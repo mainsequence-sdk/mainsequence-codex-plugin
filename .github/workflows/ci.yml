@@ -15,10 +15,5 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm install --global npm@11.6.2
-      # `npm ci --ignore-scripts` once the pinned devtools is on the registry. Until then
-      # the pinned version is built from the devtools repository at this ref and checked
-      # against the lockfile integrity. Remove DEVTOOLS_SOURCE_REF after publication.
-      - run: node scripts/install-devtools.cjs
-        env:
-          DEVTOOLS_SOURCE_REF: codex/extract-codex-plugin
+      - run: npm ci --ignore-scripts
       - run: npm run release:check
