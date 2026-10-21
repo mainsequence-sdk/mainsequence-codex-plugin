@@ -1,0 +1,13 @@
+MainSequence Codex plugin, Copyright MainSequence SDK, MIT.
+
+Reusable MainSequence developer tooling is bundled from @dev-mainsequence/devtools.
+Its license and attribution are included in dist/vendor/devtools in the published package.
+
+The hook adapter, presentation layer, manifests, skills and host checks were extracted
+from mainsequence-sdk/mainsequence-devtools 0.2.8 (ADR 0003 there), Copyright (c) 2024
+MainSequence SDK, MIT license.
+
+MainSequence brand icons are copied unchanged from the public website:
+https://www.main-sequence.io/favicon.svg
+https://www.main-sequence.io/favicon-192.png
+Retrieved 2026-10-01. The branding belongs to MainSequence.
