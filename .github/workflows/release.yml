@@ -1,0 +1,41 @@
+name: Release Codex plugin
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the checked npm artifact
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: codex-plugin-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+      - run: npm install --global npm@11.6.2
+      # A release always builds from the published devtools archive named in the lockfile.
+      - run: npm ci --ignore-scripts
+      - name: Check release tag
+        if: github.ref_type == 'tag'
+        run: node -e 'if(process.env.GITHUB_REF_NAME !== `v${require("./package.json").version}`) process.exit(1)'
+      - run: npm run release:check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mainsequence-codex-plugin-release
+          include-hidden-files: true
+          path: artifacts/*.tgz
+      - name: Publish the exact verified archive using npm trusted publishing
+        if: github.ref_type == 'tag' || inputs.publish
+        run: npm publish "./artifacts/dev-mainsequence-codex-plugin-$(node -p 'require("./package.json").version').tgz" --ignore-scripts --access public --provenance

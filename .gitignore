@@ -1,0 +1,15 @@
+node_modules/
+/build/
+/codex/
+/artifacts/
+*.tgz
+.env
+
+# Mirrored plugin artifact at the package root, written by scripts/build-codex.cjs for npm pack.
+/dist/
+/.codex-plugin/
+/hooks/
+/skills/
+/assets/
+/build-info.json
+/plugin.json
