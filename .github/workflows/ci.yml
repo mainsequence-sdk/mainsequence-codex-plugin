@@ -1,0 +1,24 @@
+name: Codex plugin
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm install --global npm@11.6.2
+      # `npm ci --ignore-scripts` once the pinned devtools is on the registry. Until then
+      # the pinned version is built from the devtools repository at this ref and checked
+      # against the lockfile integrity. Remove DEVTOOLS_SOURCE_REF after publication.
+      - run: node scripts/install-devtools.cjs
+        env:
+          DEVTOOLS_SOURCE_REF: codex/extract-codex-plugin
+      - run: npm run release:check

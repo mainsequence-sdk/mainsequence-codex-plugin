@@ -1,0 +1,48 @@
+{
+  "name": "@dev-mainsequence/codex-plugin",
+  "version": "0.3.0",
+  "description": "MainSequence plugin for Codex: /ms developer commands executed before inference and conversational project MCPs",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mainsequence-sdk/mainsequence-codex-plugin.git"
+  },
+  "bin": {
+    "ms-devtools": "./dist/runner.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    ".codex-plugin",
+    "hooks",
+    "skills",
+    "assets",
+    "build-info.json"
+  ],
+  "scripts": {
+    "build": "node scripts/clean.cjs && tsc -p tsconfig.json && node scripts/build-codex.cjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test tests/*.test.cjs",
+    "pack:codex": "npm run build && node scripts/pack-codex.cjs",
+    "verify:package": "node scripts/verify-package.cjs",
+    "verify:codex": "node scripts/verify-codex-host.cjs",
+    "verify:codex:reload": "node scripts/verify-codex-reload.cjs",
+    "release:check": "npm run typecheck && npm test && node scripts/check-release.cjs && node scripts/pack-codex.cjs && npm pack --ignore-scripts --pack-destination artifacts && npm run verify:package"
+  },
+  "dependencies": {
+    "@dev-mainsequence/devtools": "0.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "18.19.130",
+    "typescript": "5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
