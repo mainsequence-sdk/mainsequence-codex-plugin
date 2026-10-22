@@ -1,7 +1,7 @@
 {
   "name": "mainsequence",
-  "version": "0.3.1",
-  "description": "Use MainSequence project MCPs from conversation and run explicit developer commands with the bundled runner.",
+  "version": "0.4.2",
+  "description": "Browse MainSequence agents and project MCPs using your existing devtools session, and run developer commands.",
   "author": {
     "name": "MainSequence"
   },
@@ -9,13 +9,14 @@
   "hooks": "./hooks/hooks.json",
   "skills": "./skills/",
   "interface": {
-    "displayName": "MainSequence Developer Tools",
-    "shortDescription": "Use project MCPs and run MainSequence developer commands.",
+    "displayName": "MainSequence",
+    "shortDescription": "Browse agents and tools with your existing MainSequence session.",
     "developerName": "MainSequence",
     "category": "Productivity",
     "websiteUrl": "https://www.main-sequence.io/",
     "composerIcon": "./assets/mainsequence-icon.svg",
     "logo": "./assets/mainsequence-icon.svg",
     "logoDark": "./assets/mainsequence-icon.svg"
-  }
+  },
+  "mcpServers": "./.mcp.json"
 }

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MainSequence</title>
+<style>
+:root{color-scheme:light dark;font-family:var(--font-sans,system-ui,sans-serif);font-size:var(--font-text-md-size,14px);color:var(--color-text-primary,light-dark(#242424,#eee));background:var(--color-background-primary,light-dark(#fff,#212121))}*{box-sizing:border-box}body{margin:0}main{max-width:900px;margin:auto;padding:24px}header,.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}header{justify-content:space-between;margin-bottom:22px}h1{font-size:var(--font-heading-md-size,22px);font-weight:var(--font-weight-semibold,600);margin:0}h2{font-size:16px;margin:0 0 8px}p{line-height:1.55;margin:8px 0}.muted,small{color:var(--color-text-secondary,light-dark(#666,#aaa))}small{font-size:12px}button,input,select{font:inherit;color:inherit;border:1px solid var(--color-border-primary,light-dark(#d8d8d8,#555));border-radius:var(--border-radius-md,8px);background:var(--color-background-primary,light-dark(#fff,#212121));padding:9px 12px;min-height:38px}button{cursor:pointer}button:hover{background:var(--color-background-secondary,light-dark(#f4f4f4,#303030))}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--color-text-primary,light-dark(#242424,#eee));outline-offset:3px}.account{border:1px solid var(--color-border-secondary,light-dark(#e5e5e5,#444));border-radius:var(--border-radius-lg,12px);padding:16px;margin-bottom:20px}.account p:first-child{margin-top:0}.backend{font-size:12px;overflow-wrap:anywhere}label{display:block;font-size:12px;color:var(--color-text-secondary,light-dark(#666,#aaa));margin:14px 0 6px}select{width:100%}nav{display:flex;gap:6px;border-bottom:1px solid var(--color-border-secondary,light-dark(#e5e5e5,#444));margin-bottom:16px}nav button{border:0;background:transparent;border-radius:0;color:var(--color-text-secondary,light-dark(#666,#aaa));padding:10px 16px}nav button[aria-selected=true]{color:var(--color-text-primary,light-dark(#242424,#eee));border-bottom:2px solid currentColor}form{display:flex;gap:8px}input{min-width:0;flex:1}.notice{padding:12px 0;min-height:42px}.item{padding:18px 0;border-bottom:1px solid var(--color-border-secondary,light-dark(#e5e5e5,#444));overflow-wrap:anywhere}.item p{white-space:pre-wrap}.tag{font-size:11px;border:1px solid var(--color-border-secondary,light-dark(#ddd,#444));border-radius:var(--border-radius-full,999px);padding:3px 8px}.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 0}.empty{padding:30px 12px;text-align:center}.empty p{max-width:440px;margin:8px auto}details{margin-top:12px}summary{cursor:pointer}pre{white-space:pre-wrap;word-break:break-word;font-family:var(--font-mono,monospace);font-size:12px;padding:12px;background:var(--color-background-secondary,light-dark(#f5f5f5,#2c2c2c));border-radius:var(--border-radius-md,8px);max-height:320px;overflow:auto}footer{margin-top:24px;padding-top:12px;color:var(--color-text-secondary,light-dark(#666,#aaa));font-size:12px}[hidden]{display:none!important}@media(max-width:420px){main{padding:16px}header{gap:8px}form{flex-wrap:wrap}form button{width:100%}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style></head>
+<body><main>
+<header><div><h1>MainSequence</h1><small>Agents and Tools</small></div><button id="refresh" disabled>Refresh</button></header>
+<section class="account" aria-label="MainSequence account and environment">
+<p id="account">Connecting to Codex…</p><p class="backend muted" id="backend"></p><small id="session"></small>
+<label for="environment">Environment</label><select id="environment" disabled><option value="">Choose an environment</option></select>
+<p id="account-issue" class="muted" role="status"></p></section>
+<nav role="tablist" aria-label="MainSequence directories"><button id="agents-tab" role="tab" aria-selected="true" aria-controls="directory" tabindex="0">Agents</button><button id="tools-tab" role="tab" aria-selected="false" aria-controls="directory" tabindex="-1">Tools</button></nav>
+<section id="directory" role="tabpanel" aria-labelledby="agents-tab">
+<form id="search-form"><input id="search" type="search" aria-label="Search agents" placeholder="Search agents" maxlength="300" disabled><button id="search-button" disabled>Search</button></form>
+<p id="notice" class="notice muted" role="status" aria-live="polite">Loading account status…</p>
+<div id="results"></div><div id="pager" class="pager" hidden><button id="previous">Previous</button><small id="page"></small><button id="next">Next</button></div>
+</section><footer id="footer">Read-only discovery · Uses your existing MainSequence session</footer>
+</main>
+<script type="module">
+const BUILD = /* MAINSEQUENCE_PANEL_BUILD */ null;
+const $ = id => document.getElementById(id), pending = new Map();
+let sequence = 0, generation = 0, connected = false, busy = false, snapshot = null, catalog = 'agents', offset = 0, currentPage = null;
+function rpc(method, params = {}) {
+  const id = ++sequence;
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => { pending.delete(id); reject(new Error('Codex did not respond. Refresh to try again.')); }, 125000);
+    pending.set(id, { resolve, reject, timeout });
+    parent.postMessage({ jsonrpc: '2.0', id, method, params }, '*');
+  });
+}
+function styles(context = {}) {
+  for (const [key, value] of Object.entries(context.styles?.variables || {})) if (/^--[a-zA-Z0-9_-]+$/.test(key) && typeof value === 'string') document.documentElement.style.setProperty(key, value);
+  if (['light', 'dark'].includes(context.theme)) document.documentElement.style.colorScheme = context.theme;
+}
+function controls() {
+  const ready = connected && snapshot?.contextId && $('environment').value;
+  $('refresh').disabled = !connected || busy;
+  $('environment').disabled = !snapshot?.contextId;
+  $('search').disabled = !ready; $('search-button').disabled = !ready || busy;
+  $('previous').disabled = busy || offset === 0;
+  $('next').disabled = busy || !currentPage || currentPage.semantic || offset + currentPage.results.length >= currentPage.count || !currentPage.results.length;
+  $('directory').setAttribute('aria-busy', String(busy));
+}
+function clearResults() { $('results').replaceChildren(); $('pager').hidden = true; currentPage = null; }
+function node(tag, value, cls) { const item = document.createElement(tag); if (value !== undefined) item.textContent = value; if (cls) item.className = cls; return item; }
+function failure(error) {
+  $('notice').textContent = error.message;
+  if (['CONTEXT_CHANGED', 'AUTH_REJECTED', 'NOT_AUTHENTICATED'].includes(error.code)) { snapshot = null; $('environment').value = ''; clearResults(); $('account').textContent = 'Session needs refreshing'; }
+}
+async function call(name, args = {}) {
+  const output = await rpc('tools/call', { name, arguments: args });
+  const data = output.structuredContent || JSON.parse(output.content?.find(c => c.type === 'text')?.text || '{}');
+  if (output.isError || data.error) throw Object.assign(new Error(data.error?.message || 'MainSequence could not complete this read.'), { code: data.error?.code });
+  if (!BUILD || data.build?.panelId !== BUILD.panelId) throw Object.assign(new Error('The panel and server versions differ. Reopen MainSequence from its newest app card.'), { code: 'CONTEXT_CHANGED' });
+  return data;
+}
+async function refresh() {
+  const run = ++generation, previousEnvironment = $('environment').value;
+  busy = true; snapshot = null; clearResults(); controls();
+  $('account').textContent = 'Checking your MainSequence session…'; $('backend').textContent = ''; $('session').textContent = ''; $('account-issue').textContent = ''; $('notice').textContent = '';
+  try {
+    const state = await call('mainsequence_open'); if (run !== generation) return;
+    snapshot = state;
+    const a = state.account;
+    $('account').textContent = a.authenticated ? (a.username || 'Signed in') : 'Not signed in';
+    $('backend').textContent = a.backend;
+    const source = { machine: 'Shared machine session', environment: 'Environment session', host: 'Host session', none: 'No saved session' }[a.source] || 'Existing devtools session';
+    $('session').textContent = source + (a.checked ? ' · Verified with MainSequence' : ' · Not verified with backend');
+    $('account-issue').textContent = state.issue?.message || (!a.authenticated ? 'Sign in using the existing /ms login command, then refresh.' : '');
+    const placeholder = node('option', 'Choose an environment'); placeholder.value = '';
+    $('environment').replaceChildren(placeholder, ...state.environments.map(env => { const option = node('option', env.name + (env.isProduction ? ' · Production' : '')); option.value = env.uid; return option; }));
+    if (state.environments.some(env => env.uid === previousEnvironment)) $('environment').value = previousEnvironment;
+    else if (state.environments.length === 1) $('environment').value = state.environments[0].uid;
+    else $('environment').value = '';
+    $('notice').textContent = state.contextId ? (state.environments.length ? 'Choose an environment to browse.' : 'No environments are available to this account.') : 'Discovery is unavailable until the account is verified.';
+    busy = false; controls();
+    if (state.contextId && $('environment').value) await discover(0);
+  } catch (error) { if (run === generation) { $('account').textContent = 'Account status unavailable'; failure(error); } }
+  finally { if (run === generation) { busy = false; controls(); } }
+}
+function selection() { return { contextId: snapshot.contextId, environmentUid: $('environment').value }; }
+function render(page, target, run) {
+  clearResults(); currentPage = page;
+  if (!page.results.length) {
+    const empty = node('div', undefined, 'empty'); empty.append(node('h2', catalog === 'agents' ? 'No agents found' : 'No project MCPs found'), node('p', 'Try another search or environment.', 'muted')); $('results').append(empty);
+  }
+  for (const item of page.results) {
+    const card = node('article', undefined, 'item'), heading = node('div', undefined, 'row');
+    heading.append(node('h2', item.name || 'Unnamed agent'));
+    if (item.runtimeState) heading.append(node('span', item.runtimeState, 'tag'));
+    card.append(heading);
+    if (catalog === 'agents') {
+      if (item.description) card.append(node('p', item.description));
+      const defaults = [item.defaults.provider, item.defaults.model, item.defaults.thinking].filter(Boolean).join(' · ');
+      if (defaults) card.append(node('p', defaults, 'muted'));
+      const detail = node('details'); detail.append(node('summary', 'Agent details'), node('p', 'ID: ' + item.uid, 'muted'), node('p', 'Response types: ' + (item.responseKinds.join(', ') || 'Not reported'), 'muted'));
+      if (item.repositoryBranch) detail.append(node('p', 'Branch: ' + item.repositoryBranch, 'muted'));
+      card.append(detail);
+    } else {
+      heading.append(node('span', item.saved ? 'Saved connection' : 'Not saved', 'tag'));
+      if (item.repository && item.repository !== item.name) card.append(node('p', item.repository, 'muted'));
+      card.append(node('p', 'Release: ' + item.uid, 'muted'));
+      const button = node('button', 'Inspect tools'), output = node('div');
+      button.disabled = !item.saved;
+      if (!item.saved) output.append(node('p', 'Save a connection before inspecting its tools.', 'muted'));
+      button.onclick = async () => {
+        button.disabled = true; output.replaceChildren(node('p', 'Reading the current catalog…', 'muted'));
+        try {
+          const result = await call('mainsequence_tools', { ...target, releaseUid: item.uid }); if (run !== generation) return;
+          output.replaceChildren();
+          if (!result.tools.length) output.append(node('p', 'No tools are currently exposed.', 'muted'));
+          for (const tool of result.tools) {
+            const details = node('details'); details.append(node('summary', tool.name), node('p', tool.description));
+            if (Object.keys(tool.annotations).length) details.append(node('small', Object.entries(tool.annotations).map(([key, value]) => key + ': ' + value).join(' · ')));
+            details.append(node('pre', JSON.stringify(tool.inputSchema, null, 2))); output.append(details);
+          }
+        } catch (error) { if (run === generation) { output.replaceChildren(node('p', error.message, 'muted')); if (['CONTEXT_CHANGED', 'AUTH_REJECTED', 'NOT_AUTHENTICATED'].includes(error.code)) { failure(error); controls(); } } }
+        finally { button.disabled = false; }
+      };
+      card.append(button, output);
+    }
+    $('results').append(card);
+  }
+  $('notice').textContent = catalog === 'agents' ? 'Browse agents before starting a conversation.' : 'Available project MCPs. Catalog inspection requires an existing saved connection; discovery does not connect or invoke tools.';
+  $('pager').hidden = false;
+  $('page').textContent = page.semantic ? `${page.results.length} ranked results` : `${page.results.length ? offset + 1 : 0}–${offset + page.results.length} of ${page.count}`;
+}
+async function discover(nextOffset = 0) {
+  const run = ++generation; offset = nextOffset; clearResults();
+  if (!snapshot?.contextId || !$('environment').value) { busy = false; $('notice').textContent = snapshot?.contextId ? 'Choose an environment to browse.' : 'Refresh or sign in to browse agents and tools.'; controls(); return; }
+  const target = selection(); busy = true; controls(); $('notice').textContent = catalog === 'agents' ? 'Loading agents…' : 'Discovering project MCPs…';
+  try { const page = await call('mainsequence_discover', { ...target, catalog, search: $('search').value, offset }); if (run === generation) render(page, target, run); }
+  catch (error) { if (run === generation) failure(error); }
+  finally { if (run === generation) { busy = false; controls(); } }
+}
+function tab(next) {
+  catalog = next; $('search').value = ''; const label = next === 'agents' ? 'Search agents' : 'Search project MCPs';
+  $('search').placeholder = label; $('search').setAttribute('aria-label', label);
+  for (const key of ['agents', 'tools']) { $(key + '-tab').setAttribute('aria-selected', String(key === next)); $(key + '-tab').setAttribute('tabindex', key === next ? '0' : '-1'); }
+  $('directory').setAttribute('aria-labelledby', next + '-tab'); return discover(0);
+}
+$('refresh').onclick = refresh; $('environment').onchange = () => { $('search').value = ''; return discover(0); };
+$('search-form').onsubmit = event => { event.preventDefault(); return discover(0); };
+$('previous').onclick = () => discover(Math.max(0, offset - 20)); $('next').onclick = () => discover(offset + 20);
+for (const key of ['agents', 'tools']) {
+  $(key + '-tab').onclick = () => tab(key);
+  $(key + '-tab').onkeydown = event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const next = event.key === 'Home' ? 'agents' : event.key === 'End' ? 'tools' : key === 'agents' ? 'tools' : 'agents'; $(next + '-tab').focus(); void tab(next); } };
+}
+function teardown() { ++generation; connected = false; for (const p of pending.values()) { clearTimeout(p.timeout); p.reject(new Error('The panel closed.')); } pending.clear(); controls(); }
+addEventListener('message', event => {
+  if (event.source !== parent || event.data?.jsonrpc !== '2.0') return;
+  const message = event.data, p = pending.get(message.id);
+  if (p) { pending.delete(message.id); clearTimeout(p.timeout); message.error ? p.reject(new Error(message.error.message)) : p.resolve(message.result); return; }
+  if (message.method === 'ui/notifications/host-context-changed') styles(message.params);
+  if (message.method === 'ui/resource-teardown') { teardown(); parent.postMessage({ jsonrpc: '2.0', id: message.id, result: {} }, '*'); }
+});
+addEventListener('pagehide', teardown);
+controls();
+if (window.parent === window) { $('account').textContent = 'Open MainSequence in Codex'; $('notice').textContent = 'This panel uses the Codex MCP App connection to read your existing devtools session.'; }
+else try {
+  const initialized = await rpc('ui/initialize', { appInfo: { name: 'mainsequence', version: BUILD?.version || 'preview' }, appCapabilities: {}, protocolVersion: '2026-01-26' });
+  parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/initialized', params: {} }, '*');
+  styles(initialized.hostContext); connected = true; await refresh();
+} catch (error) { failure(error); controls(); }
+</script></body></html>

@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "mainsequence": {
+      "command": "node",
+      "args": [
+        "./dist/panel-server.js"
+      ],
+      "cwd": ".",
+      "env_vars": [
+        "MAINSEQUENCE_ENDPOINT",
+        "MAINSEQUENCE_ACCESS_TOKEN",
+        "MAINSEQUENCE_REFRESH_TOKEN"
+      ]
+    }
+  }
+}

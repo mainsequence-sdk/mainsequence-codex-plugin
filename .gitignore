@@ -13,3 +13,4 @@ node_modules/
 /assets/
 /build-info.json
 /plugin.json
+/.mcp.json

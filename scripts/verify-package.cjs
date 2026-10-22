@@ -17,12 +17,12 @@ async function main() {
     const manifest = JSON.parse(await fs.readFile(path.join(installed, '.codex-plugin/plugin.json'), 'utf8'));
     const metadata = JSON.parse(await fs.readFile(path.join(installed, 'package.json'), 'utf8'));
     const info = JSON.parse(await fs.readFile(path.join(installed, 'build-info.json'), 'utf8'));
-    if (manifest.name !== 'mainsequence' || manifest.version !== metadata.version || manifest.hooks !== './hooks/hooks.json' || manifest.skills !== './skills/') throw new Error('The npm artifact must contain the versioned Codex compatibility manifest.');
+    if (manifest.name !== 'mainsequence' || manifest.version !== metadata.version || manifest.hooks !== './hooks/hooks.json' || manifest.skills !== './skills/' || manifest.mcpServers !== './.mcp.json') throw new Error('The npm artifact must contain the versioned Codex compatibility manifest.');
     if (info.devtools.version !== metadata.dependencies['@dev-mainsequence/devtools']) throw new Error('build-info must record the pinned devtools version.');
-    for (const required of ['hooks/hooks.json', 'skills/ms/SKILL.md', 'skills/ms/agents/openai.yaml', 'skills/ms/assets/mainsequence-icon.png', 'skills/mainsequence-mcp/SKILL.md', 'assets/mainsequence-icon.svg', 'dist/runner.js', 'dist/hosts/codex.js', 'dist/hosts/codexPresentation.js', 'dist/vendor/devtools/index.js', 'dist/vendor/devtools/shared/mcp.js', 'dist/vendor/devtools/package.json', 'dist/vendor/devtools/LICENSE', 'docs/conversational-mcp.md', 'README.md', 'LICENSE', 'NOTICE']) {
+    for (const required of ['.mcp.json', 'dist/panel-server.js', 'dist/hosts/discovery.js', 'dist/hosts/panel/panel.html', 'hooks/hooks.json', 'skills/ms/SKILL.md', 'skills/ms/agents/openai.yaml', 'skills/ms/assets/mainsequence-icon.png', 'skills/mainsequence-mcp/SKILL.md', 'assets/mainsequence-icon.svg', 'dist/runner.js', 'dist/hosts/codex.js', 'dist/hosts/codexPresentation.js', 'dist/vendor/devtools/index.js', 'dist/vendor/devtools/shared/mcp.js', 'dist/vendor/devtools/package.json', 'dist/vendor/devtools/LICENSE', 'docs/conversational-mcp.md', 'README.md', 'LICENSE', 'NOTICE']) {
       if (!await exists(path.join(installed, required))) throw new Error('The npm artifact must contain ' + required);
     }
-    for (const removed of ['plugin.json', 'node_modules', 'build', 'codex', 'src', 'dist/vendor/devtools/hosts']) {
+    for (const removed of ['experiments', 'docs/codex-host-probe-results.md', 'docs/codex-desktop-parity-plan.md', 'plugin.json', 'node_modules', 'build', 'codex', 'src', 'dist/vendor/devtools/hosts']) {
       if (await exists(path.join(installed, removed))) throw new Error('The npm artifact must not contain ' + removed);
     }
     const vendored = JSON.parse(await fs.readFile(path.join(installed, 'dist/vendor/devtools/package.json'), 'utf8'));
@@ -43,7 +43,8 @@ async function main() {
     if (foreign.status !== 0 || foreign.stdout !== '') throw new Error('A mention of another plugin\'s ms skill must pass through.');
     const failure = spawnSync(process.execPath, [runner, 'sync', '--message', 'retired', '--json'], { cwd: temporary, env, encoding: 'utf8' });
     if (failure.status !== 1 || JSON.parse(failure.stdout).error.code !== 'INVALID_REQUEST') throw new Error('The terminal CLI must keep working through this package.');
-    console.log(`Codex plugin ${manifest.name} ${manifest.version} installs from the npm archive with devtools ${info.devtools.version} bundled; the hook and terminal CLI run without node_modules.`);
+    await require('./check-panel-package.cjs')(installed, env);
+    console.log(`Codex plugin ${manifest.name} ${manifest.version} installs from the npm archive with devtools ${info.devtools.version} bundled; the MCP panel, hook and terminal CLI run without node_modules.`);
   } finally { await fs.rm(temporary, { recursive: true, force: true }); }
 }
 main().catch(error => { console.error(error.message); process.exitCode = 1; });

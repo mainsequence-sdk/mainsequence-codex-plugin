@@ -50,6 +50,8 @@ function bundle(source, destination, boundary) {
   fs.mkdirSync(path.dirname(output), { recursive: true }); fs.writeFileSync(output, text);
 }
 bundle(path.join(root, 'build/runner.js'), 'runner.js', path.join(root, 'build'));
+bundle(path.join(root, 'build/panel-server.js'), 'panel-server.js', path.join(root, 'build'));
+fs.cpSync(path.join(root, 'src/hosts/panel'), path.join(target, 'dist/hosts/panel'), { recursive: true });
 fs.chmodSync(path.join(target, 'dist/runner.js'), 0o755);
 fs.writeFileSync(path.join(target, 'dist/package.json'), '{"type":"commonjs"}\n');
 for (const name of ['LICENSE', 'NOTICE']) {
@@ -57,14 +59,18 @@ for (const name of ['LICENSE', 'NOTICE']) {
   fs.copyFileSync(path.join(coreRoot, name), path.join(target, 'dist/vendor/devtools', name));
 }
 fs.writeFileSync(path.join(target, 'dist/vendor/devtools/package.json'), JSON.stringify({ name: core.name, version: core.version, main: './index.js' }, null, 2) + '\n');
-fs.cpSync(path.join(root, 'docs'), path.join(target, 'docs'), { recursive: true });
+// Ship product documentation only; historical experiments stay in the repository.
+for (const file of pkg.files.filter(file => file.startsWith('docs/'))) {
+  fs.mkdirSync(path.dirname(path.join(target, file)), { recursive: true });
+  fs.cpSync(path.join(root, file), path.join(target, file), { recursive: true });
+}
 fs.copyFileSync(path.join(root, 'README.md'), path.join(target, 'README.md'));
 fs.writeFileSync(path.join(target, 'build-info.json'), JSON.stringify({ version: pkg.version, node: pkg.engines.node,
   host: 'codex', devtools: { name: core.name, version: core.version, ...(locked?.integrity ? { integrity: locked.integrity } : {}) } }, null, 2) + '\n');
 // Codex 0.159.2 skips hooks for Agent Plugins root manifests. Ship its supported
 // compatibility entry point; a root plugin.json would take precedence and disable it.
 fs.rmSync(path.join(root, 'plugin.json'), { force: true });
-for (const name of ['dist', '.codex-plugin', 'hooks', 'skills', 'assets', 'build-info.json']) {
+for (const name of ['dist', '.mcp.json', '.codex-plugin', 'hooks', 'skills', 'assets', 'build-info.json']) {
   fs.rmSync(path.join(root, name), { recursive: true, force: true });
   fs.cpSync(path.join(target, name), path.join(root, name), { recursive: true });
 }
