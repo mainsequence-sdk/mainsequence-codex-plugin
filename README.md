@@ -1,14 +1,18 @@
 # MainSequence for Codex
 
-The `mainsequence` plugin registers the `ms` slash-menu entry in Codex and executes its
-commands with a trusted `UserPromptSubmit` hook before inference: login, session status,
-repositories, project status, dependency sync, SDK updates and more, with readable results
-and no model call. Its `mainsequence-mcp` skill lets Codex discover MainSequence project
-MCPs in conversation, remember a selection and use that project's tools through a bundled
-MCP client.
+This repository is the **MainSequence Codex plugin**. Its production code lives in
+`src/`, its Codex manifest in `manifests/codex/`, and its installable bundle in `codex/`.
 
-Version **0.3.1** bundles devtools 0.3.1, which stores a connected MCP's names with the saved
-connection (see [the release notes](docs/codex-verification.md)). Version 0.3.0 was the first
+The **0.4.2 development build** provides a native Agents/Tools panel with account and
+environment status, agent search, project MCP discovery, saved-connection status and read-only schema inspection.
+Ask Codex to **open MainSequence**. The plugin uses the existing devtools **0.3.2** session
+and APIs; devtools remains the head. See [panel behavior and validation](docs/agents-tools-panel.md).
+
+The plugin also registers the `ms` slash-menu entry for explicit developer commands and
+the `mainsequence-mcp` skill for conversational project MCP access. The independent
+Claude application is unchanged.
+
+Version 0.3.1 added saved MCP names (see [the release notes](docs/codex-verification.md)). Version 0.3.0 was the first
 release from this repository. Until devtools 0.2.8 the plugin was built and published from
 [mainsequence-devtools](https://github.com/mainsequence-sdk/mainsequence-devtools) under the
 name `mainsequence-devtools` ([ADR 0003 there](https://github.com/mainsequence-sdk/mainsequence-devtools/blob/main/docs/adr/0003-codex-plugin-extraction.md)).
@@ -110,17 +114,24 @@ results. `tests/dependency-boundary.test.cjs` forbids private devtools imports.
 recorded in `package-lock.json`. While that version is not published yet, run
 
 ```sh
-node scripts/install-devtools.cjs /path/to/dev-mainsequence-devtools-0.3.1.tgz
+node scripts/install-devtools.cjs /path/to/dev-mainsequence-devtools-0.3.2.tgz
 ```
 
 with the archive from `npm pack` of the devtools release branch, or without an argument to
 build it from the devtools repository at `DEVTOOLS_SOURCE_REF` (default `v<pinned version>`).
 Either way the archive must match the lockfile integrity, and the registry pin is not
 changed (`scripts/use-local-devtools.cjs`). CI does the same until the version is
-published. After publication, confirm that `npm view @dev-mainsequence/devtools@0.3.1
+published. After publication, confirm that `npm view @dev-mainsequence/devtools@0.3.2
 dist.integrity` equals the lockfile entry before tagging a release; if the registry archive
 differs, update the lockfile and rebuild so `build-info.json` records the published
 integrity.
+
+For a discovery upgrade, use the exact devtools archive while it is unpublished;
+with build dependencies already installed,
+`node scripts/use-local-devtools.cjs /path/to/dev-mainsequence-devtools-0.3.2.tgz` verifies
+its integrity and stages it without changing the registry pin. Publish devtools first,
+verify its registry integrity, then release the Codex plugin. No desktop activation
+or authenticated live-service acceptance is implied by a successful local build.
 
 ### Verification and release
 

@@ -40,7 +40,7 @@ test('built plugin bundles the pinned package, records its integrity and mirrors
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'codex/.codex-plugin/plugin.json'), 'utf8'));
   assert.equal(manifest.name, 'mainsequence');
   assert.equal(manifest.version, pkg.version);
-  for (const file of ['.codex-plugin/plugin.json', 'hooks/hooks.json', 'skills/ms/SKILL.md', 'skills/mainsequence-mcp/SKILL.md', 'build-info.json', 'dist/runner.js', 'dist/hosts/codex.js']) {
+  for (const file of ['.codex-plugin/plugin.json', '.mcp.json', 'dist/panel-server.js', 'dist/hosts/discovery.js', 'dist/hosts/panel/panel.html', 'hooks/hooks.json', 'skills/ms/SKILL.md', 'skills/mainsequence-mcp/SKILL.md', 'build-info.json', 'dist/runner.js', 'dist/hosts/codex.js']) {
     assert.equal(fs.readFileSync(path.join(root, file)).equals(fs.readFileSync(path.join(root, 'codex', file))), true, file);
   }
   assert.equal(fs.existsSync(path.join(root, 'plugin.json')), false);
@@ -52,4 +52,22 @@ test('shared failures keep the public contract through the vendored package', as
   const result = await tooling.dispatch({ action: 'unsupported-operation', root: root });
   assert.equal(result.schemaVersion, 1); assert.equal(result.status, 'failure');
   assert.equal(vendored.tokenizeCommand('status --path "a b"').length, 3);
+});
+
+test('the production package and its verification scripts do not depend on the experimental plugin', () => {
+  for (const directory of ['src', 'scripts']) {
+    const walk = folder => {
+      for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
+        const file = path.join(folder, entry.name);
+        if (entry.isDirectory()) walk(file);
+        else if (/\.(?:ts|mjs|cjs)$/.test(file)) {
+          assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /(?:from\s*|(?:require|import)\s*\()\s*['"][^'"]*(?:experiments\/|codex-host-probe)/, file);
+        }
+      }
+    };
+    walk(path.join(root, directory));
+  }
+  for (const file of ['experiments', 'docs/codex-host-probe-results.md', 'docs/codex-desktop-parity-plan.md']) {
+    assert.equal(fs.existsSync(path.join(root, 'codex', file)), false, file);
+  }
 });
