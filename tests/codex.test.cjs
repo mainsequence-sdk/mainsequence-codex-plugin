@@ -151,6 +151,13 @@ test('Codex repository, session and project results show useful fields without J
   assert.match(sdk.reason, /Registry publication verified: No/);
   const structured = await handleCodexPrompt({ prompt: '/ms repositories --json' }, async () => ({ schemaVersion: 1, action: 'repositories', status: 'success', summary: 'repositories completed.', data }));
   assert.deepEqual(JSON.parse(structured.reason).data, data);
+  // devtools 0.3.1 stores the release name, the repository name and its branch with a saved MCP connection.
+  const connection = { backend: 'https://fixture.example', resource_release_uid: '0c7a1a2e-6d7c-4a4e-8d2e-1f3b5c7d9e01', name: 'metatable-mcp', display_name: 'Research', code_repository_branch_uid: '7d9e0c7a-1a2e-4d7c-9a4e-8d2e1f3b5c7d', mcp_connection: { url: 'https://mcp.example/mcp', transport: 'streamable-http' } };
+  const added = await handleCodexPrompt({ prompt: '/ms mcp-add --uid 0c7a1a2e-6d7c-4a4e-8d2e-1f3b5c7d9e01' }, async () => ({ schemaVersion: 1, action: 'mcp-add', status: 'success', summary: 'MCP connection verified and saved.', data: { connection, tools: [] } }));
+  assert.match(added.reason, /Connection\n  Backend: https:\/\/fixture\.example\n  Release ID: 0c7a1a2e-6d7c-4a4e-8d2e-1f3b5c7d9e01\n  Name: metatable-mcp\n  Repository: Research\n  Repository branch ID: 7d9e0c7a-1a2e-4d7c-9a4e-8d2e1f3b5c7d\n/);
+  assert.doesNotMatch(added.reason, /display_name|code_repository_branch_uid|resource_release_uid|\{|\}/);
+  const savedList = await handleCodexPrompt({ prompt: '/ms mcp-list --json' }, async () => ({ schemaVersion: 1, action: 'mcp-list', status: 'success', summary: 'Saved MCP connections for this backend.', data: [connection] }));
+  assert.deepEqual(JSON.parse(savedList.reason).data, [connection], 'the stored labels reach the mainsequence-mcp skill unchanged');
 });
 
 test('a literal --json option value does not request JSON output', async () => {
