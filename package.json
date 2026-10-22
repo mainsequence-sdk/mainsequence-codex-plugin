@@ -1,6 +1,6 @@
 {
   "name": "@dev-mainsequence/codex-plugin",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "MainSequence plugin for Codex: /ms developer commands executed before inference and conversational project MCPs",
   "license": "MIT",
   "engines": {
@@ -36,7 +36,7 @@
     "release:check": "npm run typecheck && npm test && node scripts/check-release.cjs && node scripts/pack-codex.cjs && npm pack --ignore-scripts --pack-destination artifacts && npm run verify:package"
   },
   "dependencies": {
-    "@dev-mainsequence/devtools": "0.3.0"
+    "@dev-mainsequence/devtools": "0.3.1"
   },
   "devDependencies": {
     "@types/node": "18.19.130",

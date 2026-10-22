@@ -7,8 +7,9 @@ and no model call. Its `mainsequence-mcp` skill lets Codex discover MainSequence
 MCPs in conversation, remember a selection and use that project's tools through a bundled
 MCP client.
 
-Version **0.3.0** is the first release from this repository. Until devtools 0.2.8 the plugin
-was built and published from
+Version **0.3.1** bundles devtools 0.3.1, which stores a connected MCP's names with the saved
+connection (see [the release notes](docs/codex-verification.md)). Version 0.3.0 was the first
+release from this repository. Until devtools 0.2.8 the plugin was built and published from
 [mainsequence-devtools](https://github.com/mainsequence-sdk/mainsequence-devtools) under the
 name `mainsequence-devtools` ([ADR 0003 there](https://github.com/mainsequence-sdk/mainsequence-devtools/blob/main/docs/adr/0003-codex-plugin-extraction.md)).
 The shared implementation is still that package; this repository owns the hook adapter, the
@@ -109,14 +110,14 @@ results. `tests/dependency-boundary.test.cjs` forbids private devtools imports.
 recorded in `package-lock.json`. While that version is not published yet, run
 
 ```sh
-node scripts/install-devtools.cjs /path/to/dev-mainsequence-devtools-0.3.0.tgz
+node scripts/install-devtools.cjs /path/to/dev-mainsequence-devtools-0.3.1.tgz
 ```
 
 with the archive from `npm pack` of the devtools release branch, or without an argument to
 build it from the devtools repository at `DEVTOOLS_SOURCE_REF` (default `v<pinned version>`).
 Either way the archive must match the lockfile integrity, and the registry pin is not
 changed (`scripts/use-local-devtools.cjs`). CI does the same until the version is
-published. After publication, confirm that `npm view @dev-mainsequence/devtools@0.3.0
+published. After publication, confirm that `npm view @dev-mainsequence/devtools@0.3.1
 dist.integrity` equals the lockfile entry before tagging a release; if the registry archive
 differs, update the lockfile and rebuild so `build-info.json` records the published
 integrity.

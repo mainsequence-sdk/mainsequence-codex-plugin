@@ -1,5 +1,42 @@
 # Codex plugin verification
 
+## 0.3.1 — devtools 0.3.1: MCP names stored with saved connections (2026-10-22)
+
+The plugin bundles [devtools 0.3.1](https://github.com/mainsequence-sdk/mainsequence-devtools/pull/15)
+in place of 0.3.0; the hook adapter, manifest, hooks and skills are otherwise unchanged, so
+the hook definition and its trusted hash are the same as in 0.3.0.
+
+What the new devtools changes for this plugin:
+
+- `mcp-add` resolves the release's name, its repository's name and its repository branch
+  and stores them with the saved connection in the shared `mcp-connections.json` as `name`,
+  `display_name` and `code_repository_branch_uid`. A label that cannot be read is left out;
+  it never makes a working MCP unavailable.
+- `mcp-list` returns the stored labels without a backend request. A connection saved by an
+  earlier version is completed by the first listing that can read its labels. `mcp-add`,
+  `mcp-tools` and `mcp-call` results carry them on their connection, and discovery rows pass
+  the directory's `name` and `code_repository_branch_uid` through.
+- The connections file is shared with the Claude Desktop plugin (0.4.18 pins the same
+  devtools), so a connection labelled by either host is labelled for both.
+- The readable `/ms` output labels the new fields (`Release ID`, `Name`, `Repository`,
+  `Repository branch ID`); `--json` passes the rows to the `mainsequence-mcp` skill unchanged.
+
+Package checks under Node 22.22.0 and npm 10.9.4, `npm run release:check`: type-check, build
+from the registry archive of devtools 0.3.1 (`npm ci --ignore-scripts`; its integrity in
+`package-lock.json` and `build-info.json` is the registry's `dist.integrity`), the Node tests
+including a new case for the stored MCP connection labels in readable and `--json` output, release metadata, the standalone
+archive and the npm archive exercised as Codex installs it. Since the pinned devtools is on
+the registry, CI no longer names a devtools source branch; `scripts/install-devtools.cjs`
+falls back to the pin's release tag only for an unpublished pin.
+
+Installed-host checks with the Codex CLI 0.163.0 on macOS, in isolated `CODEX_HOME`
+directories, the only model endpoint being the counted loopback fixture: `npm run
+verify:codex` against this build installed from `artifacts/local-marketplace` and trusted
+(`skills/list` and `hooks/list` as recorded for 0.3.0; all 13 prompt cases and both sync
+cases behaved as in the 0.3.0 table below, with zero real model requests), and
+`npm run verify:codex:reload` (same three results as for 0.3.0). The hook definition did
+not change, so its trusted hash is still `sha256:8935862c…`.
+
 ## 0.3.0 — extraction from devtools and rename to `mainsequence` (2026-10-21)
 
 The plugin moved out of [mainsequence-devtools](https://github.com/mainsequence-sdk/mainsequence-devtools)

@@ -35,7 +35,7 @@ If no developer session exists, use the existing Main Sequence hosted login. A c
 
 Connection metadata lives in mcp-connections.json beside the existing MainSequence CLI configuration, separated by backend and release UID. Reads/calls recheck release access and fetch the current tool catalog. A changed endpoint requires an explicit add again. Removing a connection does not revoke your login.
 
-The release UID identifies a connection. Its optional `name` is a display label from discovery; release detail responses omit it. Adding a connection and reading or calling its tools work without that label, including for saved connections. UID-based operations do not repeat discovery to obtain a name.
+The release UID identifies a connection. Since devtools 0.3.1, mcp-add also reads the release's name, its repository's name and its repository branch from the release directory and stores them with the connection as `name`, `display_name` and `code_repository_branch_uid`, so mcp-list labels a saved connection without a backend request; a connection saved by an earlier version is completed by the first listing that can read those labels, and a label that cannot be read is left out rather than making the MCP unavailable. Adding a connection and reading or calling its tools work without the labels, and UID-based operations do not repeat discovery to obtain a name. Discovery rows carry `name` and `code_repository_branch_uid` as the platform directory reports them.
 
 Project tools enforce their ordinary permissions. The client adds no agent-specific allowlist or exclusions.
 

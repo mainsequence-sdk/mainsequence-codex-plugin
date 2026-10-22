@@ -54,6 +54,7 @@ const fieldNames: Record<string, string> = {
   dryRun: 'Preview only', endpointOnly: 'Credentials excluded from project files', dependenciesInstalled: 'Dependencies installed',
   updateAvailable: 'Update available', updateSupported: 'Automatic update supported', dependencyType: 'Dependency type',
   registryPublicationVerified: 'Registry publication verified', sourceStatus: 'Source version lookup', hint: 'Note',
+  resource_release_uid: 'Release ID', display_name: 'Repository', code_repository_branch_uid: 'Repository branch ID',
 };
 const hiddenFields = new Set(['gitCommonDir', 'repositoryIdentity', 'ref', 'store', 'sourceUrl', 'dependencyPolicy', 'releaseChannel']);
 const values: Record<string, string> = { python: 'Python', vite_react: 'React + Vite', available: 'Available', unavailable: 'Unavailable', unsupported: 'Unsupported', current: 'Up to date', update_available: 'Update available', not_installed: 'Not installed' };
