@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-21T18:26:13.317Z",
+  "dom": "- generic: Fixture data · No account access\n- heading \"MainSequence Host Probe\" [level=1]\n- paragraph: Tests the Codex host bridge. This is not a connection to MainSequence.\n- navigation \"Reference layout\":\n  - generic: Host test\n  - generic: Code\n  - generic: Projects\n  - generic: Agents\n  - generic: Tools\n- status: Fixture action completed through the host bridge.\n- heading \"Direct tool actions\" [level=2]\n- paragraph: Each button calls the local fixture through the host bridge.\n- button \"Ping fixture\"\n- button \"Add dynamic tool\"\n- button \"Read fixture resource\"\n- generic: \"{ \\\"fixture\\\": true, \\\"runId\\\": \\\"7affb65f-9df1-4720-990c-27166d03e733\\\", \\\"pings\\\": 1, \\\"extraTool\\\": false, \\\"job\\\": { \\\"id\\\": \\\"646ec8b8-7274-41d4-9e75-eb5aa855f1e2\\\", \\\"status\\\": \\\"completed\\\", \\\"progress\\\": 100 } }\"\n- heading \"Progress and cancellation\" [level=2]\n- button \"Start 10-second job\"\n- button \"Cancel job\"\n- progressbar\n- generic: completed · 100%\n- heading \"Native host integration\" [level=2]\n- paragraph: This button requests fullscreen only. It does not send a message or modify your draft.\n- button \"Request fullscreen\"\n- paragraph: Current-draft editing is not assumed. Available public bridge capabilities are shown below.\n- generic \"Host diagnostics\" [active]",
+  "computedStyle": {
+    "bodyBackground": "rgba(0, 0, 0, 0)",
+    "hostBackground": "rgb(24, 24, 24)",
+    "rootBackground": "rgba(0, 0, 0, 0)",
+    "text": "rgb(255, 255, 255)"
+  },
+  "screenshotLimitation": "Visible document capture omits the dark host backdrop."
+}

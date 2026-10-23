@@ -1,0 +1,1043 @@
+{
+  "observedDate": "2026-10-21",
+  "fixtureVersion": "0.1.0",
+  "evidence": "Real desktop UI, user button clicks and permitted MCP Apps DOM inspection after fullscreen.",
+  "events": [
+    {
+      "at": "2026-10-21T18:13:44.724Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "start",
+      "pid": 17169
+    },
+    {
+      "at": "2026-10-21T18:13:44.736Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "initialize",
+      "client": {
+        "name": "codex-mcp-client",
+        "title": "Codex",
+        "version": "0.163.0-alpha.10.2"
+      },
+      "capabilities": {
+        "experimental": {
+          "codex/auth-change": {}
+        },
+        "extensions": {
+          "io.modelcontextprotocol/ui": {
+            "mimeTypes": [
+              "text/html;profile=mcp-app",
+              "text/html+skybridge"
+            ]
+          },
+          "openai/elicitation": {
+            "form": {}
+          },
+          "openai/form": {}
+        },
+        "elicitation": {
+          "form": {},
+          "url": {}
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:13:44.744Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "notification",
+      "method": "notifications/initialized"
+    },
+    {
+      "at": "2026-10-21T18:13:44.744Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/list",
+      "extraTool": false
+    },
+    {
+      "at": "2026-10-21T18:14:35.795Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_open",
+      "meta": {
+        "keys": [
+          "callId",
+          "x-codex-turn-metadata",
+          "plugin_id",
+          "threadId",
+          "sessionId",
+          "windowId",
+          "itemId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "8c43fefb23db",
+          "sessionId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:14:41.957Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "resources/read",
+      "uri": "ui://mainsequence-host-probe/panel.html"
+    },
+    {
+      "at": "2026-10-21T18:14:42.109Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "resources/read",
+      "uri": "ui://mainsequence-host-probe/panel.html"
+    },
+    {
+      "at": "2026-10-21T18:14:42.347Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_ui_report",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:14:42.348Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "ui-report",
+      "report": {
+        "event": "initialize",
+        "protocolVersion": "2026-01-26",
+        "hostInfo": {
+          "name": "chatgpt",
+          "version": "26.1013.40934"
+        },
+        "hostCapabilities": {
+          "experimental": {
+            "openai/modelContext": {},
+            "openai/find": {},
+            "openai/message": {
+              "draft": {}
+            },
+            "openai/skillsDeepLinks": {},
+            "openai/files": {}
+          },
+          "logging": {},
+          "openLinks": {},
+          "serverResources": {},
+          "serverTools": {},
+          "message": {
+            "text": {},
+            "image": {},
+            "resourceLink": {},
+            "resource": {}
+          },
+          "updateModelContext": {
+            "resource": {},
+            "resourceLink": {},
+            "image": {},
+            "structuredContent": {},
+            "text": {}
+          },
+          "sandbox": {
+            "csp": {
+              "baseUriDomains": [],
+              "connectDomains": [],
+              "frameDomains": [],
+              "resourceDomains": []
+            }
+          }
+        },
+        "hostContextKeys": [
+          "openai/viewer-header",
+          "openai/interactionCursor",
+          "openai/modelContext",
+          "availableDisplayModes",
+          "containerDimensions",
+          "deviceCapabilities",
+          "displayMode",
+          "locale",
+          "platform",
+          "safeAreaInsets",
+          "styles",
+          "theme",
+          "timeZone",
+          "userAgent",
+          "toolInfo"
+        ],
+        "theme": "dark",
+        "displayMode": "inline",
+        "styleVariables": {
+          "--color-background-primary": "rgb(24, 24, 24)",
+          "--color-background-secondary": "rgba(54, 54, 54, 0.96)",
+          "--color-background-tertiary": "rgb(20, 20, 20)",
+          "--color-background-inverse": "rgb(255, 255, 255)",
+          "--color-background-ghost": "transparent",
+          "--color-background-info": "rgb(19, 52, 99)",
+          "--color-background-danger": "rgb(40, 11, 10)",
+          "--color-background-success": "color-mix(in srgb, rgb(64, 201, 119) 12%, rgb(40, 40, 40))",
+          "--color-background-warning": "color-mix(in srgb, rgb(255, 133, 73) 12%, rgb(40, 40, 40))",
+          "--color-background-disabled": "rgba(255, 255, 255, 0.05)",
+          "--color-text-primary": "rgb(255, 255, 255)",
+          "--color-text-secondary": "rgba(255, 255, 255, 0.498)",
+          "--color-text-tertiary": "rgba(255, 255, 255, 0.498)",
+          "--color-text-inverse": "rgb(13, 13, 13)",
+          "--color-text-ghost": "rgba(255, 255, 255, 0.498)",
+          "--color-text-info": "rgb(44, 103, 197)",
+          "--color-text-danger": "rgb(255, 103, 100)",
+          "--color-text-success": "rgb(64, 201, 119)",
+          "--color-text-warning": "rgb(255, 133, 73)",
+          "--color-text-disabled": "rgba(255, 255, 255, 0.498)",
+          "--color-border-primary": "rgba(255, 255, 255, 0.157)",
+          "--color-border-secondary": "rgba(255, 255, 255, 0.082)",
+          "--color-border-tertiary": "rgba(255, 255, 255, 0.082)",
+          "--color-border-inverse": "rgb(255, 255, 255)",
+          "--color-border-ghost": "transparent",
+          "--color-border-info": "rgb(58, 131, 247)",
+          "--color-border-danger": "rgb(255, 103, 100)",
+          "--color-border-success": "rgb(64, 201, 119)",
+          "--color-border-warning": "rgb(255, 133, 73)",
+          "--color-border-disabled": "rgba(255, 255, 255, 0.157)",
+          "--color-ring-primary": "rgb(58, 131, 247)",
+          "--color-ring-secondary": "rgb(58, 131, 247)",
+          "--color-ring-inverse": "rgb(58, 131, 247)",
+          "--color-ring-info": "rgb(58, 131, 247)",
+          "--color-ring-danger": "rgb(255, 103, 100)",
+          "--color-ring-success": "rgb(64, 201, 119)",
+          "--color-ring-warning": "rgb(255, 133, 73)",
+          "--font-sans": "-apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+          "--font-mono": "ui-monospace, SFMono-Regular, \"SF Mono\", menlo, consolas, \"Liberation Mono\", monospace",
+          "--font-weight-normal": "430",
+          "--font-weight-medium": "500",
+          "--font-weight-semibold": "600",
+          "--font-weight-bold": "700",
+          "--font-text-xs-size": "12px",
+          "--font-text-sm-size": "13px",
+          "--font-text-md-size": "14px",
+          "--font-text-lg-size": "16px",
+          "--font-heading-xs-size": "18px",
+          "--font-heading-sm-size": "20px",
+          "--font-heading-md-size": "24px",
+          "--font-heading-lg-size": "28px",
+          "--font-heading-xl-size": "36px",
+          "--font-heading-2xl-size": "48px",
+          "--font-heading-3xl-size": "72px",
+          "--font-text-xs-line-height": "calc(1 / .75)",
+          "--font-text-sm-line-height": "calc(1.25 / .875)",
+          "--font-text-md-line-height": "calc(1.5 / 1)",
+          "--font-text-lg-line-height": "calc(1.75 / 1.125)",
+          "--font-heading-xs-line-height": "1.33",
+          "--font-heading-sm-line-height": "1.33",
+          "--font-heading-md-line-height": "1.2",
+          "--font-heading-lg-line-height": "1.2",
+          "--font-heading-xl-line-height": "1",
+          "--font-heading-2xl-line-height": "1",
+          "--font-heading-3xl-line-height": "1",
+          "--border-radius-xs": "5px",
+          "--border-radius-sm": "7.5px",
+          "--border-radius-md": "10px",
+          "--border-radius-lg": "12.5px",
+          "--border-radius-xl": "15px",
+          "--border-radius-full": "9999px",
+          "--border-width-regular": "1px",
+          "--shadow-hairline": "rgba(0, 0, 0, 0.1) 0px 0px 0px 0.5px",
+          "--shadow-sm": "rgba(0, 0, 0, 0.08) 0px 1px 2px -1px",
+          "--shadow-md": "rgba(0, 0, 0, 0.08) 0px 2px 4px -1px",
+          "--shadow-lg": "rgba(0, 0, 0, 0.1) 0px 4px 8px -2px"
+        },
+        "bridgeMethods": {
+          "callTool": "function",
+          "sendFollowUpMessage": "function",
+          "requestDisplayMode": "function",
+          "requestModal": "undefined",
+          "requestClose": "function",
+          "openExternal": "function",
+          "setWidgetState": "function"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:17:46.024Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_toggle_tool",
+      "meta": {
+        "keys": [
+          "callId",
+          "x-codex-turn-metadata",
+          "plugin_id",
+          "threadId",
+          "sessionId",
+          "windowId",
+          "itemId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "8c43fefb23db",
+          "sessionId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:17:46.046Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "notifications/tools/list_changed",
+      "extraTool": true
+    },
+    {
+      "at": "2026-10-21T18:18:53.843Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_toggle_tool",
+      "meta": {
+        "keys": [
+          "callId",
+          "x-codex-turn-metadata",
+          "plugin_id",
+          "threadId",
+          "sessionId",
+          "windowId",
+          "itemId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "8c43fefb23db",
+          "sessionId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:18:53.866Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "notifications/tools/list_changed",
+      "extraTool": false
+    },
+    {
+      "at": "2026-10-21T18:19:44.089Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_ui_report",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:19:44.089Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "ui-report",
+      "report": {
+        "event": "host-context-changed",
+        "protocolVersion": "2026-01-26",
+        "hostInfo": {
+          "name": "chatgpt",
+          "version": "26.1013.40934"
+        },
+        "hostCapabilities": {
+          "experimental": {
+            "openai/modelContext": {},
+            "openai/find": {},
+            "openai/message": {
+              "draft": {}
+            },
+            "openai/skillsDeepLinks": {},
+            "openai/files": {}
+          },
+          "logging": {},
+          "openLinks": {},
+          "serverResources": {},
+          "serverTools": {},
+          "message": {
+            "text": {},
+            "image": {},
+            "resourceLink": {},
+            "resource": {}
+          },
+          "updateModelContext": {
+            "resource": {},
+            "resourceLink": {},
+            "image": {},
+            "structuredContent": {},
+            "text": {}
+          },
+          "sandbox": {
+            "csp": {
+              "baseUriDomains": [],
+              "connectDomains": [],
+              "frameDomains": [],
+              "resourceDomains": []
+            }
+          }
+        },
+        "hostContextKeys": [
+          "containerDimensions"
+        ],
+        "styleVariables": {},
+        "bridgeMethods": {
+          "callTool": "function",
+          "sendFollowUpMessage": "function",
+          "requestDisplayMode": "function",
+          "requestModal": "undefined",
+          "requestClose": "function",
+          "openExternal": "function",
+          "setWidgetState": "function"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:26.696Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_start_job",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:27.704Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:28.703Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:28.734Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_ping",
+      "source": "ui",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:29.275Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_toggle_tool",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:29.297Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "notifications/tools/list_changed",
+      "extraTool": true
+    },
+    {
+      "at": "2026-10-21T18:21:29.707Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:30.703Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:31.705Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:32.703Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:32.801Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "resources/read",
+      "uri": "probe://fixture"
+    },
+    {
+      "at": "2026-10-21T18:21:33.906Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:34.825Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:34.900Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_cancel_job",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:37.451Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_ui_report",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:37.455Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "ui-report",
+      "report": {
+        "event": "host-context-changed",
+        "protocolVersion": "2026-01-26",
+        "hostInfo": {
+          "name": "chatgpt",
+          "version": "26.1013.40934"
+        },
+        "hostCapabilities": {
+          "experimental": {
+            "openai/modelContext": {},
+            "openai/find": {},
+            "openai/message": {
+              "draft": {}
+            },
+            "openai/skillsDeepLinks": {},
+            "openai/files": {}
+          },
+          "logging": {},
+          "openLinks": {},
+          "serverResources": {},
+          "serverTools": {},
+          "message": {
+            "text": {},
+            "image": {},
+            "resourceLink": {},
+            "resource": {}
+          },
+          "updateModelContext": {
+            "resource": {},
+            "resourceLink": {},
+            "image": {},
+            "structuredContent": {},
+            "text": {}
+          },
+          "sandbox": {
+            "csp": {
+              "baseUriDomains": [],
+              "connectDomains": [],
+              "frameDomains": [],
+              "resourceDomains": []
+            }
+          }
+        },
+        "hostContextKeys": [
+          "containerDimensions",
+          "displayMode"
+        ],
+        "displayMode": "fullscreen",
+        "styleVariables": {},
+        "bridgeMethods": {
+          "callTool": "function",
+          "sendFollowUpMessage": "function",
+          "requestDisplayMode": "function",
+          "requestModal": "undefined",
+          "requestClose": "function",
+          "openExternal": "function",
+          "setWidgetState": "function"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:37.675Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_ui_report",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:37.676Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "ui-report",
+      "report": {
+        "event": "host-context-changed",
+        "protocolVersion": "2026-01-26",
+        "hostInfo": {
+          "name": "chatgpt",
+          "version": "26.1013.40934"
+        },
+        "hostCapabilities": {
+          "experimental": {
+            "openai/modelContext": {},
+            "openai/find": {},
+            "openai/message": {
+              "draft": {}
+            },
+            "openai/skillsDeepLinks": {},
+            "openai/files": {}
+          },
+          "logging": {},
+          "openLinks": {},
+          "serverResources": {},
+          "serverTools": {},
+          "message": {
+            "text": {},
+            "image": {},
+            "resourceLink": {},
+            "resource": {}
+          },
+          "updateModelContext": {
+            "resource": {},
+            "resourceLink": {},
+            "image": {},
+            "structuredContent": {},
+            "text": {}
+          },
+          "sandbox": {
+            "csp": {
+              "baseUriDomains": [],
+              "connectDomains": [],
+              "frameDomains": [],
+              "resourceDomains": []
+            }
+          }
+        },
+        "hostContextKeys": [
+          "containerDimensions"
+        ],
+        "styleVariables": {},
+        "bridgeMethods": {
+          "callTool": "function",
+          "sendFollowUpMessage": "function",
+          "requestDisplayMode": "function",
+          "requestModal": "undefined",
+          "requestClose": "function",
+          "openExternal": "function",
+          "setWidgetState": "function"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:21:51.439Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "callId",
+          "x-codex-turn-metadata",
+          "plugin_id",
+          "threadId",
+          "sessionId",
+          "windowId",
+          "itemId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "8c43fefb23db",
+          "sessionId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:06.908Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_toggle_tool",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:06.929Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "notifications/tools/list_changed",
+      "extraTool": false
+    },
+    {
+      "at": "2026-10-21T18:22:06.937Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_start_job",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:07.944Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:08.946Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:09.945Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:10.945Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:11.944Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:12.946Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:13.944Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:14.945Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:15.944Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:22:16.966Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_snapshot",
+      "meta": {
+        "keys": [
+          "thread_id",
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "thread_id": "8c43fefb23db",
+          "threadId": "8c43fefb23db"
+        }
+      }
+    },
+    {
+      "at": "2026-10-21T18:24:19.491Z",
+      "runId": "7affb65f-9df1-4720-990c-27166d03e733",
+      "event": "tools/call",
+      "tool": "probe_open",
+      "meta": {
+        "keys": [
+          "callId",
+          "x-codex-turn-metadata",
+          "plugin_id",
+          "threadId",
+          "sessionId",
+          "windowId",
+          "itemId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "8c43fefb23db",
+          "sessionId": "8c43fefb23db"
+        }
+      }
+    }
+  ],
+  "modelVisibleTools": [
+    "probe_cancel_job",
+    "probe_open",
+    "probe_ping",
+    "probe_snapshot",
+    "probe_start_job",
+    "probe_toggle_tool"
+  ],
+  "finalObservedState": {
+    "pings": 1,
+    "extraTool": false,
+    "jobStatus": "completed",
+    "progress": 100
+  },
+  "verifiedCancelledJobProgress": 80
+}

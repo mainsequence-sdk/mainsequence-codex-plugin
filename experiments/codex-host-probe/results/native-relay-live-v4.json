@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-22",
+  "installedVersion": "0.4.0",
+  "observedPanelHeader": "0.3.0 \u00b7 MCP relay",
+  "observedRevisedNativeControls": true,
+  "versionAdoption": "The running host retained the prior server and resource identity; revised MCP relay controls and submission status are visible. Do not claim the v4 resource is live.",
+  "sendCountBefore": 2,
+  "agent": "alpha",
+  "sessionUid": "11879343-15ef-4db1-b554-a941de1b7730",
+  "input": "MCP-RELAY-CHECK-20261022-B\n  exact second line",
+  "uiSubmit": "clicked once and acknowledged",
+  "uiStatus": "Request submitted to Codex. The agent reply is not confirmed yet.",
+  "nativeToolReply": "success",
+  "recall": {
+    "status": "passed-live-desktop",
+    "turnId": "01a162a5-964b-7e70-b062-33f36187cd8d",
+    "expectedReplyIncludedInRequest": false,
+    "exactReply": "Alpha fixture agent: MCP-RELAY-CHECK-20261022-B\n  exact second line",
+    "toolCallsDuringRecall": 0,
+    "agentResend": false,
+    "verification": "Observed native final response and supported read_thread inspection: userMessage, reasoning, agentMessage only.",
+    "limits": "No desktop restart/resume, compaction or cross-chat retention tested."
+  },
+  "sendCountAfter": 3,
+  "exactReply": "Alpha fixture agent: MCP-RELAY-CHECK-20261022-B\n  exact second line",
+  "literalMultilinePreserved": true,
+  "nativeResultInModelContext": true,
+  "nativeQuoteShown": true,
+  "shellOrHookFallback": false,
+  "recallRequestIncludesExpectedReply": false,
+  "sendCountBeforeRecall": 3,
+  "recordUpdated": "2026-10-22"
+}

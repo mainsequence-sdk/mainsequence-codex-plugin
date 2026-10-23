@@ -1,0 +1,134 @@
+{
+  "observedAt": "2026-10-22",
+  "fixture": true,
+  "desktopLive": true,
+  "build": {
+    "schemaVersion": 1,
+    "pluginVersion": "0.5.0",
+    "devtoolsVersion": "0.3.1",
+    "buildId": "be431969fe9e59cd17a43a01cbe1b1a42c05bec992552db4bd77905cb2d40902",
+    "panelTemplateSha256": "3eb9a236089c4738bd90a574fc59eadfc9e7d936b8a1b0fdc7dc760eb3ce61d8",
+    "resourceUri": "ui://mainsequence-host-probe/panel-0.5.0-be431969fe9e59cd.html"
+  },
+  "serverRunId": "1e9e50d8-1bc3-49fa-a655-36637eda5d96",
+  "activation": {
+    "passed": true,
+    "panelHeader": "Host probe · 0.5.0 · MCP relay",
+    "panelServerInstalledBuildMatch": true,
+    "hostInfo": {
+      "name": "chatgpt",
+      "version": "26.1013.40934"
+    },
+    "observation": "New probe_open card rendered the installed resource. No restart or plugin toggle was requested in this turn. Activation occurred between the previous installation check and this turn; its exact trigger was not observed."
+  },
+  "baseline": {
+    "agent": "alpha",
+    "sessionUid": "11879343-15ef-4db1-b554-a941de1b7730",
+    "sends": 3
+  },
+  "queuedClose": {
+    "marker": "LIVE-QUEUE-CLOSE-20261022-C1",
+    "literalMessage": "LIVE-QUEUE-CLOSE-20261022-C1\n  keep these two spaces",
+    "submittedVia": "live MCP App Send to native chat",
+    "submissionAcknowledged": true,
+    "submittedDuringActiveTurn": true,
+    "panelClosedByUser": true,
+    "inspectorTabsAfterClose": [],
+    "delivery": "passed",
+    "appInputArrivedAfterPanelClose": true,
+    "tool": "probe_agent",
+    "agentSendsBefore": 3,
+    "agentSendsAfter": 4,
+    "toolCalls": 1,
+    "reply": "Alpha fixture agent: LIVE-QUEUE-CLOSE-20261022-C1\n  keep these two spaces",
+    "nativeReplyQuoted": true,
+    "automaticRetry": false,
+    "nativeDeliveryTurn": "01a162f6-fe61-70d1-a470-3c3563bd7f94"
+  },
+  "recall": {
+    "status": "passed",
+    "turnId": "01a16307-3dd7-7c23-978b-48ec1716bb0b",
+    "expectedAnswerSupplied": false,
+    "toolCalls": 0,
+    "agentSendsBefore": 5,
+    "agentSendsAfter": 5,
+    "reply": "Alpha fixture agent: LIVE-QUEUE-STOP-20261022-C2\n  recover once only",
+    "verifiedBy": "Supported read_thread shows the exact native final answer and no tool/command items; live fixture count is still five."
+  },
+  "stoppedTurnRecovery": {
+    "status": "failed-delivery-recovery",
+    "marker": "LIVE-STOP-RECOVERY-20261022-C3",
+    "literalMessage": "LIVE-STOP-RECOVERY-20261022-C3\n  preserve once after stop",
+    "agent": "alpha",
+    "sessionUid": "11879343-15ef-4db1-b554-a941de1b7730",
+    "agentSendsBeforeStop": 5,
+    "turnToInterrupt": "01a16308-2cab-7a93-aa78-3baab164d8f6",
+    "submissionAcknowledged": true,
+    "automaticRetry": false,
+    "submittedDuringActiveTurn": true,
+    "agentSendsImmediatelyBeforeStop": 5,
+    "observedPriorTurnStatus": "interrupted",
+    "interruptedTurnId": "01a16308-2cab-7a93-aa78-3baab164d8f6",
+    "recoveryCheckTurnId": "01a16311-4ec5-7d61-8a40-beb6a077daeb",
+    "agentSendsAfterStop": 5,
+    "agentCallsInInterruptedTurn": 0,
+    "sessionSurvived": true,
+    "uncertainAfterStop": false,
+    "userReportedNativeStop": true,
+    "finalVerificationTurnId": "01a1631b-cb30-7d91-8eb4-db74038c9f35",
+    "messageSha256": "fb10b1a5ee15f2b687a8335ca380b191f7619c91e08de100b27d4e2f3d7a44d7",
+    "agentSendsAfterRecoveryCheck": 5,
+    "originalRequestDispatches": 0,
+    "duplicateSends": 0,
+    "originalRequestResubmitted": false,
+    "originalRequestVisibleInNativeQueue": false,
+    "nativeQueueObservationSource": "User reported No longer visible after the actual interrupted turn and a completed recovery-check turn.",
+    "nativeReplyReceived": false,
+    "replyContextCheck": {
+      "status": "not-applicable-no-reply",
+      "reason": "The stopped C3 request was never dispatched. No reply exists to recall."
+    },
+    "observation": "Codex acknowledged the app request while the turn was active. Native Stop interrupted that turn. After a completed recovery-check turn and another user continuation, the original app request had not arrived, agent count remained five and the user reported it absent from the native queue. Treat acknowledged app messages as cancellable, not durably delivered. Exact host queue internals were not inspected."
+  },
+  "notes": [
+    "probe_comms_snapshot has an old hard-coded devtoolsVersion label. Packaged build identity verifies actual devtools 0.3.1; do not use that legacy label as dependency evidence."
+  ],
+  "panelReopen": {
+    "passed": true,
+    "version": "0.5.0",
+    "restoredSessionUid": "11879343-15ef-4db1-b554-a941de1b7730",
+    "agentSends": 4
+  },
+  "secondQueuedDelivery": {
+    "marker": "LIVE-QUEUE-STOP-20261022-C2",
+    "status": "passed-normal-completion-only",
+    "agentSendsBefore": 4,
+    "agentSendsAfter": 5,
+    "toolCalls": 1,
+    "nativeDeliveryTurn": "01a16300-5505-75b2-99dd-643280330b20",
+    "reply": "Alpha fixture agent: LIVE-QUEUE-STOP-20261022-C2\n  recover once only",
+    "nativeReplyQuoted": true,
+    "automaticRetry": false
+  },
+  "stopAttempts": [
+    {
+      "status": "not-exercised",
+      "marker": "LIVE-QUEUE-STOP-20261022-C2",
+      "literalMessage": "LIVE-QUEUE-STOP-20261022-C2\n  recover once only",
+      "submissionAcknowledged": true,
+      "submittedDuringActiveTurn": true,
+      "agentSendsBeforeStop": 4,
+      "turnToInterrupt": "01a162f6-fe61-70d1-a470-3c3563bd7f94",
+      "automaticRetry": false,
+      "note": "The requested Stop action was not observed. The preceding turn completed normally, so C2 delivery is recorded as ordinary queued delivery, not interruption recovery.",
+      "observedPriorTurnStatus": "completed"
+    }
+  ],
+  "finalScope": {
+    "fixtureOnly": true,
+    "productionSourcesChanged": false,
+    "devtoolsChanged": false,
+    "claudeChanged": false,
+    "customCodex": false
+  }
+}

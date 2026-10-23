@@ -1,0 +1,4 @@
+{
+  "description": "Fixture native agent reply with /ms-probe-chat; /ms-probe retains the earlier blocked-hook regression check. Ordinary prompts pass through.",
+  "hooks": { "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "node \"${PLUGIN_ROOT}/command-hook.mjs\"", "timeout": 15, "additionalContextLimit": 0, "statusMessage": "Checking the fixture agent command" }] }] }
+}

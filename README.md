@@ -3,10 +3,23 @@
 This repository is the **MainSequence Codex plugin**. Its production code lives in
 `src/`, its Codex manifest in `manifests/codex/`, and its installable bundle in `codex/`.
 
-The **0.4.2 development build** provides a native Agents/Tools panel with account and
-environment status, agent search, project MCP discovery, saved-connection status and read-only schema inspection.
-Ask Codex to **open MainSequence**. The plugin uses the existing devtools **0.3.2** session
-and APIs; devtools remains the head. See [panel behavior and validation](docs/agents-tools-panel.md).
+The **0.7.1 development build** follows Claude's MainSequence panel layout using
+Codex theme tokens: Home, Code, Projects, Agents, Tools, Activity and Settings.
+It includes repository setup and maintenance, project setup and links, deployment
+history/stages/logs, shared account/settings controls, direct messages and agent tasks.
+Replies and task results use native MCP tools and remain in Codex conversation context.
+
+Ask Codex to **open MainSequence**. Shared devtools **0.3.5** owns authentication,
+account binding, domain APIs, local project operations, authenticated assets and durable
+delivery. Claude's repository and dependency remain unchanged. See the
+[capability matrix and verification](docs/agents-tools-panel.md), including the stock
+Codex host differences. No probe or custom Codex build is shipped.
+
+Choose **Talk**, select **Message** or **Task** when the agent supports both, write a
+message, then **Send in Codex**. The reply returns through a native
+MCP tool and stays in chat context. After Stop, use **Messages and recovery → Recover in
+Codex** on the original request. Recovery reuses saved work; an unknown remote outcome
+blocks resend. Browsing or selecting an example never sends a message automatically.
 
 The plugin also registers the `ms` slash-menu entry for explicit developer commands and
 the `mainsequence-mcp` skill for conversational project MCP access. The independent
@@ -88,6 +101,19 @@ For project MCPs, ask in conversation: "Which internal MCPs are available?", "Ad
 metatable-mcp", "Use it to list my tables." See
 [conversational project MCP connections](docs/conversational-mcp.md) and
 [ADR 0002](docs/adr/0002-conversational-project-mcp-client.md).
+
+Every saved project MCP's tools are also registered directly, as the Claude Desktop
+plugin registers them: `ms_<tool>_<hash>` (for example `ms_crm_contacts_list_…`), each
+with the project's own schema and bound to one saved connection and environment. Codex
+calls them like any other tool, with no `contextId` or environment selection. The list
+comes from devtools' shared project-tool catalog (`project-tool-catalog.json` beside the
+shared CLI state, the same names, schemas and results as the Claude Desktop plugin; devtools
+ADR 0004) and is refreshed in the background; a connection saved in the current chat appears
+in the next chat, and is usable at once through `mainsequence_tools` /
+`mainsequence_call_tool`. A cold project MCP can take over a minute to answer: devtools gives
+project requests 120 s and honours a tool's advertised timeout up to 300 s, and the plugin's
+server allows Codex tool calls 300 seconds (`tool_timeout_sec` in `.mcp.json`) instead of
+the host default of 60.
 
 ## Architecture and development
 

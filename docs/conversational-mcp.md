@@ -10,9 +10,14 @@ Codex discovers the directory, saves your selection, reads that project's curren
 
 Connections are owned by the plugin. They do not create separate entries in Codex's native MCP list. Installing or updating the plugin itself still follows the host's plugin lifecycle.
 
+Since plugin 0.7.8 every saved connection's tools are also registered directly as `ms_<tool>_<hash>` tools with the project's own schemas, the way the Claude Desktop plugin registers them, so "list my contacts" is one tool call with no contextId or environment argument. Since 0.7.9 the registration comes from devtools' shared project-tool catalog (`project-tool-catalog.json` beside `mcp-connections.json`, shared with the Claude Desktop plugin) that is refreshed in the background; a connection saved in the current chat is registered from the next chat on, and is usable at once through `mainsequence_tools` / `mainsequence_call_tool`. The plugin's server also allows Codex tool calls 300 seconds, because a cold project MCP has taken more than the host's 60-second default to answer.
+
 ## Runner and library
 
-The conversational skill calls the same runner/API available to other local hosts:
+The conversational skill prefers native `mainsequence_*` tools, which share a
+persistent devtools connection cache. It opens account context once, reads saved
+connections, inspects schemas, then calls the selected tool. The bundled runner is
+a fallback when native tools are unavailable:
 
 | Command | Result |
 | --- | --- |
@@ -33,7 +38,7 @@ The plugin uses the existing developer machine session for central discovery and
 
 If no developer session exists, use the existing Main Sequence hosted login. A central Codex OAuth connection does not automatically provide that session. Browser sign-in may be necessary once; adding subsequent project connections reuses the developer session.
 
-Connection metadata lives in mcp-connections.json beside the existing MainSequence CLI configuration, separated by backend and release UID. Reads/calls recheck release access and fetch the current tool catalog. A changed endpoint requires an explicit add again. Removing a connection does not revoke your login.
+Connection metadata lives in mcp-connections.json beside the existing MainSequence CLI configuration, separated by backend and release UID. Since plugin 0.7.3 / devtools 0.3.7, the native process reuses verified release metadata, a release grant and schemas for at most 60 seconds, bounded by credential expiry. A prepared call sends only the business `tools/call` request. Explicit schema reads still fetch the current catalog. Shared login and saved connection changes, expiry and transport failures invalidate the cache; each call keeps its own cancellation signal. Credentials and results are never persisted in this cache. A changed endpoint requires an explicit add again. Removing a connection does not revoke your login. Separate runner processes perform fresh setup.
 
 The release UID identifies a connection. Since devtools 0.3.1, mcp-add also reads the release's name, its repository's name and its repository branch from the release directory and stores them with the connection as `name`, `display_name` and `code_repository_branch_uid`, so mcp-list labels a saved connection without a backend request; a connection saved by an earlier version is completed by the first listing that can read those labels, and a label that cannot be read is left out rather than making the MCP unavailable. Adding a connection and reading or calling its tools work without the labels, and UID-based operations do not repeat discovery to obtain a name. Discovery rows carry `name` and `code_repository_branch_uid` as the platform directory reports them.
 
@@ -44,6 +49,14 @@ Project tools enforce their ordinary permissions. The client adds no agent-speci
 Access denial, an unavailable release, or a corrupt connection file is reported without deleting the saved connection or changing accounts. All project requests use the current stateless Streamable HTTP profile. Stateful sessions, subscriptions, tasks and deprecated SSE endpoints are unsupported.
 
 A tool call is never retried automatically. A timeout, interrupted stream or cancellation may follow a completed remote operation. If the result reports partial-or-uncertain effects, check the operation's outcome before repeating it. Tool errors retain their server result for diagnosis, with known authentication credentials redacted.
+
+Since plugin 0.7.2 / devtools 0.3.6, a remote tool failure is labelled
+`MCP_TOOL_ERROR`, distinct from an HTTP/protocol `API_ERROR`. The native tool result
+and panel preserve the original `content`, `structuredContent` and uncertain-effects
+warning. A CRM `not_found` or `forbidden` response is therefore visible instead of
+being discarded. Cold setup verifies the shared account remotely. Prepared calls
+check the selected credentials locally before and after execution; server-side
+authorization still applies to every call.
 
 ## Validation and release boundary
 

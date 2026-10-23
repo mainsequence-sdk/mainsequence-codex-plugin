@@ -1,0 +1,9 @@
+{
+  "version": "0.4.0",
+  "literalMessagePreserved": true,
+  "sessionBound": true,
+  "nativePromptDoesNotTriggerHook": true,
+  "blankMessageRefused": true,
+  "moduleSyntax": true,
+  "liveUpdatedButton": "Revised MCP relay behavior passed in the desktop panel labelled 0.3.0 \u00b7 MCP relay. Installed v4 resource adoption is not established."
+}

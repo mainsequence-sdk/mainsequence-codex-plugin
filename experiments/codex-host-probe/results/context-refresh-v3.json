@@ -1,0 +1,142 @@
+{
+  "host": "codex-cli 0.163.0-alpha.10.2",
+  "checks": [
+    {
+      "name": "hook-result-becomes-native-assistant-item",
+      "passed": true,
+      "modelFixtureRequests": 1,
+      "resultIncludedInModelContext": true,
+      "assistantItems": [
+        "MainSequence fixture \u00b7 alpha\n\nAlpha fixture agent: CONTEXT-REPLY-df9e2ea2-c941-4f2d-b2ec-549024a7db98\nsecond line"
+      ],
+      "hookStatuses": [
+        "completed"
+      ]
+    },
+    {
+      "name": "reply-in-next-turn-context",
+      "passed": true,
+      "agentSends": 1
+    },
+    {
+      "name": "native-reply-persisted-in-thread-read",
+      "passed": true
+    },
+    {
+      "name": "initial-model-tools",
+      "tools": [
+        {
+          "type": "function",
+          "name": "list_mcp_resources"
+        },
+        {
+          "type": "function",
+          "name": "list_mcp_resource_templates"
+        },
+        {
+          "type": "function",
+          "name": "read_mcp_resource"
+        },
+        {
+          "type": "function",
+          "name": "request_user_input"
+        },
+        {
+          "type": "namespace",
+          "name": "multi_agent_v1"
+        },
+        {
+          "type": "namespace",
+          "name": "mcp__mainsequence_host_probe"
+        },
+        {
+          "type": "function",
+          "name": "get_goal"
+        },
+        {
+          "type": "function",
+          "name": "create_goal"
+        },
+        {
+          "type": "function",
+          "name": "update_goal"
+        },
+        {
+          "type": "web_search"
+        }
+      ],
+      "dynamicInRequest": false
+    },
+    {
+      "name": "stable-dispatch-expanded",
+      "passed": true,
+      "modelToolCalls": 2,
+      "modelReceivesNewSchema": true,
+      "nativeModelResult": true
+    },
+    {
+      "name": "stable-dispatch-revised",
+      "passed": true,
+      "modelToolCalls": 2,
+      "modelReceivesNewSchema": true,
+      "nativeModelResult": true
+    },
+    {
+      "name": "stable-dispatch-removal",
+      "passed": true,
+      "remoteCalls": 0
+    },
+    {
+      "name": "notification-followed-by-next-turn",
+      "cachedCatalog": true,
+      "modelRequestContainsTool": false
+    },
+    {
+      "name": "second-turn-after-notification",
+      "cachedCatalog": true,
+      "modelRequestContainsTool": false
+    },
+    {
+      "name": "explicit-mcp-reload",
+      "serverRestarted": false,
+      "cachedCatalog": true,
+      "modelRequestContainsTool": false
+    },
+    {
+      "name": "user-config-hot-reload",
+      "cachedCatalog": true,
+      "modelRequestContainsTool": false
+    },
+    {
+      "name": "turn-plugin-disable-enable",
+      "cachedCatalog": true,
+      "modelRequestContainsTool": true
+    },
+    {
+      "name": "thread-unsubscribe-resume",
+      "cachedCatalog": true,
+      "modelRequestContainsTool": true
+    },
+    {
+      "name": "runtime-restart-with-added-tool",
+      "cachedCatalog": true,
+      "modelRequestContainsTool": true
+    },
+    {
+      "name": "explicit-mcp-removal-reload",
+      "cachedCatalog": false,
+      "modelRequestContainsTool": true
+    },
+    {
+      "name": "turn-plugin-toggle-refreshes-removal",
+      "passed": true,
+      "modelRequestContainsTool": false
+    },
+    {
+      "name": "reply-survives-runtime-restart-and-resume",
+      "passed": true
+    }
+  ],
+  "scope": "Installed Codex app-server, isolated profile, unchanged devtools 0.3.0, local scripted Responses fixture. No real model or MainSequence endpoint.",
+  "desktopAcceptance": "0.3.0 installed; existing live chat still served 0.2.0 at last check. Reload requested before live acceptance."
+}

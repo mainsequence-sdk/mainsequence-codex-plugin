@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-22",
+  "input": "/ms-probe-chat @alpha NATIVE-CONTEXT-CHECK",
+  "automaticHook": {
+    "resultContextReceived": false,
+    "sendCountBeforeFallback": 0,
+    "probeToolsExposedInCurrentTurn": false,
+    "status": "failed-live-acceptance"
+  },
+  "fallback": {
+    "route": "local communicationAction through unchanged devtools 0.3.0",
+    "explicitUserCommand": true,
+    "sendCountAfter": 1,
+    "status": "success",
+    "reply": "Alpha fixture agent: NATIVE-CONTEXT-CHECK"
+  },
+  "nativeContext": {
+    "replyReceivedInThisModelTurn": true,
+    "assistantCommentaryRendered": true,
+    "laterTurnRecall": "Prior fallback reply is present in later conversation context; no resend. This is not hook acceptance."
+  },
+  "hostControl": {
+    "documentedAppServerProxy": "unavailable: default control socket absent",
+    "noPrivateSocketsUsed": true,
+    "noTranscriptFilesEdited": true
+  },
+  "nextStep": "Trace native panel submission and hook dispatch with a fresh unique marker; do not request another restart.",
+  "correction": "The user restarted Codex. On the next inspected turn the installed probe tools and 0.3.0 panel are available and probe_comms_snapshot succeeds. Treating the remaining issue as plugin loading was unsupported."
+}

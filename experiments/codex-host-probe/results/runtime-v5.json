@@ -1,0 +1,111 @@
+{
+  "observedAt": "2026-10-22",
+  "host": "codex-cli 0.163.0-alpha.10.2",
+  "pluginId": "mainsequence-host-probe@mainsequence-host-probe",
+  "checks": [
+    {
+      "name": "isolated-install",
+      "passed": true
+    },
+    {
+      "name": "local-mcp-discovery",
+      "passed": true,
+      "server": "mainsequence_host_probe",
+      "toolNames": [
+        "probe_agent",
+        "probe_mcp",
+        "probe_project_catalog",
+        "probe_ui_report",
+        "probe_toggle_tool",
+        "probe_open",
+        "probe_cancel_job",
+        "probe_context",
+        "probe_comms_snapshot",
+        "probe_snapshot",
+        "probe_ping",
+        "probe_start_job"
+      ],
+      "capabilities": {
+        "resources": {
+          "listChanged": false
+        },
+        "tools": {
+          "listChanged": true
+        }
+      }
+    },
+    {
+      "name": "ui-metadata",
+      "passed": true,
+      "resourceUri": "ui://mainsequence-host-probe/panel-0.5.0-be431969fe9e59cd.html",
+      "entrypoints": [
+        {
+          "type": "global"
+        },
+        {
+          "type": "thread"
+        }
+      ],
+      "appOnlyVisibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "direct-tool-call",
+      "passed": true,
+      "pings": 1
+    },
+    {
+      "name": "local-ui-resource",
+      "passed": true,
+      "mimeTypes": [
+        "text/html;profile=mcp-app"
+      ],
+      "bytes": 21050,
+      "build": {
+        "schemaVersion": 1,
+        "pluginVersion": "0.5.0",
+        "devtoolsVersion": "0.3.1",
+        "buildId": "be431969fe9e59cd17a43a01cbe1b1a42c05bec992552db4bd77905cb2d40902",
+        "panelTemplateSha256": "3eb9a236089c4738bd90a574fc59eadfc9e7d936b8a1b0fdc7dc760eb3ce61d8",
+        "resourceUri": "ui://mainsequence-host-probe/panel-0.5.0-be431969fe9e59cd.html"
+      }
+    },
+    {
+      "name": "fixture-operation-cancel",
+      "passed": true
+    },
+    {
+      "name": "dynamic-tool-add",
+      "supported": false,
+      "observationWindowMs": 5000
+    },
+    {
+      "name": "new-tool-callable",
+      "supported": true
+    },
+    {
+      "name": "thread-isolation",
+      "separateServerInstance": true,
+      "secondThreadPings": 1
+    }
+  ],
+  "desktopRenderingTested": false,
+  "serverInfo": {
+    "name": "mainsequence-host-probe",
+    "title": null,
+    "version": "0.5.0",
+    "description": null,
+    "icons": null,
+    "websiteUrl": null
+  },
+  "serverCapabilities": {
+    "resources": {
+      "listChanged": false
+    },
+    "tools": {
+      "listChanged": true
+    }
+  },
+  "scope": "Bounded projection of the actual isolated runtime report. No model turns."
+}

@@ -26,7 +26,7 @@ assert.equal(Object.keys(pkg.dependencies).length, 1, 'devtools is the only runt
 assert.equal(pkg.bin['ms-devtools'], './dist/runner.js');
 // The npm archive is the Codex plugin: its manifest, hooks, skills, assets and bundled
 // runner sit at the package root, mirrored from the codex/ artifact by the build.
-for (const file of ['.codex-plugin/plugin.json', '.mcp.json', 'dist/panel-server.js', 'dist/hosts/discovery.js', 'dist/hosts/panel/panel.html', 'hooks/hooks.json', 'skills/ms/SKILL.md', 'skills/ms/agents/openai.yaml', 'skills/ms/assets/mainsequence-icon.png', 'skills/mainsequence-mcp/SKILL.md', 'assets/mainsequence-icon.svg', 'build-info.json', 'dist/runner.js', 'dist/hosts/codex.js', 'dist/vendor/devtools/index.js', 'dist/vendor/devtools/shared/mcp.js', 'dist/vendor/devtools/LICENSE']) {
+for (const file of ['.codex-plugin/plugin.json', '.mcp.json', 'dist/panel-server.js', 'dist/hosts/discovery.js', 'dist/hosts/messaging.js', 'dist/vendor/devtools/shared/agentDelivery.js', 'dist/hosts/panel/panel.html', 'hooks/hooks.json', 'skills/ms/SKILL.md', 'skills/ms/agents/openai.yaml', 'skills/ms/assets/mainsequence-icon.png', 'skills/mainsequence-mcp/SKILL.md', 'assets/mainsequence-icon.svg', 'build-info.json', 'dist/runner.js', 'dist/hosts/codex.js', 'dist/vendor/devtools/index.js', 'dist/vendor/devtools/shared/mcp.js', 'dist/vendor/devtools/LICENSE']) {
   assert.equal(fs.existsSync(file), true, `${file} must be in the package root for npm pack`);
   assert.equal(fs.readFileSync(file).equals(fs.readFileSync(`codex/${file}`)), true, `${file} must match the built artifact`);
 }
