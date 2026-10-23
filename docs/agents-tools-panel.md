@@ -24,14 +24,18 @@ and dependency stay unchanged. This is the real plugin, not a host probe.
 ### What the plugin exposes automatically
 
 Enabling MainSequence registers the plugin's bundled `mainsequence` MCP server and
-its 16 integration tools (15 model-visible and one app-only submission acknowledgement).
-Those tools use the shared devtools session. The plugin
-does not mirror the central platform `/mcp` catalog as individual Codex functions.
-Saved project connections are discovered and called through `mainsequence_tools`
-and `mainsequence_call_tool`; they do not become separate native MCP configuration
-entries or individual model functions, including after a plugin reload. The
+its 16 integration tools (15 model-visible and one app-only submission acknowledgement),
+plus one `ms_<tool>_<hash>` tool for every tool of every saved project MCP connection,
+named and bound exactly as the Claude Desktop plugin names and binds them. Those tools
+use the shared devtools session. The plugin does not mirror the central platform `/mcp`
+catalog as individual Codex functions. Saved connections do not become separate native
+MCP configuration entries. The registered project tools come from a catalog cache
+(`codex-tool-catalog.json` beside `mcp-connections.json`) that `tools/list` answers from
+at once; one chat's server refreshes it in the background when it is older than 15
+minutes or after a connection or account change, and sends `tools/list_changed`. The
 `tools/list_changed` observation below describes the host's measured registration
-behavior, not a dynamic-registration feature implemented by this plugin.
+behavior: a connection saved in the current chat is registered for the next chat, and is
+usable immediately through `mainsequence_tools` / `mainsequence_call_tool`.
 
 These are host-integration differences, not reasons to omit domain functionality:
 
@@ -44,8 +48,10 @@ These are host-integration differences, not reasons to omit domain functionality
   presents them. They stay in context, with a Codex inference turn.
 - **Dynamic top-level project tool registration:** measured stock-host behavior refreshes
   server status after `tools/list_changed`, but does not rebuild model function schemas
-  until a host plugin reload. Fresh tools remain usable immediately through the stable
-  `mainsequence_tools` / `mainsequence_call_tool` interface.
+  until a host plugin reload or a new chat. Project tools registered from the catalog
+  cache are therefore those known when the chat's server started; fresh tools remain
+  usable immediately through the stable `mainsequence_tools` / `mainsequence_call_tool`
+  interface.
 - **Native workspace/terminal controls:** the MCP App bridge exposes no native folder
   picker, automatic multi-root session attachment, signed-terminal environment injection,
   or start-in-devcontainer API. Folder paths, repository preparation, opening the OS
@@ -398,3 +404,65 @@ The regression suite removes a running detached package and verifies its setting
 tool list and captured panel remain available. `scripts/verify-update-lifecycle-live.mjs`
 checks account, environments, agents, saved CRM schemas and local discovery using
 the existing shared session after removing only a disposable package copy.
+
+
+## Inline icon correction — 0.7.8
+
+The Agents directory, semantic search and detail request the platform's existing
+`include_icons: true` through devtools `includeIcons: true`. Images and their
+reduced-motion still frames are projected from `command_center_icon.idle` in that
+same response. The panel does not request a second Command Center directory or
+individual `/icon/` URLs. Missing or invalid inline images render the placeholder
+without any image-fetch fallback. The legacy `view: assets` request remains a
+network-free no-op for old panel HTML; reopen the current panel to render icons.
+
+The shared devtools transport still coalesces the combined response across chat
+processes. There is no periodic agent/icon refresh. Explicit Refresh requests a
+fresh directory. No change is made to the shared login or Claude.
+
+## Direct project tools, timeouts and distinct refusals — 0.7.8
+
+Measured against the Production CRM release on 2026-10-23 with plain `fetch`: a cold
+`mcp-call` took 53–71 s (release detail and exchange-launch about 2 s each, the
+project's `initialize` 9 s to over 60 s, `tools/call crm_contacts_list` 39 s), a warm one
+7–10 s. Codex's default `tool_timeout_sec` is 60 s, so the host failed the tool while the
+server was still waiting; Claude Desktop runs the same devtools call with a 30-minute
+budget and succeeds. Three changes follow from that comparison:
+
+- `.mcp.json` sets `tool_timeout_sec: 300`. The server's own per-request limit is 290 s,
+  and project MCP requests (`mainsequence_tools`, `mainsequence_call_tool`,
+  `mainsequence_connection` and the registered `ms_*` tools) give devtools a 120 s HTTP
+  budget per message instead of its 60 s default. Other requests keep devtools' defaults.
+- Saved project MCP tools are registered directly as `ms_<tool>_<hash>`
+  (`src/hosts/toolCatalog.ts`), with the same FNV-1a naming as the Claude plugin, so
+  `ms_crm_contacts_list_183f8138` is the same tool in both hosts. A call forwards to
+  `mcp-call` with the saved connection's backend, environment and release and returns the
+  remote tool's own content and `structuredContent`, with `summary`, `error` and
+  `effects` appended as in Claude. No `expectedAccount` snapshot is attached; devtools
+  verifies the shared session for the connection's backend. The catalog cache holds
+  schemas only, never credentials or results; one process refreshes at a time under a
+  lock file; a connection whose catalog cannot be read keeps its earlier tools and is
+  reported in `mainsequence_open` → `registeredTools.unavailable`. `mainsequence_tools`
+  no longer discards the shared transport cache for every chat process.
+- Every `INVALID_REQUEST` from the discovery layer now names the argument and what is
+  accepted: a wrong `environmentUid` lists the account's environments; a release known
+  in another environment names that environment; an unknown release says which read
+  (`mainsequence_view connections` or `mainsequence_discover tools`) must come first; an
+  omitted `arguments` object on `mainsequence_call_tool` is an empty object, as its
+  schema says; release ids match regardless of case. `CONTEXT_CHANGED` carries its cause
+  (`AUTH_REJECTED: The MCP endpoint returned HTTP 401.`) instead of a bare "refresh".
+
+`MAINSEQUENCE_CODEX_TOOL_CATALOG=off` stops a server from reading or writing the
+catalog on its own (the packaged test uses it); cached tools are still listed.
+
+Live acceptance on 2026-10-23, Codex CLI 0.163.0, local marketplace install: a fresh
+server's first `tools/list` returned the 16 plugin tools; its background refresh wrote
+70 CRM schemas to the catalog and sent `tools/list_changed`; the next `tools/list`
+returned 86 tools. In `codex exec` sessions the model found and called
+`mcp__mainsequence__ms_crm_contacts_list_68ee6e71` directly through its code-mode tool and
+answered with the contact's title and uid; attempts ran 20–35 s and were not cut off by
+the host. Three earlier sessions failed on upstream errors only (`HTTP 503` and a reset
+from the project gateway, `HTTP 500` from the development backend behind the
+`local-backend` haproxy); a plain-fetch call made in the same minute as the successful
+session also met one backend `HTTP 500`. Those errors now reach the model with their
+status code instead of a generic "refresh" message.

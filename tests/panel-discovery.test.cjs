@@ -6,6 +6,7 @@ const path = require('node:path');
 const { createDevTools, createNodeHost, createSessionService } = require('@dev-mainsequence/devtools');
 const { createDiscovery } = require('../build/hosts/discovery');
 const environmentUid = '10000000-0000-4000-8000-000000000001';
+const otherEnvironmentUid = '10000000-0000-4000-8000-000000000002';
 const agentUid = '20000000-0000-4000-8000-000000000001';
 const releaseUid = '30000000-0000-4000-8000-000000000001';
 const backend = 'https://backend.example.test';
@@ -26,7 +27,7 @@ async function fixture(t, overrides = {}) {
     calls.push({ url: String(url), method: options.method, rpc: body?.method, tool: body?.params?.name });
     let result;
     if (String(url) === backend + '/api/v1/users/me/') result = { username };
-    else if (String(url).includes('/organization-environments/')) result = { count: 1, results: [{ uid: environmentUid, name: 'Research', is_production: false }] };
+    else if (String(url).includes('/organization-environments/')) result = { count: 2, results: [{ uid: environmentUid, name: 'Research', is_production: false }, { uid: otherEnvironmentUid, name: 'Staging', is_production: false }] };
     else if (String(url) === backend + `/api/v1/resource-releases/${releaseUid}/`) result = connection;
     else if (String(url).endsWith('/exchange-launch/')) result = { mode: 'token', release_kind: 'fastapi', token: 'private-release-token', rpc_url: 'https://project.example.test/mcp' };
     else if (String(url).endsWith('/mcp')) {
@@ -121,10 +122,17 @@ test('signed-out sessions do not perform discovery or sign in', async t => {
 test('scope and pagination validation; unknown releases cannot acquire credentials', async t => {
   const f = await fixture(t), service = createDiscovery(), status = await service.status(f.dispatch);
   const base = { contextId: status.contextId, environmentUid }; const before = f.calls.length;
-  for (const args of [{ ...base, catalog: 'send' }, { ...base, catalog: 'agents', offset: -1 }, { ...base, catalog: 'agents', search: 'x', offset: 20 }, { ...base, environmentUid: agentUid, catalog: 'tools' }]) await assert.rejects(service.discover(f.dispatch, args), { code: 'INVALID_REQUEST' });
-  await assert.rejects(service.tools(f.dispatch, { ...base, releaseUid }), { code: 'INVALID_REQUEST' });
+  // Each refusal names the argument and what is accepted; one generic sentence hid five different mistakes.
+  await assert.rejects(service.discover(f.dispatch, { ...base, catalog: 'send' }), { code: 'INVALID_REQUEST', message: /catalog must be "agents" or "tools", not "send"/ });
+  await assert.rejects(service.discover(f.dispatch, { ...base, catalog: 'agents', offset: -1 }), { code: 'INVALID_REQUEST', message: /offset must be a non-negative integer/ });
+  await assert.rejects(service.discover(f.dispatch, { ...base, catalog: 'agents', search: 'x', offset: 20 }), { code: 'INVALID_REQUEST', message: /omit offset when search is set/ });
+  await assert.rejects(service.discover(f.dispatch, { ...base, environmentUid: agentUid, catalog: 'tools' }), { code: 'INVALID_REQUEST', message: new RegExp(`environmentUid "${agentUid}" is not one of this account's environments: Research = ${environmentUid}; Staging = ${otherEnvironmentUid}`) });
+  await assert.rejects(service.tools(f.dispatch, { ...base, releaseUid }), { code: 'INVALID_REQUEST', message: /not a saved or discovered MCP of Research .* mainsequence_view with view "connections"/ });
+  await assert.rejects(service.tools(f.dispatch, { ...base, releaseUid: 'crm' }), { code: 'INVALID_REQUEST', message: /releaseUid must be a release UUID/ });
+  await assert.rejects(service.tools(f.dispatch, { contextId: 'stale', environmentUid, releaseUid }), { code: 'CONTEXT_CHANGED', message: /contextId "stale" is unknown .* mainsequence_open/ });
   assert.ok(f.calls.slice(before).every(c => c.url.endsWith('/users/me/')));
   await service.discover(f.dispatch, { ...base, catalog: 'tools' });
+  await assert.rejects(service.tools(f.dispatch, { ...base, environmentUid: otherEnvironmentUid, releaseUid }), { code: 'INVALID_REQUEST', message: new RegExp(`belongs to Research \\(${environmentUid}\\); pass environmentUid "${environmentUid}"`) });
   await fs.writeFile(f.connections, '[]');
   await assert.rejects(service.tools(f.dispatch, { ...base, releaseUid }), /Add this MCP connection/);
   assert.equal(await fs.readFile(f.connections, 'utf8'), '[]');
@@ -174,7 +182,7 @@ test('details and assets require discovered agents; connections require scoped e
  await assert.rejects(service.view(f.dispatch,{...selected,view:'assets',agentUids:[agentUid]}),{code:'INVALID_REQUEST'});
  await assert.rejects(service.connection(f.dispatch,{...selected,action:'connect',releaseUid}),{code:'INVALID_REQUEST'});
  await service.discover(f.dispatch,{...selected,catalog:'agents'});
- await service.view(f.dispatch,{...selected,view:'assets',agentUids:[agentUid]});assert.equal(assets,1);
+ await service.view(f.dispatch,{...selected,view:'assets',agentUids:[agentUid]});assert.equal(assets,0);
  const connected=await service.view(f.dispatch,{...selected,view:'connections'});assert.equal(connected.results[0].uid,releaseUid);
  const before=f.actions.length;await service.connection(f.dispatch,{...selected,action:'disconnect',releaseUid});
  const mutation=f.actions.slice(before).find(a=>a.action==='mcp-remove');assert.equal(mutation.expectedAccount,'fixture-user');assert.equal(mutation.environmentUid,environmentUid);assert.deepEqual(JSON.parse(await fs.readFile(f.connections,'utf8')),[]);
@@ -182,9 +190,22 @@ test('details and assets require discovered agents; connections require scoped e
 });
 test('project details and tool invocation reject unselected IDs and malformed arguments',async t=>{
  const f=await fixture(t), service=createDiscovery(),state=await service.status(f.dispatch),selected={contextId:state.contextId,environmentUid};
- await assert.rejects(service.view(f.dispatch,{...selected,view:'project',projectUid:agentUid}),{code:'INVALID_REQUEST'});
- await assert.rejects(service.invoke(f.dispatch,{...selected,releaseUid,tool:'metrics',arguments:{}}),{code:'INVALID_REQUEST'});
+ await assert.rejects(service.view(f.dispatch,{...selected,view:'project',projectUid:agentUid}),{code:'INVALID_REQUEST',message:/projectUid .* view "projects" first/});
+ await assert.rejects(service.invoke(f.dispatch,{...selected,releaseUid,tool:'metrics',arguments:{}}),{code:'INVALID_REQUEST',message:/not a saved or discovered MCP/});
  await service.view(f.dispatch,{...selected,view:'connections'});
- for(const args of [undefined,null,[],42])await assert.rejects(service.invoke(f.dispatch,{...selected,releaseUid,tool:'metrics',arguments:args}),{code:'INVALID_REQUEST'});
+ for(const args of [null,[],42])await assert.rejects(service.invoke(f.dispatch,{...selected,releaseUid,tool:'metrics',arguments:args}),{code:'INVALID_REQUEST',message:/arguments must be a JSON object/});
+ await assert.rejects(service.invoke(f.dispatch,{...selected,releaseUid,tool:'',arguments:{}}),{code:'INVALID_REQUEST',message:/tool must be a tool name from mainsequence_tools/});
  assert.equal(f.actions.some(a=>a.action==='mcp-call'),false);
+ // The schema marks arguments optional; omitting it is an empty argument object, as for any tool.
+ const result=await service.invoke(f.dispatch,{...selected,releaseUid:releaseUid.toUpperCase(),tool:'metrics'});
+ assert.equal(result.error.code,'MCP_TOOL_ERROR');
+ const call=f.actions.find(a=>a.action==='mcp-call');assert.deepEqual(call.arguments,{});assert.equal(call.releaseUid,releaseUid);
+});
+
+test('an authentication failure during a scoped call keeps its cause in the refreshed-context message',async t=>{
+ const f=await fixture(t), service=createDiscovery(),state=await service.status(f.dispatch),selected={contextId:state.contextId,environmentUid};
+ await service.view(f.dispatch,{...selected,view:'connections'});
+ const dispatch=async request=>request.action==='mcp-call'?{schemaVersion:1,action:'mcp-call',status:'failure',summary:'The MCP endpoint returned HTTP 401.',error:{code:'AUTH_REJECTED',message:'The MCP endpoint returned HTTP 401.'}}:f.dispatch(request);
+ await assert.rejects(service.invoke(dispatch,{...selected,releaseUid,tool:'metrics'}),{code:'CONTEXT_CHANGED',message:/\(AUTH_REJECTED: The MCP endpoint returned HTTP 401\.\)/});
+ await assert.rejects(service.view(f.dispatch,{...selected,view:'connections'}),{code:'CONTEXT_CHANGED'},'the context is dropped after an authentication failure');
 });

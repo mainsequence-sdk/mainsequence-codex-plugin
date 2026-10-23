@@ -256,3 +256,16 @@ test('Code and Settings expose setup, shared preferences and account actions',as
  ui.el('environment').value='env-a';await ui.el('environment').onchange();await ui.el('code-tab').onclick();assert.match(flatten(ui.el('results')),/Set up/);await button(ui,'results','Set up').onclick();assert.match(flatten(ui.el('results')),/Install dependencies after setup/);assert.match(flatten(ui.el('results')),/\/tmp\/repos/);
  await ui.el('settings-tab').onclick();assert.match(flatten(ui.el('results')),/Save settings/);assert.match(flatten(ui.el('results')),/Renew session/);assert.match(flatten(ui.el('results')),/Sign out/);
 });
+
+
+test('agent icons render from the directory response with no follow-up assets call',async()=>{
+ const icon={source:'data:image/svg+xml;base64,PHN2Zy8+',stillSource:'data:image/svg+xml;base64,PHN2Zy8+',rendering:'color',imageRendering:'pixelated'};
+ const ui=await panel(async(name,args)=>{
+  if(name==='mainsequence_open')return {...status,selectedEnvironmentUid:'env-a'};
+  assert.equal(name,'mainsequence_discover','Rendering icons must not invoke another tool');
+  return {...page('Inline'),results:[{...page('Inline').results[0],icon}]};
+ });
+ assert.ok(walk(ui.el('results')).some(el=>el.src===icon.source));
+ assert.equal(ui.requests.filter(r=>r.params?.name==='mainsequence_discover').length,1);
+ assert.equal(ui.requests.some(r=>r.params?.arguments?.view==='assets'),false);
+});

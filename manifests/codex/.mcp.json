@@ -10,7 +10,8 @@
         "MAINSEQUENCE_ENDPOINT",
         "MAINSEQUENCE_ACCESS_TOKEN",
         "MAINSEQUENCE_REFRESH_TOKEN"
-      ]
+      ],
+      "tool_timeout_sec": 300
     }
   }
 }

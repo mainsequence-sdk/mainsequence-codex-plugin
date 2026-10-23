@@ -436,3 +436,133 @@ Verified: 163 core tests and 53 plugin tests pass. Twenty independent packaged C
 A live intermediate twenty-client run using the existing machine login loaded seven agents and four icons through one owner and one upstream socket: thirteen cold HTTP requests total and zero additional requests for the repeated agent discovery. The first live run encountered account verification failures during renewal, prompting the shared session lease. The final run with the lease was blocked by the external local backend stopping: port 8000 refused connections and the Django web container was absent. That run is recorded as failed, not verified.
 
 0.7.6 is installed locally. The current native chat still reported 0.7.5 immediately after installation, so activation and final native-panel verification are pending the requested plugin toggle and backend availability. Claude remains untouched. These versions have not been published.
+
+## Local backend activation and CRM renewal — 2026-10-23
+
+Native activation of 0.7.6 / devtools 0.3.9 was confirmed. The shared setting now
+selects the owner's `http://local-backend:8000` alias. The Mac's hosts file and
+resolver map it to `127.0.0.1`; the earlier workstation resolution is no longer
+current. The normal shared login for this exact backend now verifies successfully.
+
+The alias exposed a backend configuration defect: REST account/environment reads
+succeeded, but MCP rejected `Host: local-backend:8000` with HTTP 421. With explicit
+owner approval, the backend's existing MCP Host allowlist gained that exact
+authority. Three focused boundary tests pass, including rejection of other ports,
+lookalike hosts and an unapproved Origin. Authentication remains required. The
+running backend subsequently served all seven Production agents. This is separate
+from the Codex plugin and needs no Codex reload. Backend issue
+[#1178](https://github.com/Main-Sequence-Server-Side/tdag-django/issues/1178)
+is fixed in local commit `127c96167` (not pushed).
+
+A real connection setup then saved CRM successfully but returned `CONTEXT_CHANGED`
+when its account-bound operation renewed the token before retaining its cache.
+Devtools 0.3.10 now skips retaining that stale identity and lets its existing final
+account verification decide success. It does not reuse the old grant or replay an
+operation. A regression reproduces renewal during setup and verifies one refresh,
+successful persistence, a later warm read and one business dispatch. Existing
+account-change and cancellation protections still pass. Codex 0.7.7 pins this fix.
+Release checks pass: 164 devtools tests and 53 plugin tests, plus isolated packages.
+
+Final live sharing acceptance with 20 packaged 0.7.7 chat processes passed against
+the real shared login: all clients saw the same two environments, seven agents and
+four icons. They joined the SAME service instance used by native Codex, with 23
+connected clients including existing desktop chats. The measured run made 13
+upstream requests total, coalesced 247 reads, and used 80 cached responses. Repeating
+agent discovery caused zero additional upstream requests. The service had three
+sockets across the platform and CRM origins; its bound is two per origin, not two
+across every service. Evidence: `artifacts/shared-panels-live-0.7.7.json`.
+
+Real CRM acceptance on the packaged fix loaded 70 schemas, listed 41 tasks and read
+one task detail. Each business read made exactly ONE upstream request, with no
+repeated discovery or initialization and zero business writes. However, those two
+reads still took 37.2 and 10.1 seconds. Django separately logged a 30-second refresh
+failure with a database connection closing through `host.docker.internal:15432`.
+This does not prove the database caused every slow CRM call; upstream latency
+remains unresolved. Evidence: `artifacts/crm-read-live-0.7.7.json`.
+
+Native activation is now verified: this chat and the expanded panel both report
+0.7.7 / devtools 0.3.10 and the same shared transport instance as the twenty-client
+acceptance test. The actual Codex panel renders all seven agents and seven Talk
+buttons, enabled Search/Refresh controls, and both environments with Production
+selected. Its connected-account indicator matches Codex's success color exactly:
+`rgb(64, 201, 119)`. This is live DOM/computed-CSS evidence; screenshot capture was
+not verified. Evidence: `artifacts/native-agent-list-0.7.7.json`.
+
+Native CRM reads now pass too: task listing returned 41 tasks, task detail
+succeeded, contact listing returned 206 contacts, and contact detail succeeded.
+The consecutive contact list/detail reads made exactly one upstream request each,
+with no repeated setup. They still took 12.7 and 13.6 seconds respectively; this
+does not resolve the upstream latency. Earlier native task listing took 55 seconds.
+Read-only database probes subsequently connected through both the configured host
+route and the Docker service route in about 600 ms, with SELECT 1 around 200 ms.
+Django also recorded intermittent database connection failures and an 86.9-second
+token refresh, so a healthy spot check does not establish backend reliability.
+Evidence: `artifacts/native-crm-read-0.7.7.json`.
+
+The misleading MCP off switch was traced to Codex's name matching: it removes
+underscores when matching configured servers to plugin server names. The obsolete
+disabled standalone `main_sequence` therefore matched the running plugin's
+`mainsequence` entry. Only that obsolete disabled configuration section was removed,
+with its non-secret values backed up locally. The plugin remains enabled; the old
+standalone CRM OAuth server remains disabled. The native settings page itself was
+not visually rechecked after removal because it is outside the permitted inspector.
+
+The package-removal lifecycle test also passes for 0.7.7: an already-running server
+continues account, environment, agent, saved CRM/catalog, workspace and panel-resource
+reads after its disposable installation directory is removed. Evidence:
+`artifacts/update-lifecycle-live-0.7.7.json`.
+
+Claude remains unchanged and no custom Codex was built. No pending CRM task/contact
+updates were executed. These package versions have not been published. Remaining
+work is backend latency/reliability, tracked in
+[#1177](https://github.com/Main-Sequence-Server-Side/tdag-django/issues/1177),
+and the separately documented host limitations;
+agent-list rendering, native activation and shared discovery are verified.
+
+## Eliminate separate icon requests — 2026-10-23
+
+The user correctly identified an unused platform capability: `agent.list`,
+`agent.search` and `agent.get` already support `include_icons: true`. Version 0.7.7
+instead read the Command Center agent directory again and fetched each icon URL.
+Connection sharing reduced duplication across panels but did not remove this
+unnecessary work. The earlier sharing result was not evidence that the request
+set itself was minimal.
+
+Devtools 0.3.11 adds `includeIcons` to agent list/detail requests and projects
+bounded `command_center_icon.idle` bytes into host-ready images and reduced-motion
+stills. Missing or malformed data yields a placeholder with no image-fetch fallback.
+Its legacy asset API also uses the inline MCP contract. Codex 0.7.8 consumes images
+from the original directory/search/detail response; it never starts a separate
+assets request. Legacy `view: assets` calls from old panel HTML return an empty
+result without backend work. The user's shared login and Claude are unchanged.
+
+Verified: 165 devtools tests and 54 plugin tests pass, including package isolation.
+The twenty-process packaged fixture renders inline image data through one owner:
+six total cold HTTP requests (account, environments, MCP initialize/notification,
+catalog and agent list), one agent-list read, zero Command Center directory/icon
+requests, and at most two sockets to the fixture origin. Warm discovery and the
+idle interval add zero requests. The actual panel script test renders the returned
+image without requesting assets. The concurrent renewal fixture now writes its
+synthetic credential file atomically, matching the real credential-store behavior;
+production credential handling is unchanged.
+
+A bounded live check used one packaged process and one directory read, rather than
+running another live concurrency test. It returned seven Production agents and four
+inline icons through the existing shared transport. Directory work took 7.1 seconds
+and four upstream requests including MCP setup; legacy assets added zero requests.
+Evidence: `artifacts/inline-icons-live-0.7.8.json`. The native chat also reports
+0.7.8 / devtools 0.3.11 with the same transport owner; no further activation toggle
+is needed. All three expanded native panels are now verified through the permitted
+DOM inspector: seven agents, four fully loaded inline images, three placeholders,
+both environments, and the green connected indicator using Codex's success color.
+Each panel's visible runtime diagnostics reports 0.7.8 / 0.3.11 and the exact same
+shared connection service, `4835ec21-5e87-40a7-952a-6a45b821ab21`.
+Evidence: `artifacts/inline-icons-native-0.7.8.json`.
+
+The live 60-second idle observation counted one upstream request while another
+chat process joined the shared service. That global counter cannot attribute the
+request to a panel, so this is not recorded as a zero-traffic live test. Zero idle
+traffic and cross-process request coalescing are verified by the isolated fixture
+above. No extra live load test was run against the user's working backend.
+These are local installed packages, not published releases. This fix makes no claim
+to resolve the separate database-connection failures tracked in backend #1177.

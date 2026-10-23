@@ -13,7 +13,16 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   const installed = path.join(temporary, 'plugin'); await fsp.cp(path.resolve('codex'), installed, { recursive: true });
   const mcp = JSON.parse(fs.readFileSync(path.join(installed, '.mcp.json'))).mcpServers.mainsequence;
   assert.deepEqual(mcp.args, ['./dist/panel-server.js']);
-  const child = spawn(process.execPath, mcp.args, { cwd: installed, env: { PATH: process.env.PATH, HOME: temporary }, stdio: ['pipe', 'pipe', 'pipe'] });
+  assert.ok(mcp.tool_timeout_sec >= 120, 'cold project MCP calls exceed the host default of 60 s');
+  // A catalog written by an earlier chat's server, beside the shared CLI state of this HOME.
+  const { toolName } = require('../build/hosts/toolCatalog');
+  const stateDir = process.platform === 'darwin' ? path.join(temporary, 'Library', 'Application Support', 'MainSequenceCLI') : process.platform === 'win32' ? path.join(temporary, 'MainSequenceCLI') : path.join(temporary, '.config', 'mainsequence');
+  const cached = { backend: 'https://backend.example.test', releaseUid: '30000000-0000-4000-8000-000000000001', environmentUid: '10000000-0000-4000-8000-000000000001', environmentName: 'Research', name: 'Metrics',
+    tools: [{ name: 'metrics', description: 'Inspect metrics', inputSchema: { type: 'object', properties: { window: { type: 'string' } } }, annotations: { readOnlyHint: true } }] };
+  await fsp.mkdir(stateDir, { recursive: true });
+  await fsp.writeFile(path.join(stateDir, 'codex-tool-catalog.json'), JSON.stringify({ version: 1, updatedAt: new Date().toISOString(), connections: [cached] }));
+  const registered = toolName(cached.backend, cached.environmentUid, cached.releaseUid, 'metrics');
+  const child = spawn(process.execPath, mcp.args, { cwd: installed, env: { PATH: process.env.PATH, HOME: temporary, APPDATA: temporary, MAINSEQUENCE_CODEX_TOOL_CATALOG: 'off' }, stdio: ['pipe', 'pipe', 'pipe'] });
   t.after(() => child.kill());
   const pending = new Map(); let seq = 0, stderr = '';
   child.stderr.on('data', data => { stderr += data; });
@@ -21,9 +30,27 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   function rpc(method, params = {}) { const id = ++seq; return new Promise((resolve, reject) => { const timer = setTimeout(() => reject(new Error('MCP timeout')), 3000); pending.set(id, { resolve, timer }); child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n'); }); }
   const init = await rpc('initialize', { protocolVersion: '2025-11-25', clientInfo: { name: 'test', version: '1' }, capabilities: {} });
   assert.equal(init.result.serverInfo.version, require('../package.json').version);
+  assert.equal(init.result.capabilities.tools.listChanged, true);
+  assert.match(init.result.instructions, /ms_\* tools/);
   const listed = (await rpc('tools/list')).result.tools;
-  assert.deepEqual(listed.map(tool => tool.name), ['mainsequence_open', 'mainsequence_discover', 'mainsequence_tools', 'mainsequence_stage_message', 'mainsequence_agent_request', 'mainsequence_agent_status', 'mainsequence_submission', 'mainsequence_view', 'mainsequence_connection', 'mainsequence_call_tool','mainsequence_agent_task','mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings','mainsequence_agent_prepare']);
+  assert.deepEqual(listed.map(tool => tool.name), ['mainsequence_open', 'mainsequence_discover', 'mainsequence_tools', 'mainsequence_stage_message', 'mainsequence_agent_request', 'mainsequence_agent_status', 'mainsequence_submission', 'mainsequence_view', 'mainsequence_connection', 'mainsequence_call_tool','mainsequence_agent_task','mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings','mainsequence_agent_prepare', registered]);
   assert.ok(listed.slice(0, 3).every(tool => tool.annotations.readOnlyHint));
+  // The saved project's tool is a first-class tool with the remote schema, as in Claude Desktop.
+  const project = listed.at(-1);
+  assert.deepEqual(project.inputSchema, cached.tools[0].inputSchema);
+  assert.equal(project.description, 'MainSequence Metrics [Research]: Inspect metrics');
+  assert.deepEqual(project.annotations, { openWorldHint: true, readOnlyHint: true });
+  const unknownTool = (await rpc('tools/call', { name: 'ms_metrics_0', arguments: {} })).result;
+  assert.equal(unknownTool.isError, true); assert.match(unknownTool.structuredContent.error.message, /not a registered MainSequence tool.*mainsequence_open/);
+  const badArguments = (await rpc('tools/call', { name: registered, arguments: [] })).result;
+  assert.equal(badArguments.structuredContent.error.code, 'INVALID_REQUEST'); assert.match(badArguments.structuredContent.error.message, /JSON object/);
+  // Without a session for that backend the call fails before any project request, with the devtools reason.
+  const unauthenticated = (await rpc('tools/call', { name: registered, arguments: { window: '7d' } })).result;
+  assert.equal(unauthenticated.isError, true);
+  assert.ok(['NOT_AUTHENTICATED', 'STORE_UNAVAILABLE', 'STORE_ERROR'].includes(unauthenticated.structuredContent.error.code), JSON.stringify(unauthenticated));
+  assert.equal(unauthenticated.content[0].type, 'text'); assert.equal(JSON.parse(unauthenticated.content[0].text).error.code, unauthenticated.structuredContent.error.code);
+  const unknownArgument = (await rpc('tools/call', { name: 'mainsequence_view', arguments: { contextId: 'x', environmentUid: 'y', view: 'connections', nonsense: 1 } })).result;
+  assert.match(unknownArgument.structuredContent.error.message, /does not accept "nonsense"\. Accepted: contextId, environmentUid, view/);
   const uri = listed[0]._meta.ui.resourceUri;
   const before = (await rpc('resources/read', { uri })).result.contents[0];
   assert.equal(before.mimeType, 'text/html;profile=mcp-app');

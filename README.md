@@ -102,6 +102,16 @@ metatable-mcp", "Use it to list my tables." See
 [conversational project MCP connections](docs/conversational-mcp.md) and
 [ADR 0002](docs/adr/0002-conversational-project-mcp-client.md).
 
+Every saved project MCP's tools are also registered directly, as the Claude Desktop
+plugin registers them: `ms_<tool>_<hash>` (for example `ms_crm_contacts_list_…`), each
+with the project's own schema and bound to one saved connection and environment. Codex
+calls them like any other tool, with no `contextId` or environment selection. The list
+comes from a small catalog cache beside the shared CLI state and is refreshed in the
+background; a connection saved in the current chat appears in the next chat, and is
+usable at once through `mainsequence_tools` / `mainsequence_call_tool`. A cold project
+MCP can take over a minute to answer, so the plugin's server allows Codex tool calls
+300 seconds (`tool_timeout_sec` in `.mcp.json`) instead of the host default of 60.
+
 ## Architecture and development
 
 Shared functionality comes from the exact `@dev-mainsequence/devtools` package API. The

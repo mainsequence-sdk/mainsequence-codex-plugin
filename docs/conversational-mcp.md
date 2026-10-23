@@ -10,6 +10,8 @@ Codex discovers the directory, saves your selection, reads that project's curren
 
 Connections are owned by the plugin. They do not create separate entries in Codex's native MCP list. Installing or updating the plugin itself still follows the host's plugin lifecycle.
 
+Since plugin 0.7.8 every saved connection's tools are also registered directly as `ms_<tool>_<hash>` tools with the project's own schemas, the way the Claude Desktop plugin registers them, so "list my contacts" is one tool call with no contextId or environment argument. The registration comes from a catalog cache beside `mcp-connections.json` that is refreshed in the background; a connection saved in the current chat is registered from the next chat on, and is usable at once through `mainsequence_tools` / `mainsequence_call_tool`. The plugin's server also allows Codex tool calls 300 seconds, because a cold project MCP has taken more than the host's 60-second default to answer.
+
 ## Runner and library
 
 The conversational skill prefers native `mainsequence_*` tools, which share a

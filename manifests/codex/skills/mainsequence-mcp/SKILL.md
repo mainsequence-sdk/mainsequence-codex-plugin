@@ -3,7 +3,9 @@ name: mainsequence-mcp
 description: Discover, remember, and use Main Sequence project MCPs from conversation. Use when the user asks which internal MCPs are available, asks to add or remove one, or wants to use a previously saved project MCP.
 ---
 
-Prefer the plugin's native `mainsequence_*` tools when available. They share a persistent devtools client, so reading a tool schema and then calling it does not repeat credential exchange, initialization and catalog loading. Keep the returned contextId and environmentUid for subsequent calls in the same conversation.
+Saved project MCP tools are registered directly as `ms_<tool>_<hash>` tools (for example `ms_crm_contacts_list_…`), each described as `MainSequence <connection> [<environment>]: …` and carrying the project's own input schema. Prefer them: call the tool with its arguments, with no contextId or environmentUid. `mainsequence_open` lists them under `registeredTools`. A project call can take a minute when the project MCP is cold; wait for it rather than retrying.
+
+Use the plugin's `mainsequence_*` tools below when a tool is not registered yet (a connection added in this chat appears as `ms_*` in the next chat), to discover or add connections, or to read a fresh schema. They share a persistent devtools client, so reading a tool schema and then calling it does not repeat credential exchange, initialization and catalog loading. Keep the returned contextId and environmentUid for subsequent calls in the same conversation.
 
 Saved project connections work immediately and in later conversations; they do not become separate entries in Codex's native MCP configuration. Do not edit Codex settings, start an app-server, or ask the user to invoke /ms.
 
