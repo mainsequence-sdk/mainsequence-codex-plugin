@@ -15,12 +15,12 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   assert.deepEqual(mcp.args, ['./dist/panel-server.js']);
   assert.ok(mcp.tool_timeout_sec >= 120, 'cold project MCP calls exceed the host default of 60 s');
   // A catalog written by an earlier chat's server, beside the shared CLI state of this HOME.
-  const { toolName } = require('../build/hosts/toolCatalog');
+  const { projectToolName: toolName } = require('@dev-mainsequence/devtools');
   const stateDir = process.platform === 'darwin' ? path.join(temporary, 'Library', 'Application Support', 'MainSequenceCLI') : process.platform === 'win32' ? path.join(temporary, 'MainSequenceCLI') : path.join(temporary, '.config', 'mainsequence');
   const cached = { backend: 'https://backend.example.test', releaseUid: '30000000-0000-4000-8000-000000000001', environmentUid: '10000000-0000-4000-8000-000000000001', environmentName: 'Research', name: 'Metrics',
     tools: [{ name: 'metrics', description: 'Inspect metrics', inputSchema: { type: 'object', properties: { window: { type: 'string' } } }, annotations: { readOnlyHint: true } }] };
   await fsp.mkdir(stateDir, { recursive: true });
-  await fsp.writeFile(path.join(stateDir, 'codex-tool-catalog.json'), JSON.stringify({ version: 1, updatedAt: new Date().toISOString(), connections: [cached] }));
+  await fsp.writeFile(path.join(stateDir, 'project-tool-catalog.json'), JSON.stringify({ version: 1, updatedAt: new Date().toISOString(), connections: [cached] }));
   const registered = toolName(cached.backend, cached.environmentUid, cached.releaseUid, 'metrics');
   const child = spawn(process.execPath, mcp.args, { cwd: installed, env: { PATH: process.env.PATH, HOME: temporary, APPDATA: temporary, MAINSEQUENCE_CODEX_TOOL_CATALOG: 'off' }, stdio: ['pipe', 'pipe', 'pipe'] });
   t.after(() => child.kill());

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { createDevTools, createNodeHost, createSessionService, bindSessionAccount, readWorkspacePreferences, ToolingError, createMcpConnectionCache, createSharedTransport } from '@dev-mainsequence/devtools';
+import { createDevTools, createNodeHost, createSessionService, bindSessionAccount, readWorkspacePreferences, ToolingError, createMcpConnectionCache, createSharedTransport,
+  createProjectToolCatalog, isProjectToolName, projectToolResult } from '@dev-mainsequence/devtools';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { homedir } from 'node:os';
@@ -7,7 +8,6 @@ import { createHash } from 'node:crypto';
 import { createDiscovery, DiscoveryError } from './hosts/discovery';
 import { createWorkspace } from './hosts/workspace';
 import { createMessaging, conversationIdentity } from './hosts/messaging';
-import { createToolCatalog, isRegisteredToolName } from './hosts/toolCatalog';
 
 type RecordValue = Record<string, unknown>;
 const root = path.resolve(__dirname, '..');
@@ -15,7 +15,7 @@ const build = JSON.parse(readFileSync(path.join(root, 'build-info.json'), 'utf8'
 // Capture an immutable resource at process start; both server and panel compare its identity.
 const template = readFileSync(path.join(__dirname, 'hosts/panel/panel.html'), 'utf8');
 const brandBytes = readFileSync(path.join(root, 'assets/mainsequence-mark.svg'));
-const panelId = createHash('sha256').update(brandBytes).update(build.version).update(JSON.stringify(build.devtools)).update(template).update(readFileSync(__filename)).update(readFileSync(path.join(__dirname, 'hosts/discovery.js'))).update(readFileSync(path.join(__dirname, 'hosts/messaging.js'))).update(readFileSync(path.join(__dirname, 'hosts/workspace.js'))).update(readFileSync(path.join(__dirname, 'hosts/toolCatalog.js'))).digest('hex');
+const panelId = createHash('sha256').update(brandBytes).update(build.version).update(JSON.stringify(build.devtools)).update(template).update(readFileSync(__filename)).update(readFileSync(path.join(__dirname, 'hosts/discovery.js'))).update(readFileSync(path.join(__dirname, 'hosts/messaging.js'))).update(readFileSync(path.join(__dirname, 'hosts/workspace.js'))).digest('hex');
 const uri = `ui://mainsequence/panel-${build.version}-${panelId.slice(0, 16)}.html`;
 const brand = 'data:image/svg+xml;base64,' + brandBytes.toString('base64');
 const html = template.replace('--brand-image: none', '--brand-image: url(\"' + brand + '\")').replace('/* MAINSEQUENCE_PANEL_BUILD */ null', JSON.stringify({ version: build.version, panelId }));
@@ -39,13 +39,11 @@ const mcpCache = createMcpConnectionCache();
 const messaging = createMessaging(discovery, signal => createDevTools({ host: createNodeHost(), signal, fetch:transport.fetch, sessionLock:transport.sessionLock }).dispatch);
 const object = (v: unknown): v is RecordValue => v !== null && typeof v === 'object' && !Array.isArray(v);
 // A cold project MCP (a scaled-to-zero FastAPI release) has taken over a minute to answer
-// initialize; devtools' 60 s default aborted it. Project calls get a longer HTTP budget, and
-// every request stays under the manifest's tool_timeout_sec so Codex sees our answer.
-const PROJECT_REQUEST_TIMEOUT_MS = 120_000;
+// initialize. Since devtools 0.3.12 project requests have their own 120 s budget and a tool's
+// advertised timeout is honoured up to 300 s; every request here stays under the manifest's
+// tool_timeout_sec so Codex sees our answer.
 const REQUEST_LIMIT_MS = 290_000;
-const devtoolsFor = (signal: AbortSignal, project = false) => createDevTools({ host: createNodeHost(), signal, mcpCache, fetch: transport.fetch, sessionLock: transport.sessionLock,
-  ...(project ? { requestTimeoutMs: PROJECT_REQUEST_TIMEOUT_MS } : {}) }).dispatch;
-const PROJECT_TOOLS = new Set(['mainsequence_tools', 'mainsequence_call_tool', 'mainsequence_connection']);
+const devtoolsFor = (signal: AbortSignal) => createDevTools({ host: createNodeHost(), signal, mcpCache, fetch: transport.fetch, sessionLock: transport.sessionLock }).dispatch;
 const fields = { contextId: { type: 'string' }, environmentUid: { type: 'string' } };
 type Definition = { name: string; title: string; description: string; properties: Record<string, unknown>; required: string[]; ui?: boolean; mutation?: boolean; appOnly?: boolean };
 const definitions: Definition[] = [
@@ -69,11 +67,12 @@ const definitions: Definition[] = [
   {name:'mainsequence_agent_prepare',title:'Prepare a MainSequence agent conversation',description:'Open or resume the selected agent session and wait for readiness. Does not send any message or introduction.',properties:{...fields,agentUid:{type:'string'},conversationKey:{type:'string'}},required:['contextId','environmentUid','agentUid'],mutation:true},
 ];
 const send = (value: unknown) => process.stdout.write(JSON.stringify(value) + '\n');
-// Saved project MCP tools, registered directly like the Claude Desktop plugin does. The
-// cache beside mcp-connections.json makes tools/list immediate; refreshes run in the
-// background and announce changes. MAINSEQUENCE_CODEX_TOOL_CATALOG=off keeps a host (or a
-// test) from reading catalogs on its own.
-const catalog = createToolCatalog({ dispatch: signal => devtoolsFor(signal, true), disabled: process.env.MAINSEQUENCE_CODEX_TOOL_CATALOG === 'off',
+// Saved project MCP tools, registered directly with the names, definitions and results the
+// Claude Desktop plugin uses: devtools' shared project-tool registry (ADR 0004). Its catalog
+// file beside mcp-connections.json makes tools/list immediate; refreshes run in the background
+// and announce changes. MAINSEQUENCE_CODEX_TOOL_CATALOG=off keeps a host (or a test) from
+// reading catalogs on its own.
+const catalog = createProjectToolCatalog({ dispatch: signal => devtoolsFor(signal), disabled: process.env.MAINSEQUENCE_CODEX_TOOL_CATALOG === 'off',
   notify: () => send({ jsonrpc: '2.0', method: 'notifications/tools/list_changed' }) });
 const active = new Map<string | number, AbortController>();
 async function toolCall(params: RecordValue, signal: AbortSignal) {
@@ -88,7 +87,7 @@ async function toolCall(params: RecordValue, signal: AbortSignal) {
   signal.throwIfAborted();
   if (args.refresh !== undefined && typeof args.refresh !== 'boolean') throw new DiscoveryError('INVALID_REQUEST','Refresh must be a boolean.');
   if (args.refresh === true || definition.name === 'mainsequence_settings' && args.action !== 'get') await transport.invalidate();
-  const dispatch = devtoolsFor(signal, PROJECT_TOOLS.has(definition.name));
+  const dispatch = devtoolsFor(signal);
   const conversationId = conversationIdentity(params._meta);
   const data = definition.name === 'mainsequence_open' ? { ...await discovery.status(dispatch, conversationId), messagingAvailable: Boolean(conversationId), registeredTools: catalog.state() }
     : definition.name === 'mainsequence_discover' ? await discovery.discover(dispatch, args)
@@ -103,20 +102,14 @@ async function toolCall(params: RecordValue, signal: AbortSignal) {
   else if (definition.name === 'mainsequence_tools') void catalog.update(String(args.releaseUid), (data as { tools: Parameters<typeof catalog.update>[1] }).tools);
   return { ...data as object, build: { version: build.version, panelId, devtoolsVersion: build.devtools.version }, transport: await transport.status() };
 }
-/** A registered project tool: the remote tool's own result, as the Claude plugin returns it. */
+/** A registered project tool: the remote tool's own result in the shared shape (ADR 0004), as the Claude Desktop plugin returns it. */
 async function projectToolCall(name: string, rawArguments: unknown, signal: AbortSignal) {
   const binding = catalog.binding(name);
   if (!binding) throw new DiscoveryError('INVALID_REQUEST', `${name} is not a registered MainSequence tool in this chat; its connection may have been removed or renamed. Call mainsequence_open to see the registered tools, or use mainsequence_tools and mainsequence_call_tool.`);
   const args = rawArguments === undefined ? {} : rawArguments;
   if (!object(args)) throw new DiscoveryError('INVALID_REQUEST', `${name} arguments must be a JSON object matching its input schema.`);
   signal.throwIfAborted();
-  const output = await devtoolsFor(signal, true)({ action: 'mcp-call', backend: binding.backend, environmentUid: binding.environmentUid, releaseUid: binding.releaseUid, tool: binding.tool, arguments: args });
-  const data = object(output.data) ? output.data : undefined;
-  const blocks = Array.isArray(data?.content) ? data.content.filter(block => object(block) && typeof block.type === 'string') : [];
-  const failed = output.status !== 'success';
-  const extra = { summary: output.summary, ...(output.effects ? { effects: output.effects } : {}), ...(output.error ? { error: output.error } : {}), ...(data?.structuredContent !== undefined ? { structuredContent: data.structuredContent } : {}) };
-  const content = [...blocks, ...(!blocks.length || failed || data?.structuredContent !== undefined ? [{ type: 'text', text: JSON.stringify(extra) }] : [])];
-  return { ...(failed ? { isError: true } : {}), content, ...(data?.structuredContent !== undefined ? { structuredContent: data.structuredContent } : failed ? { structuredContent: extra } : {}) };
+  return projectToolResult(await devtoolsFor(signal)({ action: 'mcp-call', backend: binding.backend, environmentUid: binding.environmentUid, releaseUid: binding.releaseUid, tool: binding.tool, arguments: args }));
 }
 async function request(method: string, params: RecordValue, signal: AbortSignal) {
   switch (method) {
@@ -141,7 +134,7 @@ async function request(method: string, params: RecordValue, signal: AbortSignal)
       // Devtools coalesces upstream reads and owns the bounded HTTP pool across
       // ALL chat processes. Icons arrive inline with the directory.
       try {
-        if (isRegisteredToolName(params.name)) return await projectToolCall(params.name, params.arguments, signal);
+        if (isProjectToolName(params.name)) return await projectToolCall(params.name, params.arguments, signal);
         const data = await toolCall(params, signal);
         return { ...('error' in data && data.error ? { isError: true } : {}), content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data };
       } catch (error) {

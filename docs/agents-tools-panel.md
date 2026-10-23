@@ -29,10 +29,12 @@ plus one `ms_<tool>_<hash>` tool for every tool of every saved project MCP conne
 named and bound exactly as the Claude Desktop plugin names and binds them. Those tools
 use the shared devtools session. The plugin does not mirror the central platform `/mcp`
 catalog as individual Codex functions. Saved connections do not become separate native
-MCP configuration entries. The registered project tools come from a catalog cache
-(`codex-tool-catalog.json` beside `mcp-connections.json`) that `tools/list` answers from
-at once; one chat's server refreshes it in the background when it is older than 15
-minutes or after a connection or account change, and sends `tools/list_changed`. The
+MCP configuration entries. The registered project tools come from devtools' shared
+project-tool catalog (`project-tool-catalog.json` beside `mcp-connections.json`, the same
+file, names, schemas and result shape the Claude Desktop plugin uses; devtools ADR 0004)
+that `tools/list` answers from at once; one chat's server refreshes it in the background
+when it is older than 15 minutes or after a connection or account change, and sends
+`tools/list_changed`. The
 `tools/list_changed` observation below describes the host's measured registration
 behavior: a connection saved in the current chat is registered for the next chat, and is
 usable immediately through `mainsequence_tools` / `mainsequence_call_tool`.
@@ -429,12 +431,15 @@ project's `initialize` 9 s to over 60 s, `tools/call crm_contacts_list` 39 s), a
 server was still waiting; Claude Desktop runs the same devtools call with a 30-minute
 budget and succeeds. Three changes follow from that comparison:
 
-- `.mcp.json` sets `tool_timeout_sec: 300`. The server's own per-request limit is 290 s,
-  and project MCP requests (`mainsequence_tools`, `mainsequence_call_tool`,
-  `mainsequence_connection` and the registered `ms_*` tools) give devtools a 120 s HTTP
-  budget per message instead of its 60 s default. Other requests keep devtools' defaults.
+- `.mcp.json` sets `tool_timeout_sec: 300`. The server's own per-request limit is 290 s.
+  In 0.7.8 the server gave project MCP requests (`mainsequence_tools`,
+  `mainsequence_call_tool`, `mainsequence_connection` and the registered `ms_*` tools) a
+  120 s HTTP budget per message instead of devtools' 60 s default; since 0.7.9 that budget
+  is devtools' own default (`projectRequestTimeoutMs`), and a tool's advertised
+  `_meta["mainsequence.ai/timeout-seconds/v1"]` is honoured up to 300 s.
 - Saved project MCP tools are registered directly as `ms_<tool>_<hash>`
-  (`src/hosts/toolCatalog.ts`), with the same FNV-1a naming as the Claude plugin, so
+  (`src/hosts/toolCatalog.ts` in 0.7.8; devtools' shared project-tool registry since
+  0.7.9, see below), with the same FNV-1a naming as the Claude plugin, so
   `ms_crm_contacts_list_183f8138` is the same tool in both hosts. A call forwards to
   `mcp-call` with the saved connection's backend, environment and release and returns the
   remote tool's own content and `structuredContent`, with `summary`, `error` and
@@ -466,3 +471,34 @@ from the project gateway, `HTTP 500` from the development backend behind the
 `local-backend` haproxy); a plain-fetch call made in the same minute as the successful
 session also met one backend `HTTP 500`. Those errors now reach the model with their
 status code instead of a generic "refresh" message.
+
+## Shared project-tool registry — 0.7.9
+
+The 0.7.8 comparison left two copies of the same five things in the Claude Desktop and
+Codex plugins: the tool name, the definition, the result shape, the catalog refresh and the
+state directory. devtools 0.3.12 owns them now (its ADR 0004, "Shared project-tool registry
+for host plugins"), and this release consumes that API:
+
+- `src/hosts/toolCatalog.ts` is gone. The server creates devtools'
+  `createProjectToolCatalog({ dispatch, disabled, notify })`, lists `catalog.list()` after its
+  own 16 tools, keeps `tools/list_changed`, `catalog.update()` after `mainsequence_tools`
+  and `catalog.refresh(true)` after a connection or account change, and answers an `ms_*`
+  call with `projectToolResult(mcp-call)`. Names, schemas, hints and results are the bytes
+  devtools produces, so they are the Claude Desktop plugin's.
+- The catalog file is `project-tool-catalog.json` beside `mcp-connections.json`, shared
+  with the Claude Desktop plugin; a refresh by either host is visible to the other at its
+  next listing. The 0.7.8 file, `codex-tool-catalog.json`, is left in place and unused; the
+  first refresh writes the new one. A listing is scoped to the current account's backend,
+  so connections another backend saved into the same file stay out of this chat's tools.
+- devtools gives project MCP requests a 120 s budget of its own and honours a tool's
+  advertised timeout up to 300 s; the server's 120 s override from 0.7.8 is removed.
+  Error messages from devtools now name the endpoint, the request (`tools/call
+  crm_contacts_list`) and the status, tell a timeout from a connection failure, and keep
+  a JSON-RPC error's own message; the server passes them through unchanged.
+- `tests/panel-tool-catalog.test.cjs` moved to devtools (`tests/project-tools.test.cjs`,
+  with the frozen name vector `ms_crm_contacts_list_183f8138`); `panel-server.test.cjs`
+  still proves the packaged server registers a cached connection's tool with devtools'
+  name and schema.
+
+Pins devtools 0.3.12. The live CRM acceptance is to be repeated with this build before the
+release is published.

@@ -106,11 +106,14 @@ Every saved project MCP's tools are also registered directly, as the Claude Desk
 plugin registers them: `ms_<tool>_<hash>` (for example `ms_crm_contacts_list_…`), each
 with the project's own schema and bound to one saved connection and environment. Codex
 calls them like any other tool, with no `contextId` or environment selection. The list
-comes from a small catalog cache beside the shared CLI state and is refreshed in the
-background; a connection saved in the current chat appears in the next chat, and is
-usable at once through `mainsequence_tools` / `mainsequence_call_tool`. A cold project
-MCP can take over a minute to answer, so the plugin's server allows Codex tool calls
-300 seconds (`tool_timeout_sec` in `.mcp.json`) instead of the host default of 60.
+comes from devtools' shared project-tool catalog (`project-tool-catalog.json` beside the
+shared CLI state, the same names, schemas and results as the Claude Desktop plugin; devtools
+ADR 0004) and is refreshed in the background; a connection saved in the current chat appears
+in the next chat, and is usable at once through `mainsequence_tools` /
+`mainsequence_call_tool`. A cold project MCP can take over a minute to answer: devtools gives
+project requests 120 s and honours a tool's advertised timeout up to 300 s, and the plugin's
+server allows Codex tool calls 300 seconds (`tool_timeout_sec` in `.mcp.json`) instead of
+the host default of 60.
 
 ## Architecture and development
 
