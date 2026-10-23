@@ -520,3 +520,22 @@ with bounded paging and filters.`). `tools/call ms_crm_contacts_list_68ee6e71` w
 the same release's tools from the same shared file under the `127.0.0.1:8000` names. The record
 is the local `artifacts/live-acceptance-0.7.9.json`. The pre-backend listing of every scope is a
 devtools follow-up: a fresh server's first list could be scoped to the configured backend.
+
+Published on 2026-10-23 (UTC) from tag `v0.7.9` on main `9cddf65`, the merge of the acceptance
+record above, by the release workflow (run 40032861384: `npm ci` from the registry devtools
+archive, `release:check`, `npm publish --provenance` through trusted publishing). The registry
+serves `@dev-mainsequence/codex-plugin@0.7.9` as `latest`, 70 files, integrity
+`sha512-5EmHyWdb3V+DB8EJmKsfK/P8bvMP+2DO04ntwuuO7EqDwbIVo5DNCOJctJJAiQlHqdVKNgbFSoEMUKjHKKL0iA==`,
+read from the registry after publishing (a local `npm pack` of the same files has another
+integrity). The devtools marketplace entry was advanced from 0.4.2 to 0.7.9
+(mainsequence-sdk/mainsequence-devtools#20, main `18cbfc8`). In an isolated `CODEX_HOME` with
+the Codex CLI 0.163.0, `codex plugin marketplace add
+https://github.com/mainsequence-sdk/mainsequence-devtools.git`, `codex plugin marketplace upgrade
+mainsequence` and `codex plugin add mainsequence@mainsequence` installed `mainsequence@mainsequence`
+0.7.9 from the npm package into `plugins/cache/mainsequence/mainsequence/0.7.9`, with the
+manifest, `dist/panel-server.js`, `dist/runner.js`, hooks, skills and `.mcp.json` in place and
+`build-info.json` naming devtools 0.3.12 by its registry integrity; `codex plugin list` reported
+it installed and enabled. The owner's own Codex home (local `mainsequence-local` marketplace,
+0.7.8 installed) was not touched; upgrading it is a user step: `codex plugin marketplace upgrade
+mainsequence`, `codex plugin add mainsequence@mainsequence`, then review the hook and start a new
+chat.
