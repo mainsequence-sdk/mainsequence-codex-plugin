@@ -1,0 +1,19 @@
+{
+  "name": "mainsequence-host-probe",
+  "version": "0.6.0",
+  "description": "Disposable Codex host capability test. Fixture data only; no MainSequence account access.",
+  "author": {
+    "name": "MainSequence"
+  },
+  "license": "MIT",
+  "mcpServers": "./.mcp.json",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "MainSequence Host Probe",
+    "shortDescription": "Test panels, themes, tools and host integration using fixture data.",
+    "category": "Developer Tools",
+    "composerIcon": "./assets/probe.svg",
+    "logo": "./assets/probe.svg",
+    "logoDark": "./assets/probe.svg"
+  }
+}

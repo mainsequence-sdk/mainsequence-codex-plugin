@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-22",
+  "phase": "native-agent-mcp-reply-received",
+  "pluginAvailable": true,
+  "panelVersion": "0.3.0",
+  "serverRunId": "7b4db7b3-a892-4f07-b02d-56f5a1e34db5",
+  "sendCountBefore": 1,
+  "agent": "alpha",
+  "sessionPrefix": "11879343",
+  "marker": "PANEL-NATIVE-TRACE-20261022-A",
+  "automaticHook": "not observed for this submission yet",
+  "nativeReply": "not observed in the current active turn",
+  "hostAcknowledged": true,
+  "sendCountAfterAcknowledgement": 1,
+  "noRepeatSubmit": true,
+  "uiFinding": "Native chat reply completed was shown on ui/message acknowledgement alone; source wording corrected to submission acknowledged, reply not confirmed.",
+  "styling": "Actual MCP App screenshot: neutral host background, white primary button, no blue palette.",
+  "appMessageDelivery": "Arrived after preceding active turn ended, as untrusted_input from mcp_app followed by user instruction to read it.",
+  "hookResultReceived": false,
+  "sendCountBeforeNativeTool": 1,
+  "nativeTool": "mcp__mainsequence_host_probe__probe_agent",
+  "sendCountAfterNativeTool": 2,
+  "nativeToolResult": {
+    "status": "success",
+    "message": "Alpha fixture agent: PANEL-NATIVE-TRACE-20261022-A"
+  },
+  "nativeModelContext": true,
+  "nativeAssistantQuote": true,
+  "localShellFallback": false,
+  "nextTurnRecall": "pending for this MCP result",
+  "panelUpdate": "0.4.0 installed via public CLI; isolated actual runtime verifies communications-v4.html. Desktop adoption of new resource still requires observation.",
+  "supportedThreadRead": {
+    "verified": true,
+    "turnId": "01a16292-f7ef-7ab3-84c8-cc3bee2e9916",
+    "itemType": "agentMessage",
+    "phase": "commentary",
+    "exactReply": "Alpha fixture agent: PANEL-NATIVE-TRACE-20261022-A"
+  }
+}

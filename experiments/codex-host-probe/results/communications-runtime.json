@@ -1,0 +1,90 @@
+{
+  "host": "codex-cli 0.163.0-alpha.10.2",
+  "checks": [
+    {
+      "name": "isolated-hook-trust",
+      "passed": true,
+      "key": "mainsequence-host-probe@mainsequence-host-probe:hooks/hooks.json:user_prompt_submit:0:0",
+      "hash": "sha256:aad57b3ab85ffd855697d275c32ef35c6a5ae5fc2daace35f896b66f45ae4f58"
+    },
+    {
+      "name": "talk-prepares-without-send",
+      "passed": true,
+      "ready": true
+    },
+    {
+      "name": "model-side-agent-tool",
+      "passed": true,
+      "exactMultiline": true,
+      "separateAgents": true
+    },
+    {
+      "name": "native-command-routing",
+      "passed": true,
+      "modelRequests": 0,
+      "hookStatus": "blocked",
+      "reply": "MainSequence fixture \u00b7 alpha\n\nAlpha fixture agent: Native composer command\nsecond line stays exact",
+      "eventMethods": [
+        "warning",
+        "thread/status/changed",
+        "turn/started",
+        "hook/started",
+        "hook/completed",
+        "turn/completed"
+      ],
+      "assistantItems": 0
+    },
+    {
+      "name": "ordinary-prompt-pass-through",
+      "passed": true,
+      "modelRequests": 1,
+      "hookStatus": "completed"
+    },
+    {
+      "name": "agent-task-cancel",
+      "passed": true
+    },
+    {
+      "name": "mcp-connect-schema-call",
+      "passed": true,
+      "toolNames": [
+        "echo",
+        "fail"
+      ],
+      "contentPreserved": true
+    },
+    {
+      "name": "mcp-model-catalog-refresh",
+      "supported": false,
+      "observationWindowMs": 1500
+    },
+    {
+      "name": "dynamic-tool-direct-call",
+      "supported": true
+    },
+    {
+      "name": "disconnected-model-tool-refused",
+      "passed": true
+    },
+    {
+      "name": "chat-isolation",
+      "passed": true
+    },
+    {
+      "name": "mcp-hook-correlation",
+      "passed": true,
+      "preparedAndCommandUsedSameSession": true,
+      "sendCount": 3
+    }
+  ],
+  "hook": {
+    "key": "mainsequence-host-probe@mainsequence-host-probe:hooks/hooks.json:user_prompt_submit:0:0",
+    "eventName": "userPromptSubmit",
+    "pluginId": "mainsequence-host-probe@mainsequence-host-probe",
+    "currentHash": "sha256:aad57b3ab85ffd855697d275c32ef35c6a5ae5fc2daace35f896b66f45ae4f58",
+    "trustStatus": "untrusted"
+  },
+  "modelFixtureRequests": 1,
+  "fixtureVersion": "0.2.0",
+  "observedDate": "2026-10-21"
+}

@@ -1,0 +1,35 @@
+{
+  "host": "codex-cli 0.163.0-alpha.10.2",
+  "root": "/var/folders/qk/n2ml8fbd70q_y7b4tgkb9_540000gn/T/mainsequence-host-probe-SQbv8P",
+  "checks": [
+    {
+      "name": "saved-request-survives-actual-turn-interrupt",
+      "passed": true,
+      "requestId": "bf118df9-7dd8-49e2-a2a9-a33317272471",
+      "sends": 0,
+      "hostQueueTested": false
+    },
+    {
+      "name": "native-model-tool-recovery",
+      "passed": true,
+      "agentSends": 1,
+      "turnId": "01a1632d-c1e5-74d0-b07c-8d0cc9e4eafc"
+    },
+    {
+      "name": "repeated-native-recovery-reuses-receipt",
+      "passed": true,
+      "agentSends": 1,
+      "turnId": "01a1632d-c220-7ec3-9256-a51ec6bdfbbb"
+    },
+    {
+      "name": "native-reply-persists-and-recall-needs-no-tool",
+      "passed": true,
+      "agentSends": 1,
+      "recallToolCalls": 0,
+      "modelFixtureOnly": true
+    }
+  ],
+  "modelFixtureRequests": 6,
+  "fixtureOnly": true,
+  "desktopUiTested": false
+}

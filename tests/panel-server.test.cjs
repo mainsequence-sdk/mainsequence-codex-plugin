@@ -22,8 +22,8 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   const init = await rpc('initialize', { protocolVersion: '2025-11-25', clientInfo: { name: 'test', version: '1' }, capabilities: {} });
   assert.equal(init.result.serverInfo.version, require('../package.json').version);
   const listed = (await rpc('tools/list')).result.tools;
-  assert.deepEqual(listed.map(tool => tool.name), ['mainsequence_open', 'mainsequence_discover', 'mainsequence_tools']);
-  assert.ok(listed.every(tool => tool.annotations.readOnlyHint));
+  assert.deepEqual(listed.map(tool => tool.name), ['mainsequence_open', 'mainsequence_discover', 'mainsequence_tools', 'mainsequence_stage_message', 'mainsequence_agent_request', 'mainsequence_agent_status', 'mainsequence_submission', 'mainsequence_view', 'mainsequence_connection', 'mainsequence_call_tool','mainsequence_agent_task','mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings','mainsequence_agent_prepare']);
+  assert.ok(listed.slice(0, 3).every(tool => tool.annotations.readOnlyHint));
   const uri = listed[0]._meta.ui.resourceUri;
   const before = (await rpc('resources/read', { uri })).result.contents[0];
   assert.equal(before.mimeType, 'text/html;profile=mcp-app');
@@ -37,6 +37,25 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
     assert.equal(output.isError, true);
   }
   assert.equal((await rpc('tools/call', { name: 'mainsequence_open', arguments: JSON.parse('{"__proto__":"bad"}') })).result.isError, true);
+  for (const meta of [undefined, { threadId: 'a', thread_id: 'b' }]) {
+    const result = (await rpc('tools/call', { name: 'mainsequence_agent_status', arguments: { action: 'list' }, _meta: meta })).result;
+    assert.equal(result.structuredContent.error.code, 'CONVERSATION_REQUIRED');
+  }
+  assert.equal(listed[4].annotations.readOnlyHint, false);
+  assert.deepEqual(listed[4].inputSchema.required, ['action', 'requestId']);
+  const missingId = (await rpc('tools/call', { name: 'mainsequence_agent_request', arguments: { action: 'deliver' }, _meta: { threadId: 'chat' } })).result;
+  assert.equal(missingId.structuredContent.error.code, 'INVALID_REQUEST');
+  assert.equal(listed[5].annotations.readOnlyHint, true);
+  assert.deepEqual(listed[6]._meta.ui.visibility, ['app']);
   assert.equal(stderr, '');
   assert.equal(fs.existsSync(path.join(installed, 'node_modules')), false);
+  // Reproduce Codex's update cleanup while the old server still serves a chat.
+  await fsp.rm(installed, {recursive:true,force:true});
+  assert.equal((await rpc('resources/read', {uri})).result.contents[0].text, before.text);
+  assert.equal((await rpc('tools/list')).result.tools.length, listed.length);
+  const settings = (await rpc('tools/call', {name:'mainsequence_settings',arguments:{action:'get'}})).result;
+  assert.equal(settings.isError, undefined, JSON.stringify(settings));
+  assert.equal(fs.realpathSync(settings.structuredContent.runtime.workingDirectory), fs.realpathSync(temporary));
+  assert.equal(settings.structuredContent.runtime.pluginWorkspace, null, 'The package directory is not a user workspace');
+  assert.equal(stderr, '');
 });

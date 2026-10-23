@@ -1,7 +1,7 @@
 {
   "name": "@dev-mainsequence/codex-plugin",
-  "version": "0.4.2",
-  "description": "MainSequence for Codex: Agents and Tools discovery using existing devtools sessions, plus developer commands and conversational MCPs",
+  "version": "0.7.6",
+  "description": "MainSequence for Codex: durable agent messaging in native chat, Agents and Tools discovery, developer commands and conversational MCPs",
   "license": "MIT",
   "engines": {
     "node": ">=22"
@@ -40,7 +40,7 @@
     "release:check": "npm run typecheck && npm test && node scripts/check-release.cjs && node scripts/pack-codex.cjs && npm pack --ignore-scripts --pack-destination artifacts && npm run verify:package"
   },
   "dependencies": {
-    "@dev-mainsequence/devtools": "0.3.2"
+    "@dev-mainsequence/devtools": "0.3.9"
   },
   "devDependencies": {
     "@types/node": "18.19.130",

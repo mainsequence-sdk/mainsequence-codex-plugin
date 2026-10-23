@@ -1,7 +1,7 @@
 {
   "name": "mainsequence",
-  "version": "0.4.2",
-  "description": "Browse MainSequence agents and project MCPs using your existing devtools session, and run developer commands.",
+  "version": "0.7.6",
+  "description": "Message MainSequence agents in Codex chat, recover saved replies, discover project MCPs and run developer commands using your shared session.",
   "author": {
     "name": "MainSequence"
   },
@@ -10,7 +10,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "MainSequence",
-    "shortDescription": "Browse agents and tools with your existing MainSequence session.",
+    "shortDescription": "Agents, messages and tools with your shared MainSequence session.",
     "developerName": "MainSequence",
     "category": "Productivity",
     "websiteUrl": "https://www.main-sequence.io/",

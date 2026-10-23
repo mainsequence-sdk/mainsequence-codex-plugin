@@ -1,0 +1,36 @@
+{
+  "observedAt": "2026-10-22",
+  "fixture": true,
+  "installed": {
+    "pluginId": "mainsequence-host-probe@mainsequence-host-probe",
+    "build": {
+      "schemaVersion": 1,
+      "pluginVersion": "0.5.0",
+      "devtoolsVersion": "0.3.1",
+      "buildId": "be431969fe9e59cd17a43a01cbe1b1a42c05bec992552db4bd77905cb2d40902",
+      "panelTemplateSha256": "3eb9a236089c4738bd90a574fc59eadfc9e7d936b8a1b0fdc7dc760eb3ce61d8",
+      "resourceUri": "ui://mainsequence-host-probe/panel-0.5.0-be431969fe9e59cd.html"
+    },
+    "verifiedAgainstInstalledCache": true
+  },
+  "runningSnapshotBefore": {
+    "fixture": true,
+    "runId": "7e51f0b5-8863-4f7c-83da-495378bdb030",
+    "pings": 0,
+    "extraTool": false,
+    "job": null
+  },
+  "runningSnapshotAfter": {
+    "fixture": true,
+    "runId": "7e51f0b5-8863-4f7c-83da-495378bdb030",
+    "pings": 0,
+    "extraTool": false,
+    "job": null
+  },
+  "activation": {
+    "matchesInstalledBuild": false,
+    "observation": "The existing live chat still returns a legacy snapshot without build metadata. Installation did not replace its running server during this turn."
+  },
+  "desktopRenderingTested": false,
+  "agentMessagesSent": 0
+}

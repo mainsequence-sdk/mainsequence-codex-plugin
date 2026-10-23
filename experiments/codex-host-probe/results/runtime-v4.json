@@ -1,0 +1,700 @@
+{
+  "fixtureRoot": "/var/folders/qk/n2ml8fbd70q_y7b4tgkb9_540000gn/T/mainsequence-host-probe-ZwS7tp",
+  "pluginId": "mainsequence-host-probe@mainsequence-host-probe",
+  "initialExtra": false,
+  "host": "codex-cli 0.163.0-alpha.10.2",
+  "checks": [
+    {
+      "name": "isolated-install",
+      "passed": true
+    },
+    {
+      "name": "local-mcp-discovery",
+      "passed": true,
+      "server": "mainsequence_host_probe",
+      "toolNames": [
+        "probe_comms_snapshot",
+        "probe_ping",
+        "probe_start_job",
+        "probe_context",
+        "probe_toggle_tool",
+        "probe_snapshot",
+        "probe_mcp",
+        "probe_cancel_job",
+        "probe_agent",
+        "probe_open",
+        "probe_ui_report",
+        "probe_project_catalog"
+      ],
+      "capabilities": {
+        "resources": {
+          "listChanged": false
+        },
+        "tools": {
+          "listChanged": true
+        }
+      }
+    },
+    {
+      "name": "ui-metadata",
+      "passed": true,
+      "resourceUri": "ui://mainsequence-host-probe/communications-v4.html",
+      "entrypoints": [
+        {
+          "type": "global"
+        },
+        {
+          "type": "thread"
+        }
+      ],
+      "appOnlyVisibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "direct-tool-call",
+      "passed": true,
+      "pings": 1
+    },
+    {
+      "name": "local-ui-resource",
+      "passed": true,
+      "mimeTypes": [
+        "text/html;profile=mcp-app"
+      ],
+      "bytes": 19328
+    },
+    {
+      "name": "fixture-operation-cancel",
+      "passed": true
+    },
+    {
+      "name": "dynamic-tool-add",
+      "supported": false,
+      "observationWindowMs": 5000
+    },
+    {
+      "name": "new-tool-callable",
+      "supported": true
+    },
+    {
+      "name": "thread-isolation",
+      "separateServerInstance": true,
+      "secondThreadPings": 1
+    }
+  ],
+  "desktopRenderingTested": false,
+  "userAgent": "Codex Desktop/0.163.0-alpha.10.2 (Mac OS 26.4.0; arm64) dumb (mainsequence-host-probe-test; 0.1.1)",
+  "discovery": {
+    "name": "mainsequence_host_probe",
+    "runtimeStatus": "connected",
+    "pluginId": "mainsequence-host-probe@mainsequence-host-probe",
+    "httpOrigin": null,
+    "serverInfo": {
+      "name": "mainsequence-host-probe",
+      "title": null,
+      "version": "0.4.0",
+      "description": null,
+      "icons": null,
+      "websiteUrl": null
+    },
+    "serverCapabilities": {
+      "resources": {
+        "listChanged": false
+      },
+      "tools": {
+        "listChanged": true
+      }
+    },
+    "tools": {
+      "probe_comms_snapshot": {
+        "name": "probe_comms_snapshot",
+        "title": "Communication fixture state",
+        "description": "Inspect only this chat's fixture agent sessions and MCP connection. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        }
+      },
+      "probe_ping": {
+        "name": "probe_ping",
+        "title": "Fixture ping",
+        "description": "Increment an in-memory fixture counter. No external effects. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "enum": [
+                "ui",
+                "runtime-test"
+              ]
+            }
+          },
+          "required": [
+            "source"
+          ],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        }
+      },
+      "probe_start_job": {
+        "name": "probe_start_job",
+        "title": "Start fixture job",
+        "description": "Run a ten-second in-memory fixture job. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        }
+      },
+      "probe_context": {
+        "name": "probe_context",
+        "title": "Fixture environment",
+        "description": "Change only the disposable fixture environment; prepared agent routes are invalidated. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "environment": {
+              "type": "string",
+              "enum": [
+                "Research",
+                "Sandbox"
+              ]
+            }
+          },
+          "required": [
+            "environment"
+          ],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        }
+      },
+      "probe_toggle_tool": {
+        "name": "probe_toggle_tool",
+        "title": "Toggle fixture tool",
+        "description": "Add or remove one harmless fixture tool and emit tools/list_changed. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        }
+      },
+      "probe_snapshot": {
+        "name": "probe_snapshot",
+        "title": "Fixture state",
+        "description": "Read this fixture server instance, tool state and job. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        }
+      },
+      "probe_mcp": {
+        "name": "probe_mcp",
+        "title": "Fixture project MCP",
+        "description": "Discover, connect, inspect, invoke or disconnect the fixture project MCP using the existing devtools client. Before each call use action=tools to fetch the CURRENT names, descriptions and input schemas, including tools added after this chat started. Then action=call with that tool name and arguments. Results enter native chat context. Removed/disconnected tools are refused. Never retry a failed write automatically. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": [
+                "discover",
+                "list",
+                "connect",
+                "tools",
+                "call",
+                "disconnect"
+              ]
+            },
+            "tool": {
+              "type": "string"
+            },
+            "arguments": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "action"
+          ],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        }
+      },
+      "probe_cancel_job": {
+        "name": "probe_cancel_job",
+        "title": "Cancel fixture job",
+        "description": "Cancel the in-memory fixture job. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        }
+      },
+      "probe_agent": {
+        "name": "probe_agent",
+        "title": "Fixture agent communication",
+        "description": "Prepare or message the local fixture agent through the existing devtools client. Never contacts an account. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": [
+                "prepare",
+                "send",
+                "get",
+                "wait",
+                "cancel",
+                "end",
+                "allow-send"
+              ]
+            },
+            "agent": {
+              "type": "string",
+              "enum": [
+                "alpha",
+                "beta"
+              ]
+            },
+            "message": {
+              "type": "string"
+            },
+            "responseKind": {
+              "type": "string",
+              "enum": [
+                "message",
+                "task"
+              ]
+            },
+            "sessionUid": {
+              "type": "string"
+            },
+            "taskUid": {
+              "type": "string"
+            },
+            "simulateUncertain": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "action",
+            "agent"
+          ],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        }
+      },
+      "probe_open": {
+        "name": "probe_open",
+        "title": "MainSequence Host Probe",
+        "description": "Open the fixture-only MainSequence host capability panel. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "ui": {
+            "resourceUri": "ui://mainsequence-host-probe/communications-v4.html"
+          },
+          "openai/ui": {
+            "entrypoints": [
+              {
+                "type": "global"
+              },
+              {
+                "type": "thread"
+              }
+            ],
+            "preferredModelDisplayMode": "fullscreen"
+          }
+        }
+      },
+      "probe_ui_report": {
+        "name": "probe_ui_report",
+        "title": "Record UI diagnostics",
+        "description": "Save bounded, public host capability diagnostics locally. No account data. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "report": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "report"
+          ],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "ui": {
+            "visibility": [
+              "app"
+            ]
+          }
+        }
+      },
+      "probe_project_catalog": {
+        "name": "probe_project_catalog",
+        "title": "Change fixture catalog",
+        "description": "Fixture-only control: simulate project tool addition, schema change or removal. This tool is part of plugin `MainSequence Host Probe`.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "catalog": {
+              "type": "string",
+              "enum": [
+                "base",
+                "expanded",
+                "revised"
+              ]
+            }
+          },
+          "required": [
+            "catalog"
+          ],
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "_meta": {
+          "ui": {
+            "visibility": [
+              "app"
+            ]
+          }
+        }
+      }
+    },
+    "toolsError": null,
+    "resources": [
+      {
+        "mimeType": "text/html;profile=mcp-app",
+        "name": "MainSequence Host Probe",
+        "uri": "ui://mainsequence-host-probe/communications-v4.html"
+      },
+      {
+        "mimeType": "application/json",
+        "name": "Fixture resource",
+        "uri": "probe://fixture"
+      }
+    ],
+    "resourceTemplates": [],
+    "authStatus": "unsupported"
+  },
+  "serverName": "mainsequence_host_probe",
+  "stderr": "{\"timestamp\":\"2026-10-22T07:52:15.260831Z\",\"level\":\"WARN\",\"fields\":{\"message\":\"failed to warm featured plugin ids cache\",\"error\":\"failed to send remote featured plugin request to https://chatgpt.com/backend-api/plugins/featured?platform=codex: error sending request for url (https://chatgpt.com/backend-api/plugins/featured?platform=codex)\"},\"target\":\"codex_core_plugins::manager\"}\n{\"timestamp\":\"2026-10-22T07:52:15.361254Z\",\"level\":\"WARN\",\"fields\":{\"message\":\"git sync failed for curated plugin sync; falling back to GitHub HTTP\",\"error\":\"git ls-remote curated plugins repo failed with status exit status: 128: fatal: unable to access 'https://github.com/openai/plugins.git/': Could not resolve host: github.com\"},\"target\":\"codex_core_plugins::startup_sync\"}\n{\"timestamp\":\"2026-10-22T07:52:15.362245Z\",\"level\":\"WARN\",\"fields\":{\"message\":\"GitHub HTTP sync failed for curated plugin sync; falling back to export archive\",\"error\":\"failed to get curated plugins repository from https://api.github.com/repos/openai/plugins: error sending request for url (https://api.github.com/repos/openai/plugins)\",\"backup_archive_api_url\":\"https://chatgpt.com/backend-api/plugins/export/curated\"},\"target\":\"codex_core_plugins::startup_sync\"}\n{\"timestamp\":\"2026-10-22T07:52:15.362864Z\",\"level\":\"WARN\",\"fields\":{\"message\":\"failed to sync curated plugins repo: git sync failed for curated plugin sync: git ls-remote curated plugins repo failed with status exit status: 128: fatal: unable to access 'https://github.com/openai/plugins.git/': Could not resolve host: github.com; GitHub HTTP sync failed for curated plugin sync: failed to get curated plugins repository from https://api.github.com/repos/openai/plugins: error sending request for url (https://api.github.com/repos/openai/plugins); export archive sync failed for curated plugin sync: failed to get curated plugins export archive metadata from https://chatgpt.com/backend-api/plugins/export/curated: error sending request for url (https://chatgpt.com/backend-api/plugins/export/curated)\"},\"target\":\"codex_core_plugins::manager\"}\n",
+  "serverEvents": [
+    {
+      "at": "2026-10-22T07:52:15.315Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "start",
+      "pid": 47242
+    },
+    {
+      "at": "2026-10-22T07:52:15.317Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "initialize",
+      "client": {
+        "name": "codex-mcp-client",
+        "title": "Codex",
+        "version": "0.163.0-alpha.10.2"
+      },
+      "capabilities": {
+        "experimental": {
+          "codex/auth-change": {}
+        },
+        "elicitation": {
+          "form": {},
+          "url": {}
+        }
+      }
+    },
+    {
+      "at": "2026-10-22T07:52:15.318Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "notification",
+      "method": "notifications/initialized"
+    },
+    {
+      "at": "2026-10-22T07:52:15.318Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "tools/list",
+      "extraTool": false
+    },
+    {
+      "at": "2026-10-22T07:52:15.320Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "tools/call",
+      "tool": "probe_ping",
+      "source": "runtime-test",
+      "meta": {
+        "keys": [
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "3f7218f63bf4"
+        }
+      }
+    },
+    {
+      "at": "2026-10-22T07:52:15.321Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "resources/read",
+      "uri": "ui://mainsequence-host-probe/communications-v4.html"
+    },
+    {
+      "at": "2026-10-22T07:52:15.322Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "tools/call",
+      "tool": "probe_start_job",
+      "meta": {
+        "keys": [
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "3f7218f63bf4"
+        }
+      }
+    },
+    {
+      "at": "2026-10-22T07:52:15.323Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "tools/call",
+      "tool": "probe_cancel_job",
+      "meta": {
+        "keys": [
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "3f7218f63bf4"
+        }
+      }
+    },
+    {
+      "at": "2026-10-22T07:52:15.324Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "tools/call",
+      "tool": "probe_toggle_tool",
+      "meta": {
+        "keys": [
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "3f7218f63bf4"
+        }
+      }
+    },
+    {
+      "at": "2026-10-22T07:52:15.345Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "notifications/tools/list_changed",
+      "extraTool": true
+    },
+    {
+      "at": "2026-10-22T07:52:20.360Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "tools/call",
+      "tool": "probe_dynamic",
+      "meta": {
+        "keys": [
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "3f7218f63bf4"
+        }
+      }
+    },
+    {
+      "at": "2026-10-22T07:52:20.425Z",
+      "runId": "2a7bd754-0c26-43a1-a787-f22ca6cec413",
+      "event": "shutdown",
+      "signal": "SIGTERM"
+    },
+    {
+      "at": "2026-10-22T07:52:15.315Z",
+      "runId": "ab0e0db4-cff0-40b7-9139-694e51760230",
+      "event": "start",
+      "pid": 47247
+    },
+    {
+      "at": "2026-10-22T07:52:15.317Z",
+      "runId": "ab0e0db4-cff0-40b7-9139-694e51760230",
+      "event": "initialize",
+      "client": {
+        "name": "codex-mcp-client",
+        "title": "Codex",
+        "version": "0.163.0-alpha.10.2"
+      },
+      "capabilities": {
+        "elicitation": {
+          "form": {},
+          "url": {}
+        }
+      }
+    },
+    {
+      "at": "2026-10-22T07:52:15.318Z",
+      "runId": "ab0e0db4-cff0-40b7-9139-694e51760230",
+      "event": "notification",
+      "method": "notifications/initialized"
+    },
+    {
+      "at": "2026-10-22T07:52:15.318Z",
+      "runId": "ab0e0db4-cff0-40b7-9139-694e51760230",
+      "event": "tools/list",
+      "extraTool": false
+    },
+    {
+      "at": "2026-10-22T07:52:15.319Z",
+      "runId": "ab0e0db4-cff0-40b7-9139-694e51760230",
+      "event": "shutdown",
+      "signal": "SIGTERM"
+    },
+    {
+      "at": "2026-10-22T07:52:20.419Z",
+      "runId": "c75fb9bf-c97c-46ac-bb87-e7035c51594e",
+      "event": "start",
+      "pid": 47328
+    },
+    {
+      "at": "2026-10-22T07:52:20.422Z",
+      "runId": "c75fb9bf-c97c-46ac-bb87-e7035c51594e",
+      "event": "initialize",
+      "client": {
+        "name": "codex-mcp-client",
+        "title": "Codex",
+        "version": "0.163.0-alpha.10.2"
+      },
+      "capabilities": {
+        "experimental": {
+          "codex/auth-change": {}
+        },
+        "elicitation": {
+          "form": {},
+          "url": {}
+        }
+      }
+    },
+    {
+      "at": "2026-10-22T07:52:20.422Z",
+      "runId": "c75fb9bf-c97c-46ac-bb87-e7035c51594e",
+      "event": "notification",
+      "method": "notifications/initialized"
+    },
+    {
+      "at": "2026-10-22T07:52:20.422Z",
+      "runId": "c75fb9bf-c97c-46ac-bb87-e7035c51594e",
+      "event": "tools/list",
+      "extraTool": false
+    },
+    {
+      "at": "2026-10-22T07:52:20.423Z",
+      "runId": "c75fb9bf-c97c-46ac-bb87-e7035c51594e",
+      "event": "tools/call",
+      "tool": "probe_ping",
+      "source": "runtime-test",
+      "meta": {
+        "keys": [
+          "threadId",
+          "progressToken"
+        ],
+        "correlations": {
+          "threadId": "d4c9abd605e8"
+        }
+      }
+    },
+    {
+      "at": "2026-10-22T07:52:20.425Z",
+      "runId": "c75fb9bf-c97c-46ac-bb87-e7035c51594e",
+      "event": "shutdown",
+      "signal": "SIGTERM"
+    }
+  ]
+}

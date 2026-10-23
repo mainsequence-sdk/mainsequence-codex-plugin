@@ -1,0 +1,196 @@
+{
+  "version": "0.3.0",
+  "date": "2026-10-22",
+  "hostRunId": "69a70b97-97aa-46b0-939e-2b2587d0d805",
+  "panel": {
+    "versionObserved": "0.3.0",
+    "connected": true,
+    "inspector": "MCP Apps",
+    "nativeButtonObserved": true,
+    "toolAdditionViaUi": true,
+    "subsequentInspector": "DOM operations timed out on both open panels; no native submit click performed"
+  },
+  "hook": {
+    "enabled": true,
+    "trustStatus": "trusted",
+    "additionalContextLimit": 0,
+    "source": "Supported hooks/list read, no trust changes"
+  },
+  "mcp": {
+    "added": {
+      "schema": [
+        {
+          "name": "echo",
+          "description": "Echo fixture text unchanged.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "name": "fail",
+          "description": "Return a fixture MCP error.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        },
+        {
+          "name": "uppercase",
+          "description": "Uppercase the fixture string.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ],
+      "result": {
+        "schemaVersion": 1,
+        "action": "mcp-call",
+        "status": "success",
+        "summary": "The MCP tool completed.",
+        "data": {
+          "content": [
+            {
+              "type": "text",
+              "text": "LIVE CATALOG ADDITION WORKS"
+            }
+          ],
+          "structuredContent": {
+            "uppercase": "LIVE CATALOG ADDITION WORKS",
+            "fixture": true
+          }
+        }
+      }
+    },
+    "revised": {
+      "catalogMutation": "fixture communicationAction control after UI timeout",
+      "schema": [
+        {
+          "name": "echo",
+          "description": "Echo fixture text unchanged.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "name": "fail",
+          "description": "Return a fixture MCP error.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        },
+        {
+          "name": "uppercase",
+          "description": "Uppercase the fixture string.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ],
+      "result": {
+        "schemaVersion": 1,
+        "action": "mcp-call",
+        "status": "success",
+        "summary": "The MCP tool completed.",
+        "data": {
+          "content": [
+            {
+              "type": "text",
+              "text": "LIVE REVISED SCHEMA WORKS"
+            }
+          ],
+          "structuredContent": {
+            "uppercase": "LIVE REVISED SCHEMA WORKS",
+            "fixture": true
+          }
+        }
+      }
+    },
+    "removed": {
+      "catalogMutation": "fixture communicationAction control",
+      "schema": [
+        {
+          "name": "echo",
+          "description": "Echo fixture text unchanged.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "name": "fail",
+          "description": "Return a fixture MCP error.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ],
+      "result": {
+        "schemaVersion": 1,
+        "action": "mcp-call",
+        "status": "failure",
+        "summary": "The selected tool is absent from the current MCP catalog.",
+        "error": {
+          "code": "INVALID_REQUEST",
+          "message": "The selected tool is absent from the current MCP catalog."
+        }
+      },
+      "projectCallsBefore": 5,
+      "projectCallsAfter": 5
+    },
+    "cleanup": "success"
+  },
+  "native": {
+    "sendsBefore": 9,
+    "sendsAfter": 9,
+    "status": "Awaiting native panel submission while chat idle"
+  }
+}

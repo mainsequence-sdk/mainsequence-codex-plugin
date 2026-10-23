@@ -1,0 +1,119 @@
+{
+  "fixture": true,
+  "desktopUiTested": false,
+  "host": "codex-cli 0.163.0-alpha.10.2",
+  "checks": [
+    {
+      "name": "clean-install",
+      "version": "0.5.0",
+      "buildId": "be431969fe9e59cd17a43a01cbe1b1a42c05bec992552db4bd77905cb2d40902",
+      "runId": "bea67153-37dd-4a12-89b4-705149473a41",
+      "adoptedExpected": true,
+      "advertisedResourceMatches": true,
+      "resourceMatches": true
+    },
+    {
+      "name": "existing-chat-after-cli-install",
+      "version": "0.5.0",
+      "buildId": "be431969fe9e59cd17a43a01cbe1b1a42c05bec992552db4bd77905cb2d40902",
+      "runId": "bea67153-37dd-4a12-89b4-705149473a41",
+      "adoptedExpected": false,
+      "advertisedResourceMatches": false,
+      "resourceMatches": false,
+      "resourceError": "{\"code\":-32602,\"message\":\"Unknown fixture resource.\"}"
+    },
+    {
+      "name": "new-chat-same-backend-after-install",
+      "version": "0.5.1-lifecycle-fixture",
+      "buildId": "4f03403feceb836539d817f874cbcc0594127e7f7fe29befc4121db36dc5b056",
+      "runId": "651199e2-6266-4170-b732-f5264c45d776",
+      "adoptedExpected": true,
+      "advertisedResourceMatches": true,
+      "resourceMatches": true
+    },
+    {
+      "name": "existing-chat-next-turn",
+      "version": "0.5.0",
+      "buildId": "be431969fe9e59cd17a43a01cbe1b1a42c05bec992552db4bd77905cb2d40902",
+      "runId": "bea67153-37dd-4a12-89b4-705149473a41",
+      "adoptedExpected": false,
+      "advertisedResourceMatches": false,
+      "resourceMatches": false,
+      "resourceError": "{\"code\":-32602,\"message\":\"Unknown fixture resource.\"}"
+    },
+    {
+      "name": "supported-mcp-reload",
+      "version": "0.5.1-lifecycle-fixture",
+      "buildId": "4f03403feceb836539d817f874cbcc0594127e7f7fe29befc4121db36dc5b056",
+      "runId": "33b14cb6-7e27-466a-9f6b-3e1ec1ab43b6",
+      "adoptedExpected": true,
+      "advertisedResourceMatches": true,
+      "resourceMatches": true
+    },
+    {
+      "name": "supported-user-config-reload",
+      "version": "0.5.1-lifecycle-fixture",
+      "buildId": "4f03403feceb836539d817f874cbcc0594127e7f7fe29befc4121db36dc5b056",
+      "runId": "33b14cb6-7e27-466a-9f6b-3e1ec1ab43b6",
+      "adoptedExpected": true,
+      "advertisedResourceMatches": true,
+      "resourceMatches": true
+    },
+    {
+      "name": "host-turn-plugin-toggle",
+      "version": "0.5.1-lifecycle-fixture",
+      "buildId": "4f03403feceb836539d817f874cbcc0594127e7f7fe29befc4121db36dc5b056",
+      "runId": "0d319608-fd8e-4133-b288-e794501f3c37",
+      "adoptedExpected": true,
+      "advertisedResourceMatches": true,
+      "resourceMatches": true
+    },
+    {
+      "name": "unsubscribe-and-resume",
+      "version": "0.5.1-lifecycle-fixture",
+      "buildId": "4f03403feceb836539d817f874cbcc0594127e7f7fe29befc4121db36dc5b056",
+      "runId": "0d319608-fd8e-4133-b288-e794501f3c37",
+      "adoptedExpected": true,
+      "advertisedResourceMatches": true,
+      "resourceMatches": true
+    },
+    {
+      "name": "fresh-backend-resumed-chat",
+      "version": "0.5.1-lifecycle-fixture",
+      "buildId": "4f03403feceb836539d817f874cbcc0594127e7f7fe29befc4121db36dc5b056",
+      "runId": "7e4f6391-8cc1-42f1-aff0-3c1ff36e83f2",
+      "adoptedExpected": true,
+      "advertisedResourceMatches": true,
+      "resourceMatches": true
+    },
+    {
+      "name": "session-preserved-without-replay",
+      "passed": true,
+      "agentSends": 1
+    },
+    {
+      "name": "removal-in-fresh-backend",
+      "passed": true
+    }
+  ],
+  "initialBuild": {
+    "schemaVersion": 1,
+    "pluginVersion": "0.5.0",
+    "devtoolsVersion": "0.3.1",
+    "buildId": "be431969fe9e59cd17a43a01cbe1b1a42c05bec992552db4bd77905cb2d40902",
+    "panelTemplateSha256": "3eb9a236089c4738bd90a574fc59eadfc9e7d936b8a1b0fdc7dc760eb3ce61d8",
+    "resourceUri": "ui://mainsequence-host-probe/panel-0.5.0-be431969fe9e59cd.html"
+  },
+  "updatedBuild": {
+    "schemaVersion": 1,
+    "pluginVersion": "0.5.1-lifecycle-fixture",
+    "devtoolsVersion": "0.3.1",
+    "buildId": "4f03403feceb836539d817f874cbcc0594127e7f7fe29befc4121db36dc5b056",
+    "panelTemplateSha256": "3eb9a236089c4738bd90a574fc59eadfc9e7d936b8a1b0fdc7dc760eb3ce61d8",
+    "resourceUri": "ui://mainsequence-host-probe/panel-0.5.1-lifecycle-fixture-4f03403feceb8365.html"
+  },
+  "modelFixtureRequests": 6,
+  "realModelRequests": 0,
+  "observedAt": "2026-10-22",
+  "scope": "Actual isolated Codex app-server with a local scripted model, fixture services only. The sequence is ordered: user-config reload and toggle were observed after successful MCP reload; they are not independent proofs of initial adoption."
+}

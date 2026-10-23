@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "mainsequence_host_probe": {
+      "command": "node",
+      "args": ["./server.mjs"],
+      "cwd": ".",
+      "env_vars": ["MS_HOST_PROBE_DATA_DIR", "MS_HOST_PROBE_INITIAL_EXTRA", "MS_HOST_PROBE_CATALOG_FILE"]
+    }
+  }
+}

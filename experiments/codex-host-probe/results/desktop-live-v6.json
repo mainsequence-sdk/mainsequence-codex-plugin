@@ -1,0 +1,148 @@
+{
+  "date": "2026-10-22",
+  "fixtureOnly": true,
+  "build": {
+    "schemaVersion": 1,
+    "pluginVersion": "0.6.0",
+    "devtoolsVersion": "0.3.1",
+    "buildId": "063693991c4bb0742564abb52e64f4305e22694eaa272a31fc1b2af767ba3260",
+    "panelTemplateSha256": "523e3fe12bc12c9195df1f0d091f67923484d41a10f994d26594bfc75df9ea7d",
+    "resourceUri": "ui://mainsequence-host-probe/panel-0.6.0-063693991c4bb074.html"
+  },
+  "installationVerified": true,
+  "activation": {
+    "status": "passed",
+    "observedVersion": "0.6.0",
+    "observedRunId": "12a115e0-ba7f-4913-97ff-52b8746d7e42",
+    "installedServerPanelMatch": true,
+    "panelHeader": "Host probe \u00b7 0.6.0 \u00b7 MCP relay",
+    "requestToolExposedToModel": true,
+    "userReportedPluginToggle": true
+  },
+  "baseline": {
+    "agent": "alpha",
+    "sessionUid": "11879343-15ef-4db1-b554-a941de1b7730",
+    "sends": 5
+  },
+  "liveStopRecovery": {
+    "status": "passed",
+    "requestId": "180167e8-ad17-47b3-8509-157f09141a31",
+    "marker": "LIVE-RECEIPT-STOP-20261022-D1",
+    "literalMessage": "LIVE-RECEIPT-STOP-20261022-D1\n  recover this saved request once",
+    "newRequestSubmitted": true,
+    "savedBeforeSubmission": true,
+    "submissionAcknowledged": true,
+    "submissionAttempts": 2,
+    "stateBeforeStop": "pending",
+    "dispatchAttemptsBeforeStop": 0,
+    "fixtureDispatchesBeforeStop": 0,
+    "totalAgentSendsBeforeStop": 5,
+    "submissionTurnId": "01a16330-1670-71e1-995d-bdf2ceea2d27",
+    "createdAt": "2026-10-22T10:38:45.949Z",
+    "automaticRetry": false,
+    "interruptedTurnVerified": true,
+    "interruptedTurnId": "01a16330-1670-71e1-995d-bdf2ceea2d27",
+    "stateAfterStop": "pending",
+    "dispatchAttemptsAfterStop": 0,
+    "fixtureDispatchesAfterStop": 0,
+    "recoveryControl": "live panel Recover in native chat",
+    "recoveryRequestId": "180167e8-ad17-47b3-8509-157f09141a31",
+    "recoveryTurnId": "01a16335-90fb-7e52-8bf6-d40a84b03749",
+    "replacementRequestCreated": false,
+    "savedRequestSurvivedStop": true,
+    "recoverySubmissionAcknowledged": true,
+    "recoveryTurnCompleted": true,
+    "duplicateAgentSends": 0,
+    "nativeReplyReceived": true,
+    "nativeAppDeliveryTurnObserved": true,
+    "nativeQueueState": "not-inspected",
+    "replyContextCheck": {
+      "status": "passed",
+      "expectedAnswerSupplied": false,
+      "agentCallRequested": false,
+      "submissionLog": [
+        {
+          "at": "2026-10-22T11:00:05.329Z",
+          "outcome": "success"
+        }
+      ],
+      "inspectorFirstClickTimedOut": true,
+      "panelAfterTimeoutStillShowedRefreshStatus": true,
+      "turnId": "01a16346-7307-7901-803e-8f4719a973eb",
+      "turnStatus": "completed",
+      "toolCalls": 0,
+      "commandCalls": 0,
+      "agentSendsBefore": 6,
+      "agentSendsAfter": 6,
+      "exactReplyRecalled": true,
+      "reply": "Alpha fixture agent: LIVE-RECEIPT-STOP-20261022-D1\n  recover this saved request once",
+      "verifiedBy": "Supported read_thread confirms exact multiline final reply and no MCP/tool or command items; subsequent read-only fixture snapshot remains six sends."
+    },
+    "observation": "D1 survived actual Stop as a saved pending request. Explicit panel recovery reused that ID. Two delayed app-origin messages for the same ID subsequently arrived: the first dispatched once and stored the response; the second returned the saved receipt without dispatch. Which submission produced each host message was not independently identified. A separate context-only turn reproduced the exact multiline response with zero tools or agent resend. The final read-only check still shows one D1 dispatch and six total sends. Earlier pending observations remain in intermediateVerification as timing evidence, not the final outcome.",
+    "intermediateVerification": {
+      "verificationTurnId": "01a16340-d214-74e3-bf50-df604876f774",
+      "stateAtVerification": "pending",
+      "dispatchAttemptsAtVerification": 0,
+      "fixtureDispatchesAtVerification": 0,
+      "totalAgentSendsAtVerification": 5,
+      "nativeAppDeliveryTurnObserved": false,
+      "observation": "The saved request survived the actual interrupted turn. Recover in native chat submitted the same ID and received acknowledgement during the next turn, which completed normally. At the subsequent user verification turn, no app-origin delivery turn or agent dispatch had occurred; D1 remained pending, total sends five. No additional submission or dispatch was performed during verification."
+    },
+    "delayedAppInputArrived": true,
+    "deliveredRequestId": "180167e8-ad17-47b3-8509-157f09141a31",
+    "dispatchAttempts": 1,
+    "fixtureDispatches": 1,
+    "totalAgentSendsAfterDelivery": 6,
+    "receiptCompletedAt": "2026-10-22T10:57:39.781Z",
+    "receiptStatus": "success",
+    "reply": "Alpha fixture agent: LIVE-RECEIPT-STOP-20261022-D1\n  recover this saved request once",
+    "deliveryTurnId": "01a16341-f5ff-7492-94e4-459522391c26",
+    "panelReceiptRefreshVerified": true,
+    "duplicateDeliveryCheck": {
+      "passed": true,
+      "trigger": "Second actual app-origin message for the same D1 request ID",
+      "turnId": "01a16345-720c-7172-8bdd-68b8090cc7fe",
+      "reusedReceipt": true,
+      "dispatchAttempts": 1,
+      "fixtureDispatches": 1,
+      "totalAgentSendsBefore": 6,
+      "totalAgentSendsAfter": 6,
+      "newSubmissionPerformed": false
+    },
+    "nativeReplyQuoted": true,
+    "nativeReplyVerifiedBy": "Supported read_thread of completed delivery turn 01a16341-f5ff-7492-94e4-459522391c26",
+    "finalVerification": {
+      "turnId": "01a16347-5373-7130-8050-80e574a4b1f8",
+      "readOnly": true,
+      "state": "delivered",
+      "dispatchAttempts": 1,
+      "fixtureDispatches": 1,
+      "totalAgentSends": 6,
+      "receiptStatus": "success",
+      "nativeReplyAndRecallVerified": true
+    }
+  },
+  "oldRequest": {
+    "marker": "LIVE-STOP-RECOVERY-20261022-C3",
+    "resubmitted": false,
+    "dispatches": 0
+  },
+  "scope": {
+    "devtoolsChanged": false,
+    "claudeChanged": false,
+    "productionSourcesChanged": false,
+    "customCodex": false
+  },
+  "acceptance": {
+    "desktopActivation": "passed",
+    "pendingSurvivesNativeStop": "passed",
+    "explicitRecoverySameRequestId": "passed",
+    "oneAgentDispatch": "passed",
+    "duplicateNativeMessageReusesReceipt": "passed",
+    "nativeReply": "passed",
+    "contextOnlyRecall": "passed",
+    "productionServicesTested": false,
+    "generalExactlyOnceGuarantee": false,
+    "hostSchedulingLatencyBounded": false
+  }
+}

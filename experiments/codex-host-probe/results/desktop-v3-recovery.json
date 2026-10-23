@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-22",
+  "version": "0.3.0",
+  "problem": "Registered temporary marketplace and temporary fixture state were absent; plugin cache still existed; native MCP tools absent from this turn.",
+  "repair": {
+    "marketplaceRoot": "/Users/jose/code/MainSequenceClientSide/mainsequence-codex-plugin/experiments/codex-host-probe/.local-marketplace",
+    "installedVersion": "0.3.0",
+    "sourceScope": "Test experiment only",
+    "hookEnabled": true,
+    "hookTrust": "trusted",
+    "nativeHookContextLimit": 0
+  },
+  "validation": {
+    "newSourceStaged": true,
+    "existingSourceUpdated": true,
+    "cliInstallSucceeded": true,
+    "currentChatFixturePrepared": true,
+    "fixtureSendCountAfterPrepare": 0,
+    "openMcpAppPanels": 0,
+    "nativeReplyStillPending": true
+  },
+  "requiredNextInput": "/ms-probe-chat @alpha NATIVE-CONTEXT-CHECK",
+  "limitations": "No native command or agent reply found in recent chat turns. No messages replayed. Previous live MCP success evidence remains historical."
+}

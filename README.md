@@ -3,10 +3,23 @@
 This repository is the **MainSequence Codex plugin**. Its production code lives in
 `src/`, its Codex manifest in `manifests/codex/`, and its installable bundle in `codex/`.
 
-The **0.4.2 development build** provides a native Agents/Tools panel with account and
-environment status, agent search, project MCP discovery, saved-connection status and read-only schema inspection.
-Ask Codex to **open MainSequence**. The plugin uses the existing devtools **0.3.2** session
-and APIs; devtools remains the head. See [panel behavior and validation](docs/agents-tools-panel.md).
+The **0.7.1 development build** follows Claude's MainSequence panel layout using
+Codex theme tokens: Home, Code, Projects, Agents, Tools, Activity and Settings.
+It includes repository setup and maintenance, project setup and links, deployment
+history/stages/logs, shared account/settings controls, direct messages and agent tasks.
+Replies and task results use native MCP tools and remain in Codex conversation context.
+
+Ask Codex to **open MainSequence**. Shared devtools **0.3.5** owns authentication,
+account binding, domain APIs, local project operations, authenticated assets and durable
+delivery. Claude's repository and dependency remain unchanged. See the
+[capability matrix and verification](docs/agents-tools-panel.md), including the stock
+Codex host differences. No probe or custom Codex build is shipped.
+
+Choose **Talk**, select **Message** or **Task** when the agent supports both, write a
+message, then **Send in Codex**. The reply returns through a native
+MCP tool and stays in chat context. After Stop, use **Messages and recovery → Recover in
+Codex** on the original request. Recovery reuses saved work; an unknown remote outcome
+blocks resend. Browsing or selecting an example never sends a message automatically.
 
 The plugin also registers the `ms` slash-menu entry for explicit developer commands and
 the `mainsequence-mcp` skill for conversational project MCP access. The independent

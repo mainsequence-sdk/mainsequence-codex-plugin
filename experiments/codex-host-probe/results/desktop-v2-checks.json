@@ -1,0 +1,160 @@
+{
+  "observedDate": "2026-10-21",
+  "fixtureVersion": "0.2.0",
+  "surface": "Live Codex MCP App and model-side tools in this chat",
+  "checks": [
+    {
+      "name": "talk-without-send",
+      "passed": true,
+      "sendsBefore": 3,
+      "sendsAfter": 3
+    },
+    {
+      "name": "separate-agent-sessions",
+      "passed": true
+    },
+    {
+      "name": "multiline-agent-panel-reply",
+      "passed": true,
+      "text": "Beta fixture agent: Beta fixture check\n  preserve spaces, \"quotes\" and $()"
+    },
+    {
+      "name": "agent-task-cancel",
+      "passed": true,
+      "observedStatus": "cancelled"
+    },
+    {
+      "name": "agent-task-wait",
+      "passed": true,
+      "observedStatus": "completed"
+    },
+    {
+      "name": "uncertain-delivery",
+      "passed": true,
+      "guardMessage": "Previous delivery is uncertain. No automatic replay is allowed.",
+      "sendsAfterAllAgentChecks": 6,
+      "guardClearedWithoutReplay": true
+    },
+    {
+      "name": "end-and-environment-guards",
+      "passed": true,
+      "sendButtonDisabled": true
+    },
+    {
+      "name": "mcp-panel-discovery-and-schemas",
+      "passed": true,
+      "tools": [
+        "echo",
+        "fail"
+      ]
+    },
+    {
+      "name": "mcp-panel-result",
+      "passed": true,
+      "text": "MCP panel verification\n  exact spaces and \"quotes\"",
+      "structuredContentPreserved": true
+    },
+    {
+      "name": "mcp-panel-error",
+      "passed": true,
+      "statusMessage": "The MCP tool reported an error. Inspect its result before retrying.",
+      "displayIssue": "Previous successful result remains in output box."
+    },
+    {
+      "name": "mcp-panel-disconnect",
+      "passed": true,
+      "denial": "Add this MCP connection before using it."
+    },
+    {
+      "name": "live-ui-model-agent-session",
+      "passed": true,
+      "result": {
+        "schemaVersion": 1,
+        "action": "agent-send",
+        "status": "success",
+        "summary": "Agent response received.",
+        "data": {
+          "account": "fixture-user",
+          "agent": {
+            "uid": "20000000-0000-4000-8000-000000000001",
+            "name": "Alpha fixture agent",
+            "description": "",
+            "environmentUid": "10000000-0000-4000-8000-000000000001",
+            "environmentName": "Research",
+            "repositoryBranch": "",
+            "runtimeReleaseUid": "30000000-0000-4000-8000-000000000001",
+            "runtimeState": "ready",
+            "defaults": {
+              "provider": "",
+              "model": "",
+              "thinking": ""
+            },
+            "responseKinds": [
+              "message",
+              "task"
+            ],
+            "skills": []
+          },
+          "sessionUid": "5f2bc7c4-05fc-4ba1-be04-86fb2836a6fd",
+          "responseKind": "message",
+          "message": "Alpha fixture agent: MODEL-PATH-CHECK\nSame prepared UI session."
+        }
+      }
+    },
+    {
+      "name": "live-model-mcp-call",
+      "passed": true,
+      "result": {
+        "schemaVersion": 1,
+        "action": "mcp-call",
+        "status": "success",
+        "summary": "The MCP tool completed.",
+        "data": {
+          "content": [
+            {
+              "type": "text",
+              "text": "MODEL-MCP-CHECK\nExact second line."
+            }
+          ],
+          "structuredContent": {
+            "echo": "MODEL-MCP-CHECK\nExact second line.",
+            "fixture": true
+          }
+        }
+      }
+    },
+    {
+      "name": "native-composer",
+      "bridgeAcknowledged": true,
+      "visualSemantics": "User reports one copy after repeated draft clicks; full native draft was not independently observed. Exact prefix replacement/preservation is not established.",
+      "successfulControlledClicks": 2,
+      "userObservation": "Original DRAFT-CHECK remained once."
+    },
+    {
+      "name": "style",
+      "passed": true,
+      "background": "rgb(24, 24, 24)",
+      "text": "rgb(255, 255, 255)",
+      "button": "White on dark",
+      "evidence": "desktop-v2-dom.json"
+    },
+    {
+      "name": "native-command-visible-reply",
+      "passed": false,
+      "userObservation": "No agent response appeared.",
+      "fixtureDelivery": true,
+      "samePreparedSession": true,
+      "receivedMessage": "**NATIVE-REPLY-CHECK**\n\n/ms-probe @alpha DRAFT-CHECK\n",
+      "sourceFinding": "command-hook.mjs emits decision:block with the reply in reason; it does not append a chat message.",
+      "runtimeFinding": "Isolated actual Codex test emitted hook/completed, no agentMessage item.",
+      "historyFinding": "Supported read_thread for the current chat returned no /ms-probe command turn or hook/agent reply item for this submission. This is consistent with, but does not independently prove, the visual observation.",
+      "classification": "The proposed native command reply UX fails this acceptance test; not equivalent to Claude command output."
+    }
+  ],
+  "removedPlugin": {
+    "id": "mainsequence@mainsequence",
+    "name": "MainSequence Developer Tools",
+    "result": "uninstalled",
+    "sourceFilesModified": false
+  }
+}

@@ -37,6 +37,7 @@ async function fixture(t, overrides = {}) {
         : ['agent.list', 'agent.search'].map(name => ({ name, inputSchema: { type: 'object' } })) };
       else if (body.method === 'tools/call' && ['agent.list', 'agent.search'].includes(body.params.name)) result = { structuredContent: { count: 1, results: [{ uid: agentUid, name: 'Analyst', description: 'private-machine-access', organization_environment_uid: environmentUid, organization_environment_name: 'Research', response_kinds: ['message'], runtime_state: 'ready' }] } };
       else if (body.method === 'tools/call' && body.params.name === 'resource_release.mcp_endpoints') result = { structuredContent: { count: 1, results: [connection] } };
+      else if (body.method === 'tools/call' && body.params.name === 'metrics') result = { isError:true, content:[{type:'text',text:'Record unavailable private-release-token'}], structuredContent:{code:'not_found',message:'Record unavailable',details:{token:'private-release-token'}} };
       else throw new Error('Unexpected RPC: ' + JSON.stringify(body));
       result = { jsonrpc: '2.0', id: body.id, result };
     } else throw new Error('Unexpected URL: ' + url);
@@ -74,6 +75,27 @@ test('public devtools session, real directory parsing and fresh saved schemas; n
   assert.ok(f.actions.filter(a => a.action === 'mcp-discover').every(a => a.enrichNames === true));
   assert.ok(f.calls.every(c => !c.tool || ['agent.list', 'agent.search', 'resource_release.mcp_endpoints'].includes(c.tool)));
   assert.equal(await fs.readFile(f.connections, 'utf8'), f.before); assert.deepEqual(f.writes, []);
+});
+
+test('opening a panel restores the environment used by native tools, scoped to the verified account',async t=>{
+  const f=await fixture(t),service=createDiscovery(),initial=await service.status(f.dispatch);
+  assert.equal(initial.selectedEnvironmentUid,null);
+  await service.view(f.dispatch,{contextId:initial.contextId,environmentUid,view:'connections'});
+  assert.equal((await service.status(f.dispatch)).selectedEnvironmentUid,environmentUid);
+  f.setAccount('another-user');assert.equal((await service.status(f.dispatch)).selectedEnvironmentUid,null);
+});
+
+test('project tool errors reach native chat with their original details and effects, with no replay or credential leak', async t => {
+  const f = await fixture(t), service = createDiscovery(), status = await service.status(f.dispatch);
+  const selected = { contextId:status.contextId, environmentUid };
+  await service.view(f.dispatch, {...selected,view:'connections'});
+  const result = await service.invoke(f.dispatch, {...selected,releaseUid,tool:'metrics',arguments:{}});
+  assert.equal(result.error.code, 'MCP_TOOL_ERROR');
+  assert.equal(result.result.isError,true);
+  assert.equal(result.result.structuredContent.code,'not_found');
+  assert.equal(result.effects.state,'partial-or-uncertain');
+  assert.equal(f.calls.filter(c=>c.tool==='metrics').length,1);
+  assert.doesNotMatch(JSON.stringify(result),/private-release-token|private-machine-access/);
 });
 
 test('a changed account refuses an old directory context before discovery', async t => {
@@ -144,4 +166,25 @@ test('verified account identity takes precedence over stale saved account metada
   assert.equal(status.account.username, 'fixture-user'); assert.ok(status.contextId);
   const result = await service.discover(f.dispatch, { contextId: status.contextId, environmentUid, catalog: 'tools' });
   assert.equal(result.results[0].saved, true); assert.deepEqual(f.writes, []);
+});
+
+test('details and assets require discovered agents; connections require scoped explicit mutations',async t=>{
+ const f=await fixture(t);let assets=0;const service=createDiscovery({assets:async input=>{assets++;assert.equal(input.expectedAccount,'fixture-user');return {};},repositories:async()=>[],preferences:async()=>({backend,baseDir:'/fixture'})});
+ const state=await service.status(f.dispatch),selected={contextId:state.contextId,environmentUid};
+ await assert.rejects(service.view(f.dispatch,{...selected,view:'assets',agentUids:[agentUid]}),{code:'INVALID_REQUEST'});
+ await assert.rejects(service.connection(f.dispatch,{...selected,action:'connect',releaseUid}),{code:'INVALID_REQUEST'});
+ await service.discover(f.dispatch,{...selected,catalog:'agents'});
+ await service.view(f.dispatch,{...selected,view:'assets',agentUids:[agentUid]});assert.equal(assets,1);
+ const connected=await service.view(f.dispatch,{...selected,view:'connections'});assert.equal(connected.results[0].uid,releaseUid);
+ const before=f.actions.length;await service.connection(f.dispatch,{...selected,action:'disconnect',releaseUid});
+ const mutation=f.actions.slice(before).find(a=>a.action==='mcp-remove');assert.equal(mutation.expectedAccount,'fixture-user');assert.equal(mutation.environmentUid,environmentUid);assert.deepEqual(JSON.parse(await fs.readFile(f.connections,'utf8')),[]);
+ await assert.rejects(service.connection(f.dispatch,{...selected,environmentUid:agentUid,action:'connect',releaseUid}),{code:'INVALID_REQUEST'});
+});
+test('project details and tool invocation reject unselected IDs and malformed arguments',async t=>{
+ const f=await fixture(t), service=createDiscovery(),state=await service.status(f.dispatch),selected={contextId:state.contextId,environmentUid};
+ await assert.rejects(service.view(f.dispatch,{...selected,view:'project',projectUid:agentUid}),{code:'INVALID_REQUEST'});
+ await assert.rejects(service.invoke(f.dispatch,{...selected,releaseUid,tool:'metrics',arguments:{}}),{code:'INVALID_REQUEST'});
+ await service.view(f.dispatch,{...selected,view:'connections'});
+ for(const args of [undefined,null,[],42])await assert.rejects(service.invoke(f.dispatch,{...selected,releaseUid,tool:'metrics',arguments:args}),{code:'INVALID_REQUEST'});
+ assert.equal(f.actions.some(a=>a.action==='mcp-call'),false);
 });

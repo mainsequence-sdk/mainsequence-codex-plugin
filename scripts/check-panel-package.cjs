@@ -13,7 +13,7 @@ module.exports = async function checkPanel(installed, env) {
   try {
     await rpc('initialize', { protocolVersion: '2025-11-25', clientInfo: { name: 'package-check', version: '1' }, capabilities: {} });
     const { tools } = await rpc('tools/list');
-    if (tools.length !== 3 || !tools.every(tool => tool.annotations.readOnlyHint)) throw new Error('Expected three read-only panel tools');
+    if (tools.length !== 16 || !tools.slice(0, 3).every(tool => tool.annotations.readOnlyHint) || tools[4].annotations.readOnlyHint) throw new Error('Expected discovery and durable agent delivery tools');
     const uri = tools.find(tool => tool.name === 'mainsequence_open')?._meta?.ui?.resourceUri;
     const { contents } = await rpc('resources/read', { uri });
     if (!contents[0].text.includes('const BUILD =') || !contents[0].text.includes('"panelId":')) throw new Error('The panel must contain immutable build metadata');
