@@ -500,5 +500,23 @@ for host plugins"), and this release consumes that API:
   still proves the packaged server registers a cached connection's tool with devtools'
   name and schema.
 
-Pins devtools 0.3.12. The live CRM acceptance is to be repeated with this build before the
-release is published.
+Pins devtools 0.3.12, built from its registry archive (`npm ci --ignore-scripts`; the integrity in
+`package-lock.json` and `build-info.json` is the registry's `dist.integrity`). `npm run
+release:check`: 55 tests, release metadata, the standalone and npm archives, the npm archive
+exercised as Codex installs it.
+
+Live acceptance on 2026-10-23 with this build's packaged server over stdio
+(`codex/dist/panel-server.js`, the shared machine session, backend `http://local-backend:8000`,
+environment Production): `initialize` answered `mainsequence 0.7.9` with `tools.listChanged`. The
+first `tools/list` returned 160 tools, the 16 plugin tools plus 144 project tools: before the
+server has learned its backend from `auth-status`, the shared file's two scopes
+(`http://127.0.0.1:8000`, written by the Claude Desktop plugin, and `http://local-backend:8000`)
+are both listed. The background refresh learned the backend and sent `tools/list_changed` 0.5 s
+later; the next `tools/list` returned 88 tools, the 72 CRM tools named for this backend
+(`ms_crm_contacts_list_68ee6e71`, described `MainSequence crm [Production]: List CRM contacts
+with bounded paging and filters.`). `tools/call ms_crm_contacts_list_68ee6e71` with
+`page_size: 1` returned in 10.1 s with `isError` unset: two text blocks and `structuredContent`
+`code: ok` with one contact of 212. In the same hour the Claude Desktop plugin 0.4.19 registered
+the same release's tools from the same shared file under the `127.0.0.1:8000` names. The record
+is the local `artifacts/live-acceptance-0.7.9.json`. The pre-backend listing of every scope is a
+devtools follow-up: a fresh server's first list could be scoped to the configured backend.
