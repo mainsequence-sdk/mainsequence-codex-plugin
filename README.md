@@ -34,10 +34,10 @@ presentation layer, the manifests, skills and icons, the host checks and the rel
 
 ## Install
 
-The marketplace stays where people added it, in the devtools repository:
+Install from this repository’s published marketplace:
 
 ```sh
-codex plugin marketplace add mainsequence-sdk/mainsequence-devtools
+codex plugin marketplace add mainsequence-sdk/mainsequence-codex-plugin
 codex plugin add mainsequence@mainsequence
 ```
 
@@ -48,12 +48,29 @@ package. Node 22 or newer is required. Review and trust the plugin's hook before
 hooks, and an untrusted hook cannot intercept `/ms`. Then start a new chat, or toggle
 MainSequence off and on in the desktop Plugins settings to hot-reload an existing chat.
 
+### Replacing the retired devtools marketplace
+
+The Codex marketplace belongs to this repository. The catalog in the shared devtools
+repository has been removed. If you previously added that marketplace, replace its
+source before upgrading:
+
+```sh
+codex plugin marketplace remove mainsequence
+codex plugin marketplace add mainsequence-sdk/mainsequence-codex-plugin
+codex plugin add mainsequence@mainsequence
+```
+
+This replaces the marketplace source, not the installed plugin. The marketplace name
+and plugin ID remain `mainsequence` and `mainsequence@mainsequence`. MainSequence login
+and saved MCP connections remain outside the plugin; no account or settings migration
+is required. Start a new chat, or toggle the plugin off and on after any running turn.
+
 ### Upgrading from `mainsequence-devtools`
 
 The plugin was renamed, and Codex identifies a plugin by its marketplace entry name, so the
-installed `mainsequence-devtools@mainsequence` is not updated in place. Refresh the
-marketplace, install the new entry, trust its hook, then remove the old plugin so that only
-one hook answers `/ms`:
+installed `mainsequence-devtools@mainsequence` is not updated in place. First replace
+the retired marketplace source as described above, then install the new entry, trust its
+hook, and remove the old plugin so that only one hook answers `/ms`:
 
 ```sh
 codex plugin marketplace upgrade mainsequence
@@ -178,5 +195,7 @@ plugin installed from another marketplace. Results are recorded in
 A `v<version>` tag runs the same checks from the published devtools archive and publishes
 the verified npm archive with provenance through npm trusted publishing (repository
 `mainsequence-sdk/mainsequence-codex-plugin`, workflow `release.yml`, environment `npm`).
-Published versions are immutable. After publishing, point the marketplace entry in the
-devtools repository at the new version.
+Published versions are immutable. After publishing and verifying the npm archive, advance
+`.agents/plugins/marketplace.json` in this repository to the published version. The
+marketplace stays on the last published version while a new release is being prepared.
+`node scripts/check-marketplace.cjs` validates its identity, npm source and version pin.

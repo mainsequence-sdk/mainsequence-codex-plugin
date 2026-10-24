@@ -4,6 +4,7 @@ const pkg = require('../package.json');
 const manifest = require('../codex/.codex-plugin/plugin.json');
 const build = require('../codex/build-info.json');
 const lock = require('../package-lock.json');
+require('./check-marketplace.cjs');
 assert.equal(pkg.private, undefined);
 assert.equal(pkg.publishConfig.access, 'public');
 assert.equal(pkg.name, '@dev-mainsequence/codex-plugin');

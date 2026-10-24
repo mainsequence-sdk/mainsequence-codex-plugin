@@ -1,5 +1,28 @@
 # Codex plugin verification
 
+## Marketplace ownership (2026-10-24)
+
+The public `.agents/plugins/marketplace.json` now belongs to this repository. It
+retains the existing `mainsequence@mainsequence` identity and pins the already
+published `@dev-mainsequence/codex-plugin@0.7.10` archive. The shared devtools
+repository no longer hosts the Codex catalog. No runtime, dependency, credential,
+backend or provider changes are part of this move.
+
+The README documents new installation from `mainsequence-sdk/mainsequence-codex-plugin`
+and replacement of a configured devtools source. `scripts/check-marketplace.cjs`
+validates catalog ownership, identity, exact npm version, source and install policy
+as part of the release check.
+
+Both release checks passed: 56 Codex tests, 182 devtools tests, complete builds and
+npm package verification. Codex CLI 0.163.0 installed the published 0.7.10 npm package
+in a disposable `CODEX_HOME`. Removing its old marketplace source and adding this
+repository’s local catalog preserved every installed-plugin field except the
+marketplace source: ID, version, enabled state, package and policy were unchanged.
+A repeated install resolved the same cached plugin. No hook trust was granted and
+no MainSequence backend, model endpoint or user account was used. The normal Codex
+configuration’s before/after SHA-256 matched. Public-URL acceptance follows the
+catalog’s merge, before removal of the devtools catalog.
+
 ## 0.3.1 — devtools 0.3.1: MCP names stored with saved connections (2026-10-22)
 
 The plugin bundles [devtools 0.3.1](https://github.com/mainsequence-sdk/mainsequence-devtools/pull/15)
@@ -83,7 +106,8 @@ Findings:
   of the upgrade, not optional cleanup. Removal leaves the old `hooks.state` trust entry in
   `config.toml`; it is inert.
 
-Migration note for users of `mainsequence-devtools` (also in the README):
+Historical 0.3.0 migration note for users of `mainsequence-devtools` (the current
+README additionally replaces the retired devtools marketplace source):
 
 ```sh
 codex plugin marketplace upgrade mainsequence
