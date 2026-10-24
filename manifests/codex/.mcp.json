@@ -7,6 +7,10 @@
       ],
       "cwd": ".",
       "env_vars": [
+        "DBUS_SESSION_BUS_ADDRESS",
+        "XDG_RUNTIME_DIR",
+        "DISPLAY",
+        "WAYLAND_DISPLAY",
         "MAINSEQUENCE_ENDPOINT",
         "MAINSEQUENCE_ACCESS_TOKEN",
         "MAINSEQUENCE_REFRESH_TOKEN"

@@ -77,4 +77,45 @@ if (process.env.FIXTURE_SLOW) setTimeout(()=>{}, 10000);
   }
   return { root, base, git: args => git(root, args) };
 }
-module.exports = { fixtureBackend, project, git };
+// Isolated Linux desktop/Secret Service fixture. Never invokes the real keyring:
+// the executable below is first on PATH and accepts read-only fixture lookups.
+async function linuxDesktopSession(t) {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'ms linux desktop '));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const calls = [];
+  const server = http.createServer((req, res) => {
+    calls.push({ path: req.url, method: req.method });
+    res.setHeader('Content-Type', 'application/json');
+    if (req.headers.authorization !== 'Bearer fixture-machine-access') return res.writeHead(401).end('{}');
+    if (req.url === '/api/v1/users/me/') return res.end(JSON.stringify({ username: 'fixture-linux-user' }));
+    if (req.url?.startsWith('/api/v1/organization-environments/')) return res.end(JSON.stringify({ count: 0, results: [] }));
+    res.writeHead(404).end('{}');
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));
+  const backend = `http://127.0.0.1:${server.address().port}`;
+  const desktop = { DBUS_SESSION_BUS_ADDRESS: 'unix:path=/fixture/session-bus', XDG_RUNTIME_DIR: '/fixture/runtime', DISPLAY: ':fixture', WAYLAND_DISPLAY: 'wayland-fixture' };
+  const failureFile = path.join(root, 'helper-failure');
+  const bin = path.join(root, 'bin'); await fs.mkdir(bin);
+  await fs.writeFile(path.join(bin, 'secret-tool'), `#!${process.execPath}
+const assert = require('node:assert/strict');
+const expected = ${JSON.stringify(desktop)};
+const fs = require('node:fs');
+if (fs.existsSync(${JSON.stringify(failureFile)})) {
+  process.stderr.write(fs.readFileSync(${JSON.stringify(failureFile)}, 'utf8'));
+  process.exit(1);
+}
+if (Object.entries(expected).some(([name, value]) => process.env[name] !== value)) {
+  process.stderr.write('secret-tool: Cannot autolaunch D-Bus without X11 $DISPLAY\\n');
+  process.exit(1);
+}
+const args = process.argv.slice(2);
+assert.equal(args[0], 'lookup', 'This fixture must never write or delete credentials.');
+assert.equal(args[2], 'MainSequenceCLI.auth');
+assert.equal(args[4], ${JSON.stringify(require('@dev-mainsequence/devtools').sessionAccount(backend))});
+console.log(${JSON.stringify(JSON.stringify({ v: 1, backend, username: 'fixture-linux-user', access: 'fixture-machine-access', refresh: 'fixture-machine-refresh' }))});
+`, { mode: 0o755 });
+  const baseEnv = { PATH: bin + path.delimiter + process.env.PATH, HOME: root, CODEX_HOME: path.join(root, 'codex-home'), MAINSEQUENCE_ENDPOINT: backend, MAINSEQUENCE_CODEX_TOOL_CATALOG: 'off' };
+  return { root, backend, desktop, baseEnv, env: { ...baseEnv, ...desktop }, calls, fail: stderr => fs.writeFile(failureFile, stderr) };
+}
+module.exports = { fixtureBackend, project, git, linuxDesktopSession };

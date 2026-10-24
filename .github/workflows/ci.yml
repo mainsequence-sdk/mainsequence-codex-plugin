@@ -19,4 +19,7 @@ jobs:
       # not published yet, the script builds it from the devtools repository at its release
       # tag and checks the archive against the lockfile integrity.
       - run: node scripts/install-devtools.cjs
+        env:
+          # Before 0.3.14 is published, verify the identical archive from this upstream fix.
+          DEVTOOLS_SOURCE_REF: codex/linux-session-errors
       - run: npm run release:check

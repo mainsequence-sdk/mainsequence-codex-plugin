@@ -173,3 +173,30 @@ and verifies the npm archive as Codex installs it, without `node_modules` or the
 checkout. `npm run verify:codex` and `npm run verify:codex:reload` run real app-server turns
 against a counted offline model fixture in an isolated Codex home. Live acceptance against
 a real backend is recorded in each release's pull request and GitHub release, not here.
+
+## Linux credential-store diagnostics
+
+[Codex issue #11](https://github.com/mainsequence-sdk/mainsequence-codex-plugin/issues/11)
+has a launcher correction here and a shared diagnostic fix in
+[devtools #24](https://github.com/mainsequence-sdk/mainsequence-devtools/issues/24).
+The manifest forwards `DBUS_SESSION_BUS_ADDRESS`, `XDG_RUNTIME_DIR`, `DISPLAY` and
+`WAYLAND_DISPLAY`. Only names are packaged; the host supplies their values.
+Devtools owns classification and fixed safe messages. Discovery/native tools retain
+its optional `error.reason`; no helper stderr or credential record is exposed.
+
+The packaged regression checks open/sign-in failures for `SESSION_UNAVAILABLE`,
+`LOCKED`, `SERVICE_UNAVAILABLE`, `ACCESS_DENIED` and `HELPER_FAILED`, then verifies the
+same fixture machine session as the CLI when forwarding is present. A fake secret-tool,
+isolated home and loopback backend keep real credentials untouched.
+`node scripts/verify-linux-session-host.mjs` reproduces failure with the old allowlist
+and success with the fixed allowlist through fresh native Codex hosts, with no model turns.
+The release check passes all 58 tests and verifies standalone/npm packages.
+
+The launcher fix was also reinstalled in the active Codex chat: after the user toggled
+the plugin off and on, native open verified the existing machine session, loaded both
+environments and showed the connected panel. No fresh sign-in was needed.
+
+Both Codex and Claude pin the same checked upstream archive. Publish devtools first,
+verify its registry integrity against the lockfile, then release the plugins. Until
+publication, CI builds upstream's `codex/linux-session-errors` branch and checks the
+exact archive integrity. The public marketplace keeps its published package pin.

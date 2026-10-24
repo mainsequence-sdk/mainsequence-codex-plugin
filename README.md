@@ -174,3 +174,13 @@ release of that tag. After publishing, read the archive's integrity from the reg
 another), then advance `.agents/plugins/marketplace.json` to the published version. The
 marketplace stays on the last published version while a release is being prepared;
 `node scripts/check-marketplace.cjs` enforces that it never advertises an unpublished one.
+
+## Linux desktop sessions
+
+The native MCP server needs the same desktop-session context as the terminal runner
+to reach Secret Service and open sign-in. The plugin forwards
+`DBUS_SESSION_BUS_ADDRESS`, `XDG_RUNTIME_DIR`, `DISPLAY` and `WAYLAND_DISPLAY` from
+Codex's environment. Start Codex from your desktop session. After installing an
+updated local build, toggle MainSequence off and on in Plugins to reload this chat.
+Shared devtools errors preserve safe reasons for unavailable sessions, services and
+locked stores. See [diagnostics and verification](docs/agents-tools-panel.md#linux-credential-store-diagnostics).

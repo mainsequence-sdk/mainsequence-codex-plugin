@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { ActionResult, SessionStatus, PlatformAgent, createDevTools } from '@dev-mainsequence/devtools';
+import type { ActionResult, SessionStatus, PlatformAgent, CredentialStoreFailureReason, createDevTools } from '@dev-mainsequence/devtools';
 
 export type Dispatch = ReturnType<typeof createDevTools>['dispatch'];
 type Row = Record<string, unknown>;
@@ -8,14 +8,14 @@ const row = (value: unknown): Row => value !== null && typeof value === 'object'
 const text = (value: unknown, max = 4000): string => typeof value === 'string' ? value.slice(0, max) : '';
 const uuid = (value: unknown): value is string => typeof value === 'string' && /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(value);
 export class DiscoveryError extends Error {
-  constructor(readonly code: string, message: string) { super(message); }
+  constructor(readonly code: string, message: string, readonly reason?: CredentialStoreFailureReason) { super(message); }
 }
 // Every refusal names the argument and what would be accepted: the model reads these, and
 // one generic sentence for five different mistakes was indistinguishable from a broken host.
 const invalid = (message: string) => new DiscoveryError('INVALID_REQUEST', message);
 const shown = (value: unknown) => JSON.stringify(typeof value === 'string' ? value.slice(0, 80) : value === undefined ? 'missing' : value).slice(0, 100);
 function success<T>(result: ActionResult<T>): T {
-  if (result.status !== 'success') throw new DiscoveryError(result.error?.code || 'API_ERROR', result.summary);
+  if (result.status !== 'success') throw new DiscoveryError(result.error?.code || 'API_ERROR', result.summary, result.error?.reason);
   if (result.data === undefined) throw new DiscoveryError('API_ERROR', 'MainSequence returned no data.');
   return result.data;
 }
@@ -49,7 +49,7 @@ export function createDiscovery(dependencies?: {
   async function status(dispatch: Dispatch, conversationId?: string) {
     prune();
     const local = account(success(await dispatch({ action: 'auth-status' })));
-    const base = { account: local, environments: [] as { uid: string; name: string; isProduction: boolean }[], contextId: null as string | null, issue: null as { code: string; message: string } | null };
+    const base = { account: local, environments: [] as { uid: string; name: string; isProduction: boolean }[], contextId: null as string | null, issue: null as { code: string; message: string; reason?: CredentialStoreFailureReason } | null };
     if (!local.authenticated) return base;
     try {
       const verified = account(success(await dispatch({ action: 'auth-status', backend: local.backend, check: true })));
@@ -67,7 +67,7 @@ export function createDiscovery(dependencies?: {
         selectedEnvironmentUid: available.some(environment => environment.uid === selected) ? selected : null };
     } catch (error) {
       if (!(error instanceof DiscoveryError)) throw error;
-      return { ...base, issue: { code: error.code, message: error.message } };
+      return { ...base, issue: { code: error.code, message: error.message, ...(error.reason ? { reason: error.reason } : {}) } };
     }
   }
   async function scoped(dispatch: Dispatch, args: Row, run: (context: Context, environmentUid: string) => Promise<unknown>) {

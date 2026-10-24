@@ -29,7 +29,7 @@ const discovery = createDiscovery({
   repositories: async (backend, account, signal) => {
     const host = createNodeHost(), session = await bindSessionAccount(createSessionService(host,{signal,fetch:transport.fetch, sessionLock:transport.sessionLock}),backend,account);
     const result = await createDevTools({host,session,signal,fetch:transport.fetch, sessionLock:transport.sessionLock}).dispatch({action:'repositories',backend});
-    if (result.status !== 'success') throw new DiscoveryError(result.error?.code || 'API_ERROR',result.summary);
+    if (result.status !== 'success') throw new DiscoveryError(result.error?.code || 'API_ERROR',result.summary,result.error?.reason);
     await session.status(backend,true); return result.data;
   }
 });
@@ -139,7 +139,8 @@ async function request(method: string, params: RecordValue, signal: AbortSignal)
         return { ...('error' in data && data.error ? { isError: true } : {}), content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data };
       } catch (error) {
         const data = { error: { code: signal.aborted ? 'CANCELLED' : error instanceof DiscoveryError || error instanceof ToolingError ? error.code : 'INTERNAL_ERROR',
-          message: signal.aborted ? 'The native wait was stopped. Read or recover the same saved request ID; do not resend.' : error instanceof DiscoveryError || error instanceof ToolingError ? error.message : 'MainSequence could not complete the operation. Read the saved request status before recovery.' } };
+          message: signal.aborted ? 'The native wait was stopped. Read or recover the same saved request ID; do not resend.' : error instanceof DiscoveryError || error instanceof ToolingError ? error.message : 'MainSequence could not complete the operation. Read the saved request status before recovery.',
+          ...(!signal.aborted && (error instanceof DiscoveryError || error instanceof ToolingError) && error.reason ? { reason: error.reason } : {}) } };
         return { isError: true, content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data };
       }
     }
