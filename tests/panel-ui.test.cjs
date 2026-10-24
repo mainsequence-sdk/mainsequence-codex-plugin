@@ -4,8 +4,13 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const html = fs.readFileSync('src/hosts/panel/panel.html', 'utf8').replace('/* MAINSEQUENCE_PANEL_BUILD */ null', JSON.stringify({ version: 'test', panelId: 'test-build' }));
 function element() { return { value: '', disabled: false, textContent: '', hidden: false, children: [], attributes: {}, style: {setProperty(){}},
-  setAttribute(key, value) { this.attributes[key] = value; }, append(...nodes) { this.children.push(...nodes); }, replaceChildren(...nodes) { this.children = nodes; }, focus() {} }; }
+  setAttribute(key, value) { this.attributes[key] = value; }, append(...nodes) { for (const n of nodes) n.parentNode = this; this.children.push(...nodes); }, replaceChildren(...nodes) { for (const n of nodes) n.parentNode = this; this.children = nodes; },
+  replaceWith(next) { const p = this.parentNode, i = p ? p.children.indexOf(this) : -1; if (i >= 0) { p.children[i] = next; next.parentNode = p; } }, focus() {} }; }
 async function panel(handler, storage = new Map()) {
+  // Minute-long timers (the icon re-check) are captured for the test to fire; shorter ones run for real.
+  const scheduled = [];
+  const schedule = (fn, ms) => { if (ms >= 60000) { const t = { fn, ms, cleared: false }; scheduled.push(t); return t; } return setTimeout(fn, ms); };
+  const cancel = t => { if (t && typeof t === 'object' && 'fn' in t) t.cleared = true; else clearTimeout(t); };
   const els = new Map([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, element()]));
   const listeners = new Map(), requests = [], styles = new Map();
   const receive = data => listeners.get('message')({ source: parent, data: { jsonrpc: '2.0', ...data } });
@@ -21,8 +26,8 @@ async function panel(handler, storage = new Map()) {
   } };
   const document = { getElementById: id => els.get(id), createElement: () => element(), documentElement: { style: { setProperty: (k, v) => styles.set(k, v) } } };
   const localStorage = {getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
-  await vm.runInNewContext('(async()=>{' + html.match(/<script type="module">([\s\S]*?)<\/script>/)[1] + '})()', { document, window: {}, parent, localStorage, addEventListener: (name, fn) => listeners.set(name, fn), setTimeout, clearTimeout, crypto: require('node:crypto') });
-  return { el: id => els.get(id), requests, receive, document, styles };
+  await vm.runInNewContext('(async()=>{' + html.match(/<script type="module">([\s\S]*?)<\/script>/)[1] + '})()', { document, window: {}, parent, localStorage, addEventListener: (name, fn) => listeners.set(name, fn), setTimeout: schedule, clearTimeout: cancel, crypto: require('node:crypto') });
+  return { el: id => els.get(id), requests, receive, document, styles, scheduled, pendingRechecks: () => scheduled.filter(t => !t.cleared) };
 }
 const account = { authenticated: true, username: 'Analyst', source: 'machine', checked: true, backend: 'https://example.test' };
 const status = { account, contextId: 'context', environments: [{ uid: 'env-a', name: 'Research' }, { uid: 'env-b', name: 'Sandbox' }] };
@@ -257,6 +262,43 @@ test('Code and Settings expose setup, shared preferences and account actions',as
  await ui.el('settings-tab').onclick();assert.match(flatten(ui.el('results')),/Save settings/);assert.match(flatten(ui.el('results')),/Renew session/);assert.match(flatten(ui.el('results')),/Sign out/);
 });
 
+
+test('agent icons are re-read once a minute while shown, without a refresh flag, and only a changed icon is redrawn in place',async()=>{
+ const image = text => ({ source: 'data:image/svg+xml;base64,' + Buffer.from('<svg>' + text + '</svg>').toString('base64'), stillSource: 'data:image/svg+xml;base64,' + Buffer.from('<svg>' + text + '-still</svg>').toString('base64'), rendering: 'color', imageRendering: 'auto' });
+ let current = image('one'), calls = [];
+ const ui = await panel(async (name, args) => {
+  if (name === 'mainsequence_open') return { ...status, selectedEnvironmentUid: 'env-a' };
+  calls.push({ name, args });
+  if (name === 'mainsequence_view' && args.view === 'agent') return { agent: { ...page('Inline').results[0], icon: current, skills: [] } };
+  return { ...page('Inline'), results: [{ ...page('Inline').results[0], icon: current }] };
+ });
+ const drawn = () => walk(ui.el('results')).filter(el => typeof el.src === 'string' && el.src.startsWith('data:image'));
+ assert.equal(drawn().length, 1); assert.equal(drawn()[0].src, image('one').source);
+ assert.equal(ui.pendingRechecks().length, 1, 'one re-check timer while the Agents list is shown'); assert.equal(ui.pendingRechecks()[0].ms, 60000);
+ // Unchanged: a second directory read without refresh, the same element stays.
+ const first = drawn()[0]; await ui.pendingRechecks()[0].fn();
+ assert.equal(calls.filter(c => c.name === 'mainsequence_discover').length, 2); assert.equal(calls.at(-1).args.refresh, undefined, 're-checks never invalidate shared caches');
+ assert.equal(drawn()[0], first); assert.equal(ui.pendingRechecks().length, 1, 'the next re-check is scheduled');
+ // Changed in Command Center: redrawn in place with the new source; nothing else re-rendered.
+ current = image('two'); await ui.pendingRechecks()[0].fn();
+ assert.equal(drawn().length, 1); assert.equal(drawn()[0].src, image('two').source); assert.notEqual(drawn()[0], first);
+ assert.equal(walk(ui.el('results')).filter(el => el.textContent === 'Inline').length, 1);
+ // Removed in Command Center: the placeholder replaces the image; restored: the image returns.
+ current = null; await ui.pendingRechecks()[0].fn(); assert.equal(drawn().length, 0); assert.ok(walk(ui.el('results')).some(el => el.textContent === '◇'));
+ current = image('three'); await ui.pendingRechecks()[0].fn(); assert.equal(drawn()[0].src, image('three').source);
+ // A failed re-check keeps the drawn icon and tries again later.
+ const stable = drawn()[0]; const good = ui.pendingRechecks()[0]; calls.push({ name: 'fail' }); current = new Proxy({}, { get() { throw new Error('directory unavailable'); } });
+ await good.fn(); assert.equal(drawn()[0], stable); assert.equal(ui.pendingRechecks().length, 1); current = image('three');
+ // Details re-read the one agent through the view; another section ends the timer; Agents starts it again.
+ await button(ui, 'results', 'Inline').onclick(); assert.equal(ui.pendingRechecks().length, 1);
+ current = image('four'); await ui.pendingRechecks()[0].fn();
+ assert.equal(calls.at(-1).name, 'mainsequence_view'); assert.equal(calls.at(-1).args.view, 'agent'); assert.ok(drawn().some(el => el.src === image('four').source));
+ await ui.el('tools-tab').onclick(); assert.equal(ui.pendingRechecks().length, 0, 'no re-check off the Agents screens');
+ await ui.el('agents-tab').onclick(); assert.equal(ui.pendingRechecks().length, 1);
+ // Explicit Refresh still asks for a fresh read; teardown ends the timer.
+ await ui.el('refresh').onclick(); assert.equal(calls.at(-1).args.refresh, true);
+ ui.receive({ id: 'teardown-1', method: 'ui/resource-teardown', params: {} }); assert.equal(ui.pendingRechecks().length, 0);
+});
 
 test('agent icons render from the directory response with no follow-up assets call',async()=>{
  const icon={source:'data:image/svg+xml;base64,PHN2Zy8+',stillSource:'data:image/svg+xml;base64,PHN2Zy8+',rendering:'color',imageRendering:'pixelated'};
