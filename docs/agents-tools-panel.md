@@ -571,4 +571,18 @@ icons; two minute re-reads each read the directory page without `refresh` (14–
 against the local backend, in the background), found no change and redrew nothing; the timer
 ended when Tools was shown, came back on Agents and ended on teardown. No icon was changed in
 Command Center during the run; the changed, removed and failed paths are the UI test's.
-Publication records for 0.7.10 follow below once released.
+Published on 2026-10-24 from tag `v0.7.10` on main `b705951` by the release workflow (run
+40082819471: `npm ci` from the registry devtools archive, `release:check`, `npm publish
+--provenance` through trusted publishing). The registry serves `@dev-mainsequence/codex-plugin@0.7.10`
+as `latest`, 70 files, integrity
+`sha512-L23DWgVJ+YfplieeQhbmcjgU2N2h65Nc1EixFLs6AzaCaRW65uZxb1DtZn+CKX6AEPEdksh7kQfyZXHkL9sbJA==`,
+read from the registry after publishing. The devtools marketplace entry was advanced from 0.7.9 to
+0.7.10 (mainsequence-sdk/mainsequence-devtools#21, main `c857329`). In an isolated `CODEX_HOME`
+with the Codex CLI 0.163.0, `codex plugin marketplace add
+https://github.com/mainsequence-sdk/mainsequence-devtools.git`, `codex plugin marketplace upgrade
+mainsequence` and `codex plugin add mainsequence@mainsequence` installed `mainsequence@mainsequence`
+0.7.10 from the npm package, with the manifest, `dist/panel-server.js`, `dist/runner.js`, hooks,
+skills and `.mcp.json` in place and `build-info.json` naming devtools 0.3.12 by its registry
+integrity; `codex plugin list` reported it installed and enabled. The owner's own Codex home was not
+touched; upgrading it is a user step (`codex plugin marketplace upgrade mainsequence`, `codex plugin
+add mainsequence@mainsequence`, then review the hook and start a new chat).
