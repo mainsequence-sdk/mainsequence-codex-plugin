@@ -5,7 +5,7 @@ import { createDevTools, createNodeHost, createSessionService, bindSessionAccoun
   type ActionRequest, type ProjectOperationRequest, type DeploymentRequest, type SessionLock } from '@dev-mainsequence/devtools';
 import { createDiscovery, type Dispatch, DiscoveryError } from './discovery';
 type Row = Record<string, unknown>;
-type Job = { id: string; action: string; context: string; status: 'running' | 'success' | 'failure' | 'cancelled'; progress: string; startedAt: string; result?: ActionResult; owner: string; controller: AbortController };
+type Job = { id: string; action: string; context: string; environmentUid: string; status: 'running' | 'success' | 'failure' | 'cancelled'; progress: string; startedAt: string; result?: ActionResult; owner: string; controller: AbortController };
 const READ = new Set(['status','resolve','sdk-status','local-repositories','delete-local-preview','docker-preview','devcontainer-preview','deployment-history','deployment-run','deployment-logs','update-sdk','install-skills']);
 const WRITE = new Set(['setup','sync','update-sdk','update-agents','install-skills','skills-sync','install','env-cleanup','open-folder','docker-build','devcontainer-write','delete-local','organization-project-setup','organization-project-link']);
 const ALLOWED = new Set(['root','projectType','repositoryUid','branch','baseDir','install','dryRun','organization','confirmation','image','platform','expectedDigest','projectUid','branchUid','target','commandCenterUrl','codeRepositoryBranchUid','limit','offset','runUid','kind','stepUid','cursor']);
@@ -17,12 +17,15 @@ export function createWorkspace(discovery: ReturnType<typeof createDiscovery>, d
     if(dependencies.execute) return dependencies.execute(action,args,scope,environmentUid,signal,progress);
     const host = createNodeHost(progress);
     host.openFolder = async root => { if (!await host.openBrowser(pathToFileURL(root).href)) throw new ToolingError('BROWSER_FAILED','The folder could not open.'); };
-    const session = await bindSessionAccount(createSessionService(host, { signal, fetch:dependencies.fetch, sessionLock:dependencies.sessionLock }), scope.backend, scope.account);
+    const originalSession = createSessionService(host, { signal, fetch:dependencies.fetch, sessionLock:dependencies.sessionLock });
+    const session = await bindSessionAccount(originalSession, scope.backend, scope.account);
     const input = { ...args, action, backend: scope.backend, expectedAccount: scope.account, environmentUid };
     let result: ActionResult;
     if (action.startsWith('deployment-')) result = await createDeployments({host,signal,fetch:dependencies.fetch, sessionLock:dependencies.sessionLock}).dispatch(input as DeploymentRequest);
     else if (PROJECT_OPERATION_ACTIONS.has(action)) result = await createProjectOperations({ host, signal }).dispatch(input as unknown as ProjectOperationRequest);
-    else result = await createDevTools({ host, session, signal, fetch:dependencies.fetch, sessionLock:dependencies.sessionLock }).dispatch({ ...input, ...(action === 'organization-project-setup' ? { instructionsFile: 'AGENTS.md' } : {}) } as ActionRequest);
+    // Organization actions bind expectedAccount themselves. A scoped session cannot
+    // be rebound; ordinary repository actions instead need our already-bound session.
+    else result = await createDevTools({ host, session: action.startsWith('organization-project-') ? originalSession : session, signal, fetch:dependencies.fetch, sessionLock:dependencies.sessionLock }).dispatch({ ...input, ...(action === 'organization-project-setup' ? { instructionsFile: 'AGENTS.md' } : {}) } as ActionRequest);
     await session.status(scope.backend, true);
     if(action==='organization-project-setup' && result.data && typeof result.data==='object') {const {claudeUrl: _,...workspace}=result.data as Record<string,unknown>;result={...result,data:workspace};}
     return result;
@@ -63,9 +66,10 @@ export function createWorkspace(discovery: ReturnType<typeof createDiscovery>, d
       if (name === 'mainsequence_workspace' && ['update-sdk','install-skills'].includes(action) && input.dryRun !== true) throw new DiscoveryError('INVALID_REQUEST','Preview requires dryRun: true.');
       if (name === 'mainsequence_workspace') return { result: await execute(action,input,context,environmentUid,signal) };
       // Accepted operations outlive panel close/native Stop. Cancellation is explicit; never replay a job.
+      if (action === 'setup' && [...jobs.values()].some(job => job.owner === ownerKey(context) && job.action === action && job.context === String(input.repositoryUid) && job.status === 'running')) throw new DiscoveryError('PROJECT_BUSY','This repository is already being set up. View its running operation before trying again.');
       if ([...jobs.values()].filter(j => j.status === 'running').length >= 8) throw new DiscoveryError('PROJECT_BUSY','Wait for a running operation to finish.');
       while(jobs.size >= 100) { const old = [...jobs.values()].find(j => j.status !== 'running'); if (!old) break; jobs.delete(old.id); }
-      const job: Job = {id:randomUUID(),action,context:String(input.root || input.projectUid || input.repositoryUid || ''),status:'running',progress:'Starting…',startedAt:new Date().toISOString(),owner:ownerKey(context),controller:new AbortController()};
+      const job: Job = {id:randomUUID(),action,context:String(input.root || input.projectUid || input.repositoryUid || ''),environmentUid,status:'running',progress:'Starting…',startedAt:new Date().toISOString(),owner:ownerKey(context),controller:new AbortController()};
       jobs.set(job.id,job);
       void execute(action,input,context,environmentUid,job.controller.signal,message => {job.progress=message;}).then(result => {job.result=result;job.status=result.status;job.progress=result.summary;},error => {
         job.status=job.controller.signal.aborted?'cancelled':'failure';job.progress=error instanceof ToolingError?error.message:'The operation stopped. Inspect partial changes before retrying.';

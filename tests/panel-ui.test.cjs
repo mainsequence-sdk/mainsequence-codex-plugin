@@ -6,10 +6,10 @@ const html = fs.readFileSync('src/hosts/panel/panel.html', 'utf8').replace('/* M
 function element() { return { value: '', disabled: false, textContent: '', hidden: false, children: [], attributes: {}, style: {setProperty(){}},
   setAttribute(key, value) { this.attributes[key] = value; }, append(...nodes) { for (const n of nodes) n.parentNode = this; this.children.push(...nodes); }, replaceChildren(...nodes) { for (const n of nodes) n.parentNode = this; this.children = nodes; },
   replaceWith(next) { const p = this.parentNode, i = p ? p.children.indexOf(this) : -1; if (i >= 0) { p.children[i] = next; next.parentNode = p; } }, focus() {} }; }
-async function panel(handler, storage = new Map()) {
+async function panel(handler, storage = new Map(), options = {}) {
   // Minute-long timers (the icon re-check) are captured for the test to fire; shorter ones run for real.
   const scheduled = [];
-  const schedule = (fn, ms) => { if (ms >= 60000) { const t = { fn, ms, cleared: false }; scheduled.push(t); return t; } return setTimeout(fn, ms); };
+  const schedule = (fn, ms) => { if (ms >= (options.captureTimersFrom || 60000)) { const t = { fn, ms, cleared: false }; scheduled.push(t); return t; } return setTimeout(fn, ms); };
   const cancel = t => { if (t && typeof t === 'object' && 'fn' in t) t.cleared = true; else clearTimeout(t); };
   const els = new Map([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, element()]));
   const listeners = new Map(), requests = [], styles = new Map();
@@ -26,7 +26,7 @@ async function panel(handler, storage = new Map()) {
   } };
   const document = { getElementById: id => els.get(id), createElement: () => element(), documentElement: { style: { setProperty: (k, v) => styles.set(k, v) } } };
   const localStorage = {getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
-  await vm.runInNewContext('(async()=>{' + html.match(/<script type="module">([\s\S]*?)<\/script>/)[1] + '})()', { document, window: {}, parent, localStorage, addEventListener: (name, fn) => listeners.set(name, fn), setTimeout: schedule, clearTimeout: cancel, crypto: require('node:crypto') });
+  await vm.runInNewContext('(async()=>{' + html.match(/<script type="module">([\s\S]*?)<\/script>/)[1] + '})()', { document, window: {}, parent, localStorage, addEventListener: (name, fn) => listeners.set(name, fn), setTimeout: schedule, clearTimeout: cancel, crypto: require('node:crypto'), Date: class extends Date { static now() { return options.now ? options.now() : Date.now(); } } });
   return { el: id => els.get(id), requests, receive, document, styles, scheduled, pendingRechecks: () => scheduled.filter(t => !t.cleared) };
 }
 const account = { authenticated: true, username: 'Analyst', source: 'machine', checked: true, backend: 'https://example.test' };
@@ -101,7 +101,7 @@ test('Tools starts with saved connections; adding an MCP requires an explicit sc
 });
 
 const walk = el => [el, ...el.children.flatMap(walk)];
-const button = (ui, root, text) => walk(ui.el(root)).find(e => e.textContent === text);
+const button = (ui, root, text) => walk(ui.el(root)).find(e => e.textContent === text && typeof e.onclick === 'function');
 test('failed MCP calls display the remote error and uncertainty and cannot be replayed from the confirmation',async()=>{
   let calls=0;
   const ui=await panel(async(name,args)=>{
@@ -310,4 +310,74 @@ test('agent icons render from the directory response with no follow-up assets ca
  assert.ok(walk(ui.el('results')).some(el=>el.src===icon.source));
  assert.equal(ui.requests.filter(r=>r.params?.name==='mainsequence_discover').length,1);
  assert.equal(ui.requests.some(r=>r.params?.arguments?.view==='assets'),false);
+});
+
+const repository = (uid, name) => ({uid,code_repository_name:name,primary_language:'python',branches:[{repository_branch:'main'}]});
+const localContext = items => ({preferences:{baseDir:'/tmp/repos'},local:{status:'success',data:{items}},pluginWorkspace:null});
+test('two repository setups keep live progress and final outcomes after leaving Code and returning',async()=>{
+ const jobs=[],repos=[repository('one','First library'),repository('two','Second library')];let lists=0;
+ const ui=await panel(async(name,args)=>{
+  if(name==='mainsequence_open')return status;
+  if(name==='mainsequence_workspace')return localContext([]);
+  if(name==='mainsequence_operations'){lists++;return {operations:jobs.map(op=>({...op}))};}
+  if(name==='mainsequence_action'){const op={id:args.input.repositoryUid,context:args.input.repositoryUid,environmentUid:args.environmentUid,action:'setup',status:'running',progress:'Cloning '+args.input.repositoryUid};jobs.push(op);return {operation:{...op}};}
+  if(args.view==='repositories')return {results:repos};
+  return page('Analyst');
+ },new Map(),{captureTimersFrom:1000});
+ ui.el('environment').value='env-a';await ui.el('code-tab').onclick();
+ for(const name of ['First library','Second library']){
+  await button(ui,'results',name).onclick();await button(ui,'results','Set up').onclick();await button(ui,'confirmation','Confirm').onclick();
+  assert.equal(button(ui,'results','Setting up…').disabled,true);
+  await button(ui,'results','← Code').onclick();
+ }
+ assert.equal(jobs.length,2);assert.equal(ui.el('activity-tab').textContent,'2 running');
+ await ui.el('home-tab').onclick();await ui.el('code-tab').onclick();
+ assert.match(flatten(ui.el('results')),/Cloning one/);assert.match(flatten(ui.el('results')),/Cloning two/);
+ assert.equal(walk(ui.el('results')).filter(el=>el.textContent==='Setting up…'&&el.disabled).length,2);
+ const firstRow=button(ui,'results','First library').parentNode.parentNode.parentNode;
+ jobs[0].progress='Installing dependencies';
+ let timer=ui.pendingRechecks().find(t=>t.ms===2000);await timer.fn();
+ assert.match(flatten(ui.el('results')),/Installing dependencies/);assert.equal(button(ui,'results','First library').parentNode.parentNode.parentNode,firstRow,'polling updates each row without replacing the list');
+ jobs[0].status='success';jobs[0].progress='Ready';jobs[0].result={status:'success',summary:'Ready',data:{root:'/tmp/repos/first'}};
+ jobs[1].status='failure';jobs[1].progress='Backend returned invalid JSON';jobs[1].result={status:'failure',summary:jobs[1].progress,effects:{message:'Inspect partial changes before retrying.'}};
+ timer=ui.pendingRechecks().find(t=>t.ms===2000);await timer.fn();
+ assert.match(flatten(ui.el('results')),/Setup failed/);assert.match(flatten(ui.el('results')),/Backend returned invalid JSON/);assert.ok(button(ui,'results','Open'));assert.equal(ui.el('activity-tab').textContent,'Activity');
+ await button(ui,'results','Second library').onclick();assert.match(flatten(ui.el('results')),/Inspect partial changes before retrying/);
+ const previous=lists;assert.equal(ui.pendingRechecks().filter(t=>t.ms===2000).length,0,'polling stops when no jobs run');
+ ui.receive({id:'close',method:'ui/resource-teardown'});assert.equal(lists,previous);
+});
+
+test('reopening Code restores server-owned setup jobs without submitting another action',async()=>{
+ const jobs=[{id:'already-running',action:'setup',context:'one',environmentUid:'env-a',status:'running',progress:'Installing dependencies'}];let mutations=0;
+ const ui=await panel(async(name,args)=>{
+  if(name==='mainsequence_open')return status;
+  if(name==='mainsequence_workspace')return localContext([{repositoryUid:'one',name:'First library',path:'/tmp/repos/first'}]);
+  if(name==='mainsequence_operations')return {operations:jobs};
+  if(name==='mainsequence_action'){mutations++;throw Error('Must not replay');}
+  return {results:args.view==='repositories'?[repository('one','First library')]:[]};
+ },new Map(),{captureTimersFrom:1000});
+ ui.el('environment').value='env-a';await ui.el('code-tab').onclick();
+ assert.equal(button(ui,'results','Setting up…').disabled,true,'a partly-created local folder is still setting up');
+ await button(ui,'results','First library').onclick();assert.match(flatten(ui.el('results')),/Installing dependencies/);assert.equal(button(ui,'results','Setting up…').disabled,true);assert.equal(mutations,0);
+ ui.receive({id:'close',method:'ui/resource-teardown'});assert.equal(ui.pendingRechecks().length,0);
+});
+
+test('Code caches repository and workspace reads for sixty seconds, isolates environments, and explicitly refreshes',async()=>{
+ let now=1000,repositories=0,workspaces=0,fail=false;
+ const ui=await panel(async(name,args)=>{
+  if(name==='mainsequence_open')return status;
+  if(name==='mainsequence_workspace'){workspaces++;return localContext([]);}
+  if(name==='mainsequence_operations')return {operations:[]};
+  if(args.view==='repositories'){repositories++;if(fail)throw Error('Read failed');return {results:[repository('one',args.environmentUid+' library')]};}
+  return page('Analyst');
+ },new Map(),{now:()=>now});
+ ui.el('environment').value='env-a';await ui.el('code-tab').onclick();
+ now+=59999;await ui.el('home-tab').onclick();await ui.el('code-tab').onclick();await ui.el('code-all').onclick();
+ assert.equal(repositories,1);assert.equal(workspaces,1,'local scans also reuse the minute cache');
+ now++;await ui.el('code-tab').onclick();assert.equal(repositories,2);assert.equal(workspaces,2);
+ await ui.el('refresh').onclick();assert.equal(repositories,3);assert.equal(workspaces,3);
+ const fresh=ui.requests.filter(r=>r.params?.arguments?.refresh);assert.ok(fresh.some(r=>r.params.name==='mainsequence_view'));assert.ok(fresh.some(r=>r.params.name==='mainsequence_workspace'));
+ ui.el('environment').value='env-b';await ui.el('environment').onchange();assert.equal(repositories,4);assert.equal(workspaces,4);assert.match(flatten(ui.el('results')),/env-b library/);
+ fail=true;await ui.el('refresh').onclick();assert.match(ui.el('notice').textContent,/Read failed/);
+ fail=false;await ui.el('code-tab').onclick();assert.equal(repositories,6,'a failed refresh is not cached');
 });

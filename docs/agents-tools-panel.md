@@ -13,11 +13,13 @@ stay unchanged. No probe or custom Codex build is shipped.
 | Native context/recovery | Immutable request saved before native submission, at-most-once dispatch, durable receipts, same-ID recovery, uncertain sends blocked; native MCP results and labelled replies remain conversation context |
 | Agent tasks | Accepted task receipt, get/wait/cancel, continue an owned saved task, outputs in native context; no task read/recovery resends the original message |
 | Tools | Saved connections, Add MCP, connect/disconnect review, fresh schemas, explicit JSON tool-call review; catalog cache survives refresh failure; stable model-facing discovery/call tools |
-| Code | Remote/local search, branch selection, setup with optional install; folder/type, status/resolve/SDK; sync/install/SDK update and preview; instructions/skills and preview/sync; environment cleanup; Docker build preview; devcontainer preview/write; local deletion preview and explicit confirmation |
+| Code | Remote/local search, branch selection, setup with optional install, live per-repository progress and persistent failure details; folder/type, status/resolve/SDK; sync/install/SDK update and preview; instructions/skills and preview/sync; environment cleanup; Docker build preview; devcontainer preview/write; local deletion preview and explicit confirmation |
 | Projects | Search/pages, branch counts, descriptions, repository/branch links; local setup/update with Codex AGENTS.md; progress, cancellation, partial-effect reporting and explicit native workspace handoff |
 | Deployments | Environment/branch history, pages, run/workflow stages, related runs, durations, errors, active-run polling, stage logs, log filtering/cursors; read-only |
 | Settings | Existing shared account, browser login, connection check, renewal, explicit shared sign-out; repositories folder/backend/Command Center settings; diagnostics and local scan |
 | Activity | Agent receipts/tasks plus accepted workspace operations, progress, explicit cancellation and results; accepted workspace work survives panel close/native Stop while the server remains alive |
+
+Code keeps repository listings and local scans for 60 seconds while browsing. Refresh bypasses that cache, and completed workspace operations invalidate local scans. Running operations update every two seconds and remain visible when returning to Code; a running setup cannot be submitted again.
 
 ## What the plugin exposes automatically
 
