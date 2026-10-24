@@ -419,8 +419,8 @@ without any image-fetch fallback. The legacy `view: assets` request remains a
 network-free no-op for old panel HTML; reopen the current panel to render icons.
 
 The shared devtools transport still coalesces the combined response across chat
-processes. There is no periodic agent/icon refresh. Explicit Refresh requests a
-fresh directory. No change is made to the shared login or Claude.
+processes. There is no periodic agent/icon refresh (until 0.7.10, below). Explicit Refresh
+requests a fresh directory. No change is made to the shared login or Claude.
 
 ## Direct project tools, timeouts and distinct refusals — 0.7.8
 
@@ -539,3 +539,36 @@ it installed and enabled. The owner's own Codex home (local `mainsequence-local`
 0.7.8 installed) was not touched; upgrading it is a user step: `codex plugin marketplace upgrade
 mainsequence`, `codex plugin add mainsequence@mainsequence`, then review the hook and start a new
 chat.
+
+## Agent icons follow Command Center — 0.7.10
+
+An icon changed in Command Center reached an open panel only after Refresh or a new app card:
+the Agents list drew an agent's inline icon when it listed agents and nothing re-read the
+directory while the list stayed on screen. (The Claude Desktop plugin had the same gap and fixed
+it in its 0.4.20 with the per-agent icon route and entity tags; the Codex panel takes icons
+inline from the directory, so it re-reads that instead.)
+
+- While the Agents list or an agent's details stay on screen, the panel re-reads what it shows
+  once a minute: the directory page (`mainsequence_discover`, same search and offset) for the
+  list, the agent view for the details. The read carries no `refresh` flag: the shared
+  transport keeps a directory read for 30 s, so a read a minute later is fresh without
+  invalidating other panels' caches, unlike the Refresh button.
+- Only a changed icon is redrawn, in place: the list, drafts and scroll position stay. A
+  removed icon shows the placeholder; a failed re-read keeps the drawn icons and tries again at
+  the next minute.
+- The timer ends with the screen (another section, a detail or list change, environment
+  change, teardown) and pauses after 240 re-reads until the screen is opened again. Nothing is
+  stored; the inline icons live in the panel's memory as before.
+
+Verification on 2026-10-24: `npm run release:check` from the registry devtools 0.3.12 archive,
+56 tests (new: the panel UI test drives the minute timer through the vm harness and checks an
+unchanged, changed, removed, restored and failed re-read, the detail view's re-read, the timer
+ending on another section and on teardown, and that the Refresh button alone sends `refresh`),
+release metadata, the standalone and npm archives, the npm archive exercised as Codex installs
+it. Live acceptance with the built server over stdio and the server-stamped panel page driven
+in a minimal DOM (Production, seven agents, the shared machine session): the list drew seven
+icons; two minute re-reads each read the directory page without `refresh` (14–17 s per read
+against the local backend, in the background), found no change and redrew nothing; the timer
+ended when Tools was shown, came back on Agents and ended on teardown. No icon was changed in
+Command Center during the run; the changed, removed and failed paths are the UI test's.
+Publication records for 0.7.10 follow below once released.

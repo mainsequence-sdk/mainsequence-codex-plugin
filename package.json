@@ -1,6 +1,6 @@
 {
   "name": "@dev-mainsequence/codex-plugin",
-  "version": "0.7.9",
+  "version": "0.7.10",
   "description": "MainSequence for Codex: durable agent messaging in native chat, Agents and Tools discovery, developer commands and conversational MCPs",
   "license": "MIT",
   "engines": {
