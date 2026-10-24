@@ -1,58 +1,49 @@
 # MainSequence for Codex
 
-This repository is the **MainSequence Codex plugin**. Its production code lives in
-`src/`, its Codex manifest in `manifests/codex/`, and its installable bundle in `codex/`.
+MainSequence for Codex puts your MainSequence account inside Codex: sign in once, set up
+and maintain your repositories and projects, message platform agents from chat, connect
+project MCPs and call their tools, and follow deployments. It is the Codex plugin
+`mainsequence@mainsequence`, published as the npm package `@dev-mainsequence/codex-plugin`.
 
-The **0.7.1 development build** follows Claude's MainSequence panel layout using
-Codex theme tokens: Home, Code, Projects, Agents, Tools, Activity and Settings.
-It includes repository setup and maintenance, project setup and links, deployment
-history/stages/logs, shared account/settings controls, direct messages and agent tasks.
-Replies and task results use native MCP tools and remain in Codex conversation context.
-
-Ask Codex to **open MainSequence**. Shared devtools **0.3.5** owns authentication,
-account binding, domain APIs, local project operations, authenticated assets and durable
-delivery. Claude's repository and dependency remain unchanged. See the
-[capability matrix and verification](docs/agents-tools-panel.md), including the stock
-Codex host differences. No probe or custom Codex build is shipped.
-
-Choose **Talk**, select **Message** or **Task** when the agent supports both, write a
-message, then **Send in Codex**. The reply returns through a native
-MCP tool and stays in chat context. After Stop, use **Messages and recovery → Recover in
-Codex** on the original request. Recovery reuses saved work; an unknown remote outcome
-blocks resend. Browsing or selecting an example never sends a message automatically.
-
-The plugin also registers the `ms` slash-menu entry for explicit developer commands and
-the `mainsequence-mcp` skill for conversational project MCP access. The independent
-Claude application is unchanged.
-
-Version 0.3.1 added saved MCP names (see [the release notes](docs/codex-verification.md)). Version 0.3.0 was the first
-release from this repository. Until devtools 0.2.8 the plugin was built and published from
-[mainsequence-devtools](https://github.com/mainsequence-sdk/mainsequence-devtools) under the
-name `mainsequence-devtools` ([ADR 0003 there](https://github.com/mainsequence-sdk/mainsequence-devtools/blob/main/docs/adr/0003-codex-plugin-extraction.md)).
-The shared implementation is still that package; this repository owns the hook adapter, the
-presentation layer, the manifests, skills and icons, the host checks and the releases.
+It is built on the shared [MainSequence developer tooling](https://github.com/mainsequence-sdk/mainsequence-devtools),
+which also powers the [VS Code extension](https://github.com/mainsequence-sdk/ms-vscode-extension)
+and the [Claude Desktop plugin](https://github.com/mainsequence-sdk/mainsequence-claude-desktop).
+One sign-in on your machine serves all three and the `mainsequence` and
+`command-center-sdk` command lines.
 
 ## Install
 
-Install from this repository’s published marketplace:
+You need the Codex desktop app or the Codex CLI, Node 22 or newer on your `PATH`, and a
+MainSequence account. Repository setup needs Git and SSH; Python repositories need `uv`,
+Vite + React repositories need npm; local image builds need Docker with buildx. The plugin
+runs on macOS and Linux. On Windows the shared sign-in cannot be kept between sessions, so
+the plugin is not supported there yet.
 
 ```sh
 codex plugin marketplace add mainsequence-sdk/mainsequence-codex-plugin
 codex plugin add mainsequence@mainsequence
 ```
 
-Codex installs the published npm package `@dev-mainsequence/codex-plugin` without running
-lifecycle scripts; the archive already contains the compiled runner and the pinned devtools
-package. Node 22 or newer is required. Review and trust the plugin's hook before use
-(`/hooks` in the CLI, or the hook prompt in the desktop app): installation does not trust
-hooks, and an untrusted hook cannot intercept `/ms`. Then start a new chat, or toggle
-MainSequence off and on in the desktop Plugins settings to hot-reload an existing chat.
+Codex installs the published npm package without running lifecycle scripts. The archive
+contains the compiled plugin and the exact MainSequence developer tooling it was built
+with, so nothing else is downloaded or built. Then:
 
-### Replacing the retired devtools marketplace
+1. Review and trust the plugin's hook: `/hooks` in the CLI, or the hook prompt in the
+   desktop app. Installation does not trust hooks, and `/ms` commands do not run until
+   the hook is trusted.
+2. Start a new chat, or toggle MainSequence off and on in the desktop Plugins settings to
+   reload an existing chat.
 
-The Codex marketplace belongs to this repository. The catalog in the shared devtools
-repository has been removed. If you previously added that marketplace, replace its
-source before upgrading:
+To update, refresh the marketplace and reinstall the entry, then start a new chat:
+
+```sh
+codex plugin marketplace upgrade mainsequence
+codex plugin add mainsequence@mainsequence
+```
+
+If you added the marketplace from the devtools repository (before 2026-10-24), replace it
+once. The plugin keeps its name, and your sign-in and saved MCP connections are not stored
+by the plugin, so nothing else changes:
 
 ```sh
 codex plugin marketplace remove mainsequence
@@ -60,142 +51,126 @@ codex plugin marketplace add mainsequence-sdk/mainsequence-codex-plugin
 codex plugin add mainsequence@mainsequence
 ```
 
-This replaces the marketplace source, not the installed plugin. The marketplace name
-and plugin ID remain `mainsequence` and `mainsequence@mainsequence`. MainSequence login
-and saved MCP connections remain outside the plugin; no account or settings migration
-is required. Start a new chat, or toggle the plugin off and on after any running turn.
+## Sign in and choose an environment
 
-### Upgrading from `mainsequence-devtools`
+Ask Codex to **open MainSequence**. The panel has **Home, Code, Projects, Agents, Tools,
+Activity** and **Settings**.
 
-The plugin was renamed, and Codex identifies a plugin by its marketplace entry name, so the
-installed `mainsequence-devtools@mainsequence` is not updated in place. First replace
-the retired marketplace source as described above, then install the new entry, trust its
-hook, and remove the old plugin so that only one hook answers `/ms`:
+1. In **Settings**, choose **Sign in with browser**. The hosted MainSequence login opens in
+   your browser; account creation is part of that flow. The session is saved in your
+   operating system's credential store (the login Keychain on macOS, Secret Service on
+   Linux), where the VS Code extension, the Claude Desktop plugin and the MainSequence
+   command lines find it too. **Check connection**, **Renew session** and **Sign out** are
+   in the same place.
+2. The backend defaults to `https://api.main-sequence.app`. If your organization runs its
+   own MainSequence deployment, set its API URL as the backend in Settings before signing
+   in. Set the **Command Center URL** there as well, so project and repository links open
+   in Command Center.
+3. Pick an **organization environment** in the panel header. Agents, MCPs, projects and
+   deployments are shown for that environment, and MainSequence tools Codex calls are
+   bound to it.
+
+From chat, `/ms login --backend https://api.main-sequence.app` does the same sign-in, and
+`/ms auth-status --check` verifies it.
+
+## What you can do
+
+- **Agents.** Browse the environment's agents with their descriptions, skills and example
+  questions. **Talk** prepares a conversation without sending anything. Choose **Message**
+  or **Task** when the agent supports both, write your message and **Send in Codex**: the
+  agent's reply comes back through a MainSequence tool and stays in the chat's context.
+  If you stop Codex mid-send, **Messages and recovery → Recover in Codex** delivers the
+  same request once more without sending it twice; a request with an unknown outcome is
+  blocked rather than resent. Nothing is ever sent automatically.
+- **Tools.** Connected project MCPs of the environment come first; **Add MCP** searches
+  the environment's releases. Every tool of a connected MCP is registered in Codex as
+  `ms_<tool>_<hash>` with the project's own schema, so "list my CRM contacts" is one
+  ordinary tool call. You can also just ask: "Which internal MCPs are available?", "Add
+  metatable-mcp", "Use it to list my tables." See
+  [conversational project MCP connections](docs/conversational-mcp.md). A project MCP that
+  has scaled to zero can take over a minute to answer its first call; the plugin waits.
+- **Code.** Your account's repositories and the local copies under your repositories
+  folder. **Set up** clones a repository into `<folder>/<organization>/projects/<name>-<uid>`
+  with its deploy key and writes an endpoint-only `.env`, optionally installing
+  dependencies. A local repository offers status, dependency sync and install, SDK update,
+  instructions and skills updates, legacy credential cleanup, a Docker build preview, a
+  devcontainer preview, and a confirmed delete.
+- **Projects.** The environment's MainSequence projects with their repository branches.
+  **Set up project locally** prepares every member branch in its own checkout and hands
+  the workspace to Codex, with a project `AGENTS.md`.
+- **Deployments.** The latest run of a repository branch, its stages and logs, and the
+  environment's deployment history. Read-only.
+- **Activity.** Running and finished operations with progress, results and cancellation.
+- **`/ms` commands.** In Codex desktop, type `/ms`, select **ms** from the slash menu,
+  append the arguments and submit, for example `/ms --help`, `/ms status`, `/ms sync`. The
+  plugin's hook runs the command before the model sees it and shows the result; `--json`
+  returns the structured result. Ordinary prompts pass through untouched. The Codex CLI
+  rejects custom `/ms` input, so use the bundled command line there:
+  `npx -p @dev-mainsequence/codex-plugin ms-devtools --help`.
+
+[Capabilities and host differences](docs/agents-tools-panel.md) lists every surface,
+what stock Codex can and cannot expose, and which MainSequence operation each plugin
+tool uses.
+
+## Troubleshooting
+
+- **`/ms` reaches the model or answers "the hook must be enabled and trusted".** Trust the
+  hook (`/hooks`), then start a new chat.
+- **The panel says you are not signed in.** Use **Settings → Sign in with browser**, or
+  `/ms login --backend <url>`. One sign-in per backend is kept on the machine.
+- **A newly connected MCP's tools are missing.** Tools connected in the current chat are
+  registered for the next chat; until then Codex uses them through the plugin's own
+  `mainsequence_tools` / `mainsequence_call_tool`.
+- **A project tool times out.** Cold project MCPs are slow on their first call; the plugin
+  allows up to five minutes. Check the project's deployment in **Deployments**.
+- **Codex cannot start the plugin.** Node 22 or newer must be on the `PATH` Codex uses.
+  **Settings** shows runtime diagnostics.
+
+## Development
+
+- `src/` is the plugin: `runner.ts` (the `/ms` hook and the `ms-devtools` command line),
+  `hosts/codex.ts` and `hosts/codexPresentation.ts` (command parsing and output), and the
+  `panel-server` with the MainSequence panel and the `mainsequence_*` tools.
+- `manifests/codex/` holds the Codex manifest, hooks, skills and icons;
+  `scripts/build-codex.cjs` compiles `src/` and writes the installable artifact to `codex/`,
+  with every needed devtools module vendored, and mirrors it to the package root for
+  `npm pack`. An installed plugin needs neither this checkout nor an npm download.
+- `.agents/plugins/marketplace.json` is the public marketplace Codex reads from this
+  repository. It names the last published npm version.
+- `tests/dependency-boundary.test.cjs` forbids private devtools imports; shared behaviour
+  comes only from the exact `@dev-mainsequence/devtools` package API.
 
 ```sh
-codex plugin marketplace upgrade mainsequence
-codex plugin add mainsequence@mainsequence
-codex plugin remove mainsequence-devtools@mainsequence
-```
-
-Your MainSequence login (the shared machine session) and saved MCP connections
-(`mcp-connections.json` beside the CLI configuration) are not stored by the plugin, so
-nothing needs migrating. The exact behaviour of the installed host during this change is
-recorded in [the verification document](docs/codex-verification.md).
-
-### A local build
-
-```sh
+npm ci --ignore-scripts
 npm run build
 codex plugin marketplace add /absolute/path/to/mainsequence-codex-plugin/artifacts/local-marketplace
 codex plugin add mainsequence@mainsequence-local
 ```
 
-The local catalog loads the built artifact in `codex/`; the installed plugin runs from
-Codex's cache. `npm run pack:codex` also writes a standalone archive of that artifact.
-
-## Use
-
-In Codex desktop, type `/ms` and **select `ms` from the slash menu**, then append the
-arguments and submit:
-
-```text
-/ms --help
-/ms login --backend https://api.main-sequence.app
-/ms status
-/ms sync
-```
-
-Selection inserts a native skill mention. The hook accepts that mention only when it
-references this plugin's own `skills/ms/SKILL.md`, parses the single-line arguments as data
-without any shell, and blocks the turn with a readable result on success and failure, so a
-handled command never reaches the model. `/ms --help --all` lists every command and
-`/ms COMMAND --help` its options; `--json` exports the structured result. Ordinary prompts
-pass through. Codex CLI rejects custom `/ms` input before submission; use `ms-devtools` in
-a terminal there (see below).
-
-For project MCPs, ask in conversation: "Which internal MCPs are available?", "Add
-metatable-mcp", "Use it to list my tables." See
-[conversational project MCP connections](docs/conversational-mcp.md) and
-[ADR 0002](docs/adr/0002-conversational-project-mcp-client.md).
-
-Every saved project MCP's tools are also registered directly, as the Claude Desktop
-plugin registers them: `ms_<tool>_<hash>` (for example `ms_crm_contacts_list_…`), each
-with the project's own schema and bound to one saved connection and environment. Codex
-calls them like any other tool, with no `contextId` or environment selection. The list
-comes from devtools' shared project-tool catalog (`project-tool-catalog.json` beside the
-shared CLI state, the same names, schemas and results as the Claude Desktop plugin; devtools
-ADR 0004) and is refreshed in the background; a connection saved in the current chat appears
-in the next chat, and is usable at once through `mainsequence_tools` /
-`mainsequence_call_tool`. A cold project MCP can take over a minute to answer: devtools gives
-project requests 120 s and honours a tool's advertised timeout up to 300 s, and the plugin's
-server allows Codex tool calls 300 seconds (`tool_timeout_sec` in `.mcp.json`) instead of
-the host default of 60.
-
-## Architecture and development
-
-Shared functionality comes from the exact `@dev-mainsequence/devtools` package API. The
-build (`scripts/build-codex.cjs`) compiles `src/` to `build/`, then writes the installable
-artifact to `codex/`: the manifest, hooks, skills and icons from `manifests/codex`, the
-runner and hook adapter with every reachable devtools `dist` module vendored into
-`dist/vendor/devtools`, and `build-info.json` with the pinned devtools version and
-registry integrity. Codex's npm plugin source reads the manifest from the package root, so
-the build mirrors `.codex-plugin`, `hooks`, `skills`, `assets`, `build-info.json` and the
-bundled `dist` there for `npm pack`; those mirrors are ignored by Git. An installed plugin
-needs neither this checkout, nor `node_modules`, nor an npm download at execution time.
-
-`src/runner.ts` is the plugin's entry point: `dist/runner.js --codex-hook` serves the
-hook, and any other invocation is the plain `ms-devtools` terminal CLI, so this package's
-`bin` keeps working in a shell (`npx -p @dev-mainsequence/codex-plugin ms-devtools --help`).
-`src/hosts/codex.ts` recognises `/ms` and the linked skill mention and dispatches through
-devtools' exported parser and tokenizer; `src/hosts/codexPresentation.ts` renders help and
-results. `tests/dependency-boundary.test.cjs` forbids private devtools imports.
-
-### Dependencies
-
 `npm ci --ignore-scripts` installs the pinned devtools from the registry with the integrity
-recorded in `package-lock.json`. While that version is not published yet, run
+in `package-lock.json`. For a devtools version that is not published yet,
+`node scripts/install-devtools.cjs /path/to/dev-mainsequence-devtools-<version>.tgz` stages
+that archive without changing the registry pin; CI does the same. Before tagging a release,
+confirm `npm view @dev-mainsequence/devtools@<pinned version> dist.integrity` equals the
+lockfile entry.
 
-```sh
-node scripts/install-devtools.cjs /path/to/dev-mainsequence-devtools-0.3.2.tgz
-```
+`npm run release:check` type-checks, builds, runs the tests, checks the release metadata,
+the marketplace and the documentation, packs the standalone artifact and the npm archive,
+and verifies the npm archive as Codex installs it. With the built plugin installed and
+trusted in a Codex host, `npm run verify:codex` runs real app-server turns against a
+counted offline model fixture and `npm run verify:codex:reload` checks reloading in an
+existing chat; set `MAINSEQUENCE_CODEX_BINARY` when the Codex CLI is not on `PATH`,
+`CODEX_HOME` for an isolated home and `MAINSEQUENCE_CODEX_PLUGIN_ID` for a plugin installed
+from another marketplace. `docs/local-development-backend.md` describes pointing a
+workstation at a development backend.
 
-with the archive from `npm pack` of the devtools release branch, or without an argument to
-build it from the devtools repository at `DEVTOOLS_SOURCE_REF` (default `v<pinned version>`).
-Either way the archive must match the lockfile integrity, and the registry pin is not
-changed (`scripts/use-local-devtools.cjs`). CI does the same until the version is
-published. After publication, confirm that `npm view @dev-mainsequence/devtools@0.3.2
-dist.integrity` equals the lockfile entry before tagging a release; if the registry archive
-differs, update the lockfile and rebuild so `build-info.json` records the published
-integrity.
-
-For a discovery upgrade, use the exact devtools archive while it is unpublished;
-with build dependencies already installed,
-`node scripts/use-local-devtools.cjs /path/to/dev-mainsequence-devtools-0.3.2.tgz` verifies
-its integrity and stages it without changing the registry pin. Publish devtools first,
-verify its registry integrity, then release the Codex plugin. No desktop activation
-or authenticated live-service acceptance is implied by a successful local build.
-
-### Verification and release
-
-```sh
-npm run release:check
-```
-
-type-checks, builds, runs the Node tests (hook, presentation, packaging and dependency
-boundary), checks release metadata, packs the standalone artifact and the npm archive, and
-verifies the npm archive as Codex installs it. With a built plugin installed and trusted in
-a Codex host, `npm run verify:codex` runs real app-server turns through a counted offline
-model fixture, and `npm run verify:codex:reload` checks the existing-chat reload behaviour
-in a temporary Codex home. Set `MAINSEQUENCE_CODEX_BINARY` when the Codex CLI is not on
-`PATH`, `CODEX_HOME` to check an isolated home, and `MAINSEQUENCE_CODEX_PLUGIN_ID` for a
-plugin installed from another marketplace. Results are recorded in
-[docs/codex-verification.md](docs/codex-verification.md).
-
-A `v<version>` tag runs the same checks from the published devtools archive and publishes
-the verified npm archive with provenance through npm trusted publishing (repository
-`mainsequence-sdk/mainsequence-codex-plugin`, workflow `release.yml`, environment `npm`).
-Published versions are immutable. After publishing and verifying the npm archive, advance
-`.agents/plugins/marketplace.json` in this repository to the published version. The
-marketplace stays on the last published version while a new release is being prepared.
-`node scripts/check-marketplace.cjs` validates its identity, npm source and version pin.
+To release: set the new version in `package.json`, `package-lock.json` and
+`manifests/codex/.codex-plugin/plugin.json`, run `npm run release:check`, merge, and push
+the tag `v<version>`. The release workflow repeats the checks from the published devtools
+archive and publishes the verified npm archive with provenance through npm trusted
+publishing. Published versions are immutable. Write the release notes on the GitHub
+release of that tag. After publishing, read the archive's integrity from the registry
+(`npm view @dev-mainsequence/codex-plugin@<version> dist.integrity`; a local `npm pack` has
+another), then advance `.agents/plugins/marketplace.json` to the published version. The
+marketplace stays on the last published version while a release is being prepared;
+`node scripts/check-marketplace.cjs` enforces that it never advertises an unpublished one.

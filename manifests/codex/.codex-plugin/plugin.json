@@ -1,6 +1,6 @@
 {
   "name": "mainsequence",
-  "version": "0.7.6",
+  "version": "0.7.11",
   "description": "Message MainSequence agents in Codex chat, recover saved replies, discover project MCPs and run developer commands using your shared session.",
   "author": {
     "name": "MainSequence"

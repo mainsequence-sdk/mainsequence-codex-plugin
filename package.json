@@ -1,6 +1,6 @@
 {
   "name": "@dev-mainsequence/codex-plugin",
-  "version": "0.7.10",
+  "version": "0.7.11",
   "description": "MainSequence for Codex: durable agent messaging in native chat, Agents and Tools discovery, developer commands and conversational MCPs",
   "license": "MIT",
   "engines": {
@@ -17,7 +17,6 @@
     "dist",
     "docs/agents-tools-panel.md",
     "docs/conversational-mcp.md",
-    "docs/codex-verification.md",
     "docs/adr",
     "README.md",
     "LICENSE",
@@ -37,7 +36,8 @@
     "verify:package": "node scripts/verify-package.cjs",
     "verify:codex": "node scripts/verify-codex-host.cjs",
     "verify:codex:reload": "node scripts/verify-codex-reload.cjs",
-    "release:check": "npm run typecheck && npm test && node scripts/check-release.cjs && node scripts/pack-codex.cjs && npm pack --ignore-scripts --pack-destination artifacts && npm run verify:package"
+    "release:check": "npm run typecheck && npm test && node scripts/check-release.cjs && node scripts/check-docs.cjs && node scripts/pack-codex.cjs && npm pack --ignore-scripts --pack-destination artifacts && npm run verify:package",
+    "check:docs": "node scripts/check-docs.cjs"
   },
   "dependencies": {
     "@dev-mainsequence/devtools": "0.3.12"
