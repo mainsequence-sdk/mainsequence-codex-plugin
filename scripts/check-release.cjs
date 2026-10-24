@@ -34,7 +34,7 @@ for (const file of ['.codex-plugin/plugin.json', '.mcp.json', 'dist/panel-server
 for (const name of ['.codex-plugin', '.mcp.json', 'hooks', 'skills', 'assets', 'build-info.json', 'dist', 'docs/agents-tools-panel.md', 'README.md', 'LICENSE', 'NOTICE']) assert.ok(pkg.files.includes(name), `package.json files must include ${name}`);
 assert.equal(fs.existsSync('plugin.json'), false, 'A portable root manifest skips hooks in Codex 0.159.2');
 assert.equal(fs.existsSync('codex/node_modules'), false);
-for (const file of ['experiments', 'docs/codex-host-probe-results.md', 'docs/codex-desktop-parity-plan.md']) assert.equal(fs.existsSync(`codex/${file}`), false, `${file} is not part of the shipped plugin`);
+for (const file of ['experiments', 'docs/local-development-backend.md']) assert.equal(fs.existsSync(`codex/${file}`), false, `${file} is not part of the shipped plugin`);
 assert.equal(fs.existsSync('codex/dist/vendor/devtools/hosts'), false, 'devtools ships no host adapters');
 if (process.env.GITHUB_REF_TYPE === 'tag') assert.equal(process.env.GITHUB_REF_NAME, `v${pkg.version}`);
 fs.mkdirSync('artifacts', { recursive: true });
