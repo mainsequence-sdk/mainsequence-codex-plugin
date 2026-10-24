@@ -200,3 +200,7 @@ Both Codex and Claude pin the same checked upstream archive. Publish devtools fi
 verify its registry integrity against the lockfile, then release the plugins. Until
 publication, CI builds upstream's `codex/linux-session-errors` branch and checks the
 exact archive integrity. The public marketplace keeps its published package pin.
+
+Source archive builds use the Node runtime pinned in CI/release workflows: different
+Node/zlib builds can produce different gzip bytes for the same tar payload. Exact
+archive integrity remains mandatory.
