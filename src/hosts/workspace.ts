@@ -17,12 +17,15 @@ export function createWorkspace(discovery: ReturnType<typeof createDiscovery>, d
     if(dependencies.execute) return dependencies.execute(action,args,scope,environmentUid,signal,progress);
     const host = createNodeHost(progress);
     host.openFolder = async root => { if (!await host.openBrowser(pathToFileURL(root).href)) throw new ToolingError('BROWSER_FAILED','The folder could not open.'); };
-    const session = await bindSessionAccount(createSessionService(host, { signal, fetch:dependencies.fetch, sessionLock:dependencies.sessionLock }), scope.backend, scope.account);
+    const originalSession = createSessionService(host, { signal, fetch:dependencies.fetch, sessionLock:dependencies.sessionLock });
+    const session = await bindSessionAccount(originalSession, scope.backend, scope.account);
     const input = { ...args, action, backend: scope.backend, expectedAccount: scope.account, environmentUid };
     let result: ActionResult;
     if (action.startsWith('deployment-')) result = await createDeployments({host,signal,fetch:dependencies.fetch, sessionLock:dependencies.sessionLock}).dispatch(input as DeploymentRequest);
     else if (PROJECT_OPERATION_ACTIONS.has(action)) result = await createProjectOperations({ host, signal }).dispatch(input as unknown as ProjectOperationRequest);
-    else result = await createDevTools({ host, session, signal, fetch:dependencies.fetch, sessionLock:dependencies.sessionLock }).dispatch({ ...input, ...(action === 'organization-project-setup' ? { instructionsFile: 'AGENTS.md' } : {}) } as ActionRequest);
+    // Organization actions bind expectedAccount inside devtools. A scoped session
+    // cannot be bound again; legacy project actions still need the scoped wrapper.
+    else result = await createDevTools({ host, session: action.startsWith('organization-') ? originalSession : session, signal, fetch:dependencies.fetch, sessionLock:dependencies.sessionLock }).dispatch({ ...input, ...(action === 'organization-project-setup' ? { instructionsFile: 'AGENTS.md' } : {}) } as ActionRequest);
     await session.status(scope.backend, true);
     if(action==='organization-project-setup' && result.data && typeof result.data==='object') {const {claudeUrl: _,...workspace}=result.data as Record<string,unknown>;result={...result,data:workspace};}
     return result;
