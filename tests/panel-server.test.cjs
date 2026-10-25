@@ -19,10 +19,14 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   const stateDir = process.platform === 'darwin' ? path.join(temporary, 'Library', 'Application Support', 'MainSequenceCLI') : process.platform === 'win32' ? path.join(temporary, 'MainSequenceCLI') : path.join(temporary, '.config', 'mainsequence');
   const cached = { backend: 'https://backend.example.test', releaseUid: '30000000-0000-4000-8000-000000000001', environmentUid: '10000000-0000-4000-8000-000000000001', environmentName: 'Research', name: 'Metrics',
     tools: [{ name: 'metrics', description: 'Inspect metrics', inputSchema: { type: 'object', properties: { window: { type: 'string' } } }, annotations: { readOnlyHint: true } }] };
+  // The shared file also holds another backend's connection (another host on the same machine); a fresh
+  // server must list only its own backend's tools, before any refresh has run.
+  const elsewhere = { ...cached, backend: 'https://elsewhere.example.test', name: 'Elsewhere' };
   await fsp.mkdir(stateDir, { recursive: true });
-  await fsp.writeFile(path.join(stateDir, 'project-tool-catalog.json'), JSON.stringify({ version: 1, updatedAt: new Date().toISOString(), connections: [cached] }));
+  await fsp.writeFile(path.join(stateDir, 'project-tool-catalog.json'), JSON.stringify({ version: 1, updatedAt: new Date().toISOString(), connections: [cached, elsewhere] }));
   const registered = toolName(cached.backend, cached.environmentUid, cached.releaseUid, 'metrics');
-  const child = spawn(process.execPath, mcp.args, { cwd: installed, env: { PATH: process.env.PATH, HOME: temporary, APPDATA: temporary, MAINSEQUENCE_CODEX_TOOL_CATALOG: 'off' }, stdio: ['pipe', 'pipe', 'pipe'] });
+  const foreign = toolName(elsewhere.backend, elsewhere.environmentUid, elsewhere.releaseUid, 'metrics');
+  const child = spawn(process.execPath, mcp.args, { cwd: installed, env: { PATH: process.env.PATH, HOME: temporary, APPDATA: temporary, MAINSEQUENCE_CODEX_TOOL_CATALOG: 'off', MAINSEQUENCE_ENDPOINT: cached.backend }, stdio: ['pipe', 'pipe', 'pipe'] });
   t.after(() => child.kill());
   const pending = new Map(); let seq = 0, stderr = '';
   child.stderr.on('data', data => { stderr += data; });
@@ -35,6 +39,7 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   const listed = (await rpc('tools/list')).result.tools;
   assert.deepEqual(listed.map(tool => tool.name), ['mainsequence_open', 'mainsequence_discover', 'mainsequence_tools', 'mainsequence_stage_message', 'mainsequence_agent_request', 'mainsequence_agent_status', 'mainsequence_submission', 'mainsequence_view', 'mainsequence_connection', 'mainsequence_call_tool','mainsequence_agent_task','mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings','mainsequence_agent_prepare', registered]);
   assert.ok(listed.slice(0, 3).every(tool => tool.annotations.readOnlyHint));
+  assert.equal(listed.some(tool => tool.name === foreign), false, 'another backend\'s cached tools never appear in this server\'s list');
   // The saved project's tool is a first-class tool with the remote schema, as in Claude Desktop.
   const project = listed.at(-1);
   assert.deepEqual(project.inputSchema, cached.tools[0].inputSchema);
