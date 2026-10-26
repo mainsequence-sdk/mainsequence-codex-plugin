@@ -34,13 +34,19 @@ The registered project tools come from devtools' shared project-tool catalog
 and result shape the Claude Desktop plugin uses; devtools ADR 0004). `tools/list` answers
 from it at once; one chat's server refreshes it in the background when it is older than 15
 minutes or after a connection or account change, and sends `tools/list_changed`. A listing
-is scoped to the current account's backend once the server has learned it. A call to an
-`ms_*` tool forwards to `mcp-call` with the saved connection's backend, environment and
-release and returns the remote tool's own content and `structuredContent`, with `summary`,
-`error` and `effects` appended as in Claude. The catalog holds schemas only, never
-credentials or results; one process refreshes at a time under a lock file; a connection
-whose catalog cannot be read keeps its earlier tools and is reported in
-`mainsequence_open` → `registeredTools.unavailable`.
+is scoped to this server's backend from the first `tools/list` on: the server resolves it
+the way `auth-status` does (environment, shared preferences, default; no network) before
+answering, so another backend's cached tools never appear in a chat (the first release
+listed every cached scope until its first refresh). A call to an `ms_*` tool forwards to
+`mcp-call` with the saved connection's backend, environment and release and returns the
+remote tool's own content and `structuredContent`, with `summary`, `error` and `effects`
+appended as in Claude. The catalog holds schemas only, never credentials or results; one
+process refreshes at a time under a lock file, and a whole refresh is bounded (300 s by
+default). A connection whose catalog cannot be read, or is not read within that budget,
+keeps its earlier tools, is marked `unavailable` with the reason in the catalog file itself,
+and is reported in `mainsequence_open` → `registeredTools.unavailable` by every process that
+reads the file; a scope whose connections exist is never written empty and healthy (the
+first release once wrote one after a 773 s refresh and reported nothing).
 `MAINSEQUENCE_CODEX_TOOL_CATALOG=off` stops a server from reading or writing the catalog on
 its own (the packaged test uses it); cached tools are still listed.
 
