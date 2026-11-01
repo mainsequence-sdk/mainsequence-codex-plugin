@@ -37,7 +37,7 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   assert.equal(init.result.capabilities.tools.listChanged, true);
   assert.match(init.result.instructions, /ms_\* tools/);
   const listed = (await rpc('tools/list')).result.tools;
-  assert.deepEqual(listed.map(tool => tool.name), ['mainsequence_open', 'mainsequence_discover', 'mainsequence_tools', 'mainsequence_stage_message', 'mainsequence_agent_request', 'mainsequence_agent_status', 'mainsequence_submission', 'mainsequence_view', 'mainsequence_connection', 'mainsequence_call_tool','mainsequence_agent_task','mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings','mainsequence_agent_prepare', registered]);
+  assert.deepEqual(listed.map(tool => tool.name), ['mainsequence_open', 'mainsequence_discover', 'mainsequence_tools', 'mainsequence_stage_message', 'mainsequence_agent_request', 'mainsequence_agent_status', 'mainsequence_submission', 'mainsequence_view', 'mainsequence_connection', 'mainsequence_call_tool','mainsequence_agent_task','mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings','mainsequence_agent_prepare','mainsequence_plugin', registered]);
   assert.ok(listed.slice(0, 3).every(tool => tool.annotations.readOnlyHint));
   assert.equal(listed.some(tool => tool.name === foreign), false, 'another backend\'s cached tools never appear in this server\'s list');
   // The saved project's tool is a first-class tool with the remote schema, as in Claude Desktop.
@@ -79,6 +79,8 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   assert.equal(missingId.structuredContent.error.code, 'INVALID_REQUEST');
   assert.equal(listed[5].annotations.readOnlyHint, true);
   assert.deepEqual(listed[6]._meta.ui.visibility, ['app']);
+  // Only the person updates the plugin, from the panel; the model never sees the tool.
+  assert.deepEqual(listed.find(tool => tool.name === 'mainsequence_plugin')._meta.ui.visibility, ['app']);
   assert.equal(stderr, '');
   assert.equal(fs.existsSync(path.join(installed, 'node_modules')), false);
   // Reproduce Codex's update cleanup while the old server still serves a chat.

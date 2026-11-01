@@ -29,7 +29,7 @@ try {
   }
   assert.ok(server, 'Codex discovers the packaged server');
   const tools = Object.values(server.tools);
-  assert.deepEqual(tools.map(t => t.name).sort(), ['mainsequence_agent_request', 'mainsequence_agent_status', 'mainsequence_call_tool', 'mainsequence_connection', 'mainsequence_discover', 'mainsequence_open', 'mainsequence_stage_message', 'mainsequence_submission', 'mainsequence_tools', 'mainsequence_view','mainsequence_agent_task','mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings','mainsequence_agent_prepare'].sort());
+  assert.deepEqual(tools.map(t => t.name).sort(), ['mainsequence_agent_request', 'mainsequence_agent_status', 'mainsequence_call_tool', 'mainsequence_connection', 'mainsequence_discover', 'mainsequence_open', 'mainsequence_stage_message', 'mainsequence_submission', 'mainsequence_tools', 'mainsequence_view','mainsequence_agent_task','mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings','mainsequence_agent_prepare','mainsequence_plugin'].sort());
   assert.equal(tools.find(t => t.name === 'mainsequence_agent_request').annotations.readOnlyHint, false);
   assert.equal(tools.find(t => t.name === 'mainsequence_agent_status').annotations.readOnlyHint, true);
   const opener = tools.find(t => t.name === 'mainsequence_open');

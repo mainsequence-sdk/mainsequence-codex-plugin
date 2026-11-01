@@ -34,7 +34,11 @@ with, so nothing else is downloaded or built. Then:
 2. Start a new chat, or toggle MainSequence off and on in the desktop Plugins settings to
    reload an existing chat.
 
-To update, refresh the marketplace and reinstall the entry, then start a new chat:
+The panel header always shows the plugin's version and whether a newer one is published.
+**Update to …** asks first, then runs Codex's own plugin commands; start a new chat to use
+the new version. If those commands cannot run from the chat, the panel shows them to run
+yourself. To update from a terminal, refresh the marketplace and reinstall the entry, then
+start a new chat:
 
 ```sh
 codex plugin marketplace upgrade mainsequence
