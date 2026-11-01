@@ -39,7 +39,7 @@ test('theme changes, safe text, explicit environment selection, read-only bridge
   assert.equal(ui.el('account').textContent, 'Analyst');
   assert.equal(ui.el('account').attributes['data-status'],'connected');
   assert.equal(ui.el('account').attributes.title,'Connected');
-  assert.equal(ui.requests.filter(r => r.method === 'tools/call').length, 1, 'No environment is guessed when several exist');
+  assert.equal(ui.requests.filter(r => r.method === 'tools/call' && r.params.name !== 'mainsequence_plugin').length, 1, 'No environment is guessed when several exist');
   ui.el('environment').value = 'env-a'; await ui.el('environment').onchange();
   await button(ui,'results','Analyst').onclick();
   assert.match(flatten(ui.el('results')), /<img src=x/); // textContent, never HTML execution
@@ -310,4 +310,51 @@ test('agent icons render from the directory response with no follow-up assets ca
  assert.ok(walk(ui.el('results')).some(el=>el.src===icon.source));
  assert.equal(ui.requests.filter(r=>r.params?.name==='mainsequence_discover').length,1);
  assert.equal(ui.requests.some(r=>r.params?.arguments?.view==='assets'),false);
+});
+
+const settle = async () => { for (let i = 0; i < 5; i++) await new Promise(resolve => setImmediate(resolve)); };
+function pluginPanel(version, update = () => ({ running: 'test', previous: '0.7.11', installed: '0.7.12', status: 'restart_required' })) {
+  const calls = [];
+  return panel(async (name, args) => {
+    if (name === 'mainsequence_open') return status;
+    if (name === 'mainsequence_plugin') { calls.push(JSON.parse(JSON.stringify(args))); return args.action === 'update' ? update() : { running: 'test', installed: '0.7.11', updateSupported: true, ...version(args) }; }
+    return page('Analyst');
+  }).then(async ui => { await settle(); return Object.assign(ui, { pluginCalls: calls }); });
+}
+
+test('the header names the running version and installs a published update only after confirmation', async () => {
+  const ui = await pluginPanel(() => ({ latest: '0.7.12', status: 'update_available' }));
+  assert.equal(ui.el('plugin-version').textContent, 'vtest');
+  assert.deepEqual(ui.pluginCalls, [{ action: 'version' }]);
+  await button(ui, 'plugin-release', 'Update to 0.7.12').onclick();
+  assert.equal(ui.pluginCalls.length, 1, 'updating waits for confirmation');
+  assert.match(flatten(ui.el('confirmation')), /installs MainSequence 0\.7\.12\. This chat keeps test until you start a new chat/);
+  await button(ui, 'confirmation', 'Confirm').onclick();
+  assert.deepEqual(ui.pluginCalls.at(-1), { action: 'update' });
+  assert.match(flatten(ui.el('plugin-release')), /0\.7\.12 installed · start a new chat/);
+  assert.equal(button(ui, 'plugin-release', 'Update to 0.7.12'), undefined);
+  assert.equal(ui.el('plugin-help').hidden, true);
+});
+
+test("without Codex's plugin commands, or when they fail, the header shows the terminal steps", async () => {
+  const unsupported = await pluginPanel(() => ({ installed: null, latest: '0.7.12', status: 'update_available', updateSupported: false }));
+  await button(unsupported, 'plugin-release', 'Update to 0.7.12').onclick();
+  assert.equal(unsupported.pluginCalls.some(args => args.action === 'update'), false);
+  assert.equal(unsupported.el('plugin-help').hidden, false);
+  assert.match(flatten(unsupported.el('plugin-help')), /codex plugin marketplace upgrade mainsequence\ncodex plugin add mainsequence@mainsequence/);
+  await button(unsupported, 'plugin-help', 'Dismiss').onclick();
+  assert.equal(unsupported.el('plugin-help').hidden, true);
+  const failed = await pluginPanel(() => ({ latest: '0.7.12', status: 'update_available' }), () => { throw Object.assign(new Error('Codex could not install the MainSequence update.'), { code: 'PROCESS_FAILED' }); });
+  await button(failed, 'plugin-release', 'Update to 0.7.12').onclick(); await button(failed, 'confirmation', 'Confirm').onclick();
+  assert.match(flatten(failed.el('plugin-help')), /Codex could not install the MainSequence update\..*codex plugin add mainsequence@mainsequence/s);
+  assert.ok(button(failed, 'plugin-release', 'Update to 0.7.12'), 'the published update is still offered');
+});
+
+test('an unreachable catalog keeps the version with a manual check that reads again', async () => {
+  let reachable = false;
+  const ui = await pluginPanel(() => reachable ? { latest: 'test', status: 'current' } : { latest: null, status: 'unknown' });
+  assert.equal(ui.el('plugin-version').textContent, 'vtest');
+  reachable = true; await button(ui, 'plugin-release', 'Check for updates').onclick();
+  assert.deepEqual(ui.pluginCalls.at(-1), { action: 'version', recheck: true });
+  assert.match(flatten(ui.el('plugin-release')), /● Up to date/);
 });

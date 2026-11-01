@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { createDiscovery, DiscoveryError } from './hosts/discovery';
 import { createWorkspace } from './hosts/workspace';
 import { createMessaging, conversationIdentity } from './hosts/messaging';
+import { createPluginUpdate } from './hosts/pluginUpdate';
 
 type RecordValue = Record<string, unknown>;
 const root = path.resolve(__dirname, '..');
@@ -15,7 +16,7 @@ const build = JSON.parse(readFileSync(path.join(root, 'build-info.json'), 'utf8'
 // Capture an immutable resource at process start; both server and panel compare its identity.
 const template = readFileSync(path.join(__dirname, 'hosts/panel/panel.html'), 'utf8');
 const brandBytes = readFileSync(path.join(root, 'assets/mainsequence-mark.svg'));
-const panelId = createHash('sha256').update(brandBytes).update(build.version).update(JSON.stringify(build.devtools)).update(template).update(readFileSync(__filename)).update(readFileSync(path.join(__dirname, 'hosts/discovery.js'))).update(readFileSync(path.join(__dirname, 'hosts/messaging.js'))).update(readFileSync(path.join(__dirname, 'hosts/workspace.js'))).digest('hex');
+const panelId = createHash('sha256').update(brandBytes).update(build.version).update(JSON.stringify(build.devtools)).update(template).update(readFileSync(__filename)).update(readFileSync(path.join(__dirname, 'hosts/discovery.js'))).update(readFileSync(path.join(__dirname, 'hosts/messaging.js'))).update(readFileSync(path.join(__dirname, 'hosts/workspace.js'))).update(readFileSync(path.join(__dirname, 'hosts/pluginUpdate.js'))).digest('hex');
 const uri = `ui://mainsequence/panel-${build.version}-${panelId.slice(0, 16)}.html`;
 const brand = 'data:image/svg+xml;base64,' + brandBytes.toString('base64');
 const html = template.replace('--brand-image: none', '--brand-image: url(\"' + brand + '\")').replace('/* MAINSEQUENCE_PANEL_BUILD */ null', JSON.stringify({ version: build.version, panelId }));
@@ -37,6 +38,8 @@ const workspace = createWorkspace(discovery,{fetch:transport.fetch, sessionLock:
 // Devtools owns the bounded connection cache; this host only supplies its lifetime.
 const mcpCache = createMcpConnectionCache();
 const messaging = createMessaging(discovery, signal => createDevTools({ host: createNodeHost(), signal, fetch:transport.fetch, sessionLock:transport.sessionLock }).dispatch);
+// The panel header's version check and update; Codex's own plugin commands do the installing.
+const plugin = createPluginUpdate({ version: build.version });
 const object = (v: unknown): v is RecordValue => v !== null && typeof v === 'object' && !Array.isArray(v);
 // A cold project MCP (a scaled-to-zero FastAPI release) has taken over a minute to answer
 // initialize. Since devtools 0.3.12 project requests have their own 120 s budget and a tool's
@@ -65,6 +68,7 @@ const definitions: Definition[] = [
   {name:'mainsequence_settings',title:'MainSequence account and workspace settings',description:'Read settings, or explicitly save workspace preferences, sign in, renew or sign out using the same shared machine session as other MainSequence clients. Signing out affects the shared account.',properties:{action:{type:'string',enum:['get','save','login','logout','refresh-token']},backend:{type:'string'},baseDir:{type:'string'},commandCenterUrl:{type:'string'}},required:['action'],mutation:true},
 
   {name:'mainsequence_agent_prepare',title:'Prepare a MainSequence agent conversation',description:'Open or resume the selected agent session and wait for readiness. Does not send any message or introduction.',properties:{...fields,agentUid:{type:'string'},conversationKey:{type:'string'}},required:['contextId','environmentUid','agentUid'],mutation:true},
+  {name:'mainsequence_plugin',title:'MainSequence plugin version and update',description:'App-only. Read the running plugin version against the published marketplace catalog and the copy Codex has installed, or update the plugin with Codex\'s own plugin commands after the person confirms in the panel. The new version loads in a new chat.',properties:{action:{type:'string',enum:['version','update']},recheck:{type:'boolean'}},required:['action'],mutation:true,appOnly:true},
 ];
 const send = (value: unknown) => process.stdout.write(JSON.stringify(value) + '\n');
 // Saved project MCP tools, registered directly with the names, definitions and results the
@@ -99,6 +103,7 @@ async function toolCall(params: RecordValue, signal: AbortSignal) {
     : definition.name === 'mainsequence_view' ? await discovery.view(dispatch, args, signal)
     : definition.name === 'mainsequence_connection' ? await discovery.connection(dispatch, args)
     : definition.name === 'mainsequence_call_tool' ? await discovery.invoke(dispatch, args)
+    : definition.name === 'mainsequence_plugin' ? await plugin.call(args, signal)
     : ['mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings'].includes(definition.name) ? await workspace.call(definition.name,args,dispatch,signal,conversationId)
     : await messaging.call(definition.name, args, dispatch, conversationId, signal);
   // Connection and account changes re-register the project tools; a fresh catalog read updates them in place.

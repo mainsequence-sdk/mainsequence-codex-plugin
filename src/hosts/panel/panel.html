@@ -6,12 +6,14 @@
 :root{font-size:var(--font-text-sm-size,14px)}.header{padding:20px 20px 0}.content{padding:8px 20px 20px}.brand h1{font-size:16px}.brand-mark{width:24px;height:24px}.account-row{margin-top:12px;gap:8px}.account-row select,.account-name{font-size:13px}.account-row select{width:108px}.account-row{gap:6px}.utility{margin-left:auto;gap:4px}nav{border-bottom:0;gap:4px;padding:10px 0 0}.item{border:0;padding:9px 0}.item h3,button.name{font-size:14px}.caption,small{font-size:13px}.field{display:flex;flex-direction:column;gap:5px;margin:10px 0}.field input,.field select{width:100%}.selected{background:var(--surface)}.card .row{flex-wrap:wrap}.card{margin:10px 0 14px;padding:14px}.detail-heading{margin:8px 0}.detail-heading h2{font-size:16px}#results>h2{margin:10px 0}#results>h3{margin-top:16px}.toolbar{margin:0 0 6px}#footer{display:none}.shell{max-width:none}.account-name{overflow-wrap:anywhere;white-space:normal}.review p{white-space:pre-wrap}
 .account-name[data-status=connected]:before{color:var(--color-text-success,light-dark(#16803d,#40c977))}.account-name[data-status=error]:before{color:var(--color-text-danger,light-dark(#b42318,#ff6764))}.account-row select{width:auto;min-width:132px;max-width:220px}
 @media(max-width:400px){.header{padding:14px 12px 0}.content{padding:8px 12px 16px}.account-row{gap:4px}.utility{margin-left:0}.account-name{font-size:12px}.account-row select{max-width:180px}nav button{padding:5px 7px}.toolbar{flex-wrap:wrap}button{max-width:100%;white-space:normal}.row.between{flex-wrap:wrap}.card{padding:10px}}
+.brand{flex-wrap:wrap;row-gap:2px}.version{color:var(--muted);font-size:12px}.release{gap:6px;font-size:12px;white-space:normal}.release button{min-height:24px;padding:2px 8px;font-size:12px}.release .ok{color:var(--color-text-success,light-dark(#16803d,#40c977))}.release .warn{color:var(--color-text-warning,light-dark(#9a6700,#e3b341))}.plugin-help{margin:10px 0 0}
 </style></head><body>
 <main class="shell">
 <header class="header">
-<div class="row between"><div class="row brand"><span id="brand-mark" class="brand-mark" aria-hidden="true"></span><h1>MainSequence</h1></div></div>
+<div class="row between"><div class="row brand"><span id="brand-mark" class="brand-mark" aria-hidden="true"></span><h1>MainSequence</h1><span id="plugin-version" class="version"></span><span id="plugin-release" class="row release" aria-live="polite"></span></div></div>
 <div class="row account-row"><span id="account" class="account-name">Connecting…</span><select id="environment" aria-label="Environment" disabled><option value="">Choose environment</option></select><div class="row utility"><button id="activity-tab" class="plain muted" aria-label="Activity">Activity</button><button id="settings-tab" class="plain muted" aria-label="Settings">Settings</button></div></div>
 <p id="account-issue" role="status" class="muted"></p>
+<div id="plugin-help" class="review plugin-help" role="status" hidden></div>
 <nav role="tablist" aria-label="MainSequence"><button id="home-tab" role="tab">Home</button><button id="code-tab" role="tab">Code</button><button id="projects-tab" role="tab">Projects</button><button id="agents-tab" role="tab" aria-selected="true">Agents</button><button id="tools-tab" role="tab">Tools</button></nav>
 </header>
 <section class="content" id="directory" role="tabpanel" aria-labelledby="agents-tab">
@@ -44,6 +46,10 @@ const assetCache = new Map(), toolCache = new Map(), activity = [];
 // changed icon is redrawn, in place. The timer ends with the screen and pauses after 240 re-checks.
 const ICON_RECHECK_MS = 60000, ICON_RECHECK_LIMIT = 240, drawnIcons = new Map();
 let iconWatch = null, iconChecks = 0;
+// The running version is always in the header. The server compares it with the published marketplace catalog and,
+// after the person confirms, updates through Codex's own plugin commands; the new version loads in a new chat.
+const UPDATE_COMMANDS = ['codex plugin marketplace upgrade mainsequence', 'codex plugin add mainsequence@mainsequence'];
+let pluginState = null, pluginBusy = '';
 function watchIcons(run, load) {
   clearTimeout(iconWatch);
   iconWatch = setTimeout(async () => {
@@ -93,6 +99,36 @@ function clearComposer() { ++preparationGeneration; recipient = null; recipientK
 function errorText(error) { return [error.result && error.code ? error.code + ': ' + error.message : error.message, error.effects?.message, error.result ? JSON.stringify(error.result.structuredContent || error.result.content || error.result, null, 2) : ''].filter(Boolean).join('\n'); }
 function failure(error) { $('notice').textContent = errorText(error); if (['CONTEXT_CHANGED', 'AUTH_REJECTED', 'NOT_AUTHENTICATED'].includes(error.code)) { snapshot = null; workspaceContext=null;operationCache=[];clearComposer(); ++deliveryGeneration; savedRequests = []; assetCache.clear(); $('deliveries').hidden = true; $('delivery-results').replaceChildren(); $('environment').value = ''; clearResults(); accountIndicator('Session needs refreshing','error'); } }
 async function call(name, args = {}) { const output = await rpc('tools/call', { name, arguments: args }); const data = output.structuredContent || JSON.parse(output.content?.find(c => c.type === 'text')?.text || '{}'); if (output.isError || data.error) throw Object.assign(new Error(data.error?.message || 'MainSequence could not complete this action.'), { code: data.error?.code, result: data.result, effects: data.effects }); if (!BUILD || data.build?.panelId !== BUILD.panelId) throw Object.assign(new Error('The panel and server versions differ. Reopen MainSequence from its newest app card.'), { code: 'CONTEXT_CHANGED' }); return data; }
+function renderPlugin() {
+  const p = pluginState || {}, box = $('plugin-release');
+  $('plugin-version').textContent = BUILD?.version ? 'v' + BUILD.version : '';
+  box.replaceChildren(pluginBusy === 'update' ? node('span', 'Updating to ' + p.latest + '…', 'muted') : pluginBusy === 'check' ? node('span', 'Checking for updates…', 'muted')
+    : p.status === 'update_available' ? button('Update to ' + p.latest, updatePlugin, 'primary')
+    : p.status === 'restart_required' ? node('span', p.installed + ' installed · start a new chat', 'warn')
+    : p.status === 'current' ? node('span', '● Up to date', 'ok')
+    : connected ? button('Check for updates', () => checkPlugin(true), 'plain muted') : node('span'));
+}
+async function checkPlugin(recheck = false) {
+  if (pluginBusy) return;
+  pluginBusy = 'check'; renderPlugin();
+  try { pluginState = await call('mainsequence_plugin', { action: 'version', ...(recheck ? { recheck: true } : {}) }); }
+  catch { pluginState = { ...pluginState, status: pluginState?.status === 'restart_required' ? 'restart_required' : 'unknown' }; }
+  finally { pluginBusy = ''; renderPlugin(); }
+}
+function pluginHelp(message) {
+  const help = $('plugin-help'); help.hidden = !message;
+  help.replaceChildren(...(message ? [node('p', message), caption('Update from a terminal, then start a new chat:'), node('pre', UPDATE_COMMANDS.join('\n')), button('Dismiss', () => pluginHelp(''), 'plain muted')] : []));
+}
+function updatePlugin() {
+  const p = pluginState;
+  if (!p?.updateSupported) return pluginHelp('This chat cannot run Codex’s plugin commands, or MainSequence was not installed from the mainsequence marketplace.');
+  review('Update MainSequence', 'Codex refreshes the mainsequence marketplace and installs MainSequence ' + p.latest + '. This chat keeps ' + BUILD.version + ' until you start a new chat.', generation, async () => {
+    pluginBusy = 'update'; pluginHelp(''); renderPlugin();
+    try { pluginState = { ...pluginState, ...await call('mainsequence_plugin', { action: 'update' }) }; }
+    catch (error) { pluginHelp(error.message); }
+    finally { pluginBusy = ''; renderPlugin(); }
+  });
+}
 function selection() { return { contextId: snapshot.contextId, environmentUid: $('environment').value }; }
 const environmentName = () => snapshot?.environments.find(e => e.uid === $('environment').value)?.name || 'this environment';
 async function view(kind, args = {}, target = selection()) { return call('mainsequence_view', { ...target, view: kind, ...args }); }
@@ -280,11 +316,11 @@ addEventListener('message', event => {
   if (message.method === 'ui/resource-teardown') { teardown(); parent.postMessage({ jsonrpc: '2.0', id: message.id, result: {} }, '*'); }
 });
 addEventListener('pagehide', teardown);
-controls();
+controls(); renderPlugin();
 if (window.parent === window) { $('account').textContent = 'Open MainSequence in Codex'; $('notice').textContent = 'This panel uses the Codex MCP App connection to read your existing devtools session.'; }
 else try {
   const initialized = await rpc('ui/initialize', { appInfo: { name: 'mainsequence', version: BUILD?.version || 'preview' }, appCapabilities: {}, protocolVersion: '2026-01-26' });
   parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/initialized', params: {} }, '*');
-  styles(initialized.hostContext); connected = true; await refresh();
+  styles(initialized.hostContext); connected = true; void checkPlugin(); await refresh();
 } catch (error) { failure(error); controls(); }
 </script></body></html>

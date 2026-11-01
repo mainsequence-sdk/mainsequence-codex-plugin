@@ -129,6 +129,20 @@ dispatch are never retried; after a process dies during send, or a transport res
 ambiguous, the request is **uncertain** and resend is blocked. A new request must never be
 used to bypass an uncertain one.
 
+Plugin version and update: the panel header always shows the running plugin version. When
+the panel opens, the server compares it with the `mainsequence` catalog on this
+repository's default branch and with the copy Codex has installed (`codex plugin list
+--json`, run with the Codex binary that started the server; nothing else named `codex` is
+run). One successful check serves the chat's panels for 30 minutes; **Check for updates**
+reads again. The header then shows **Up to date**, **Update to** the published version,
+or that a newer version is installed and needs a new chat. **Update to** asks for
+confirmation, then runs `codex plugin marketplace upgrade mainsequence` and `codex plugin
+add mainsequence@mainsequence`. The running chat keeps its version: the server captured its
+files at start and keeps working after Codex removes the old version's folder. When Codex's
+commands cannot run, the plugin came from another marketplace, or the update fails, the
+panel shows the two commands to run in a terminal. The tool is app-only, so the model never
+updates the plugin.
+
 ## Boundaries
 
 | MCP tool | Public devtools operations |
@@ -149,6 +163,7 @@ used to bypass an uncertain one.
 | `mainsequence_action` | Reviewed allowlisted devtools repository/project operations |
 | `mainsequence_operations` | Host-owned accepted-operation status and cancellation |
 | `mainsequence_settings` | Public shared preferences and existing shared-session login/renewal/sign-out |
+| `mainsequence_plugin` | App-only plugin version check against the published catalog, and the confirmed update through Codex's plugin commands |
 
 The discovery tools are model- and app-accessible and return useful structured results
 without a UI. Their arguments are allowlisted; they do not accept arbitrary devtools
