@@ -21,7 +21,7 @@ function success<T>(result: ActionResult<T>): T {
 }
 function account(value: SessionStatus) {
   return { backend: text(value.backend), authenticated: value.authenticated === true, username: text(value.username, 300),
-    source: text(value.source, 40), checked: value.checked === true, expiresAt: text(value.expiresAt, 100) };
+    source: text(value.source, 40), checked: value.checked === true, expiresAt: text(value.expiresAt, 100), sessionEndsAt: text(value.sessionEndsAt, 100) };
 }
 const environmentLabel = (context: Context, uid: string) => `${context.environments.get(uid) || 'environment'} (${uid})`;
 /** A release the context has seen, in this environment. Says where it was seen instead when it belongs elsewhere. */
@@ -91,6 +91,8 @@ export function createDiscovery(dependencies?: {
     let answer;
     try { answer = await run(context, environmentUid); }
     catch (error) {
+      // A sign-in failure ends this view. FORBIDDEN (HTTP 403) is a refused permission for a signed-in
+      // account: it keeps the context and reaches the caller as an ordinary error.
       if (error instanceof DiscoveryError && ['AUTH_REJECTED', 'NOT_AUTHENTICATED'].includes(error.code)) {
         contexts.delete(String(args.contextId));
         throw new DiscoveryError('CONTEXT_CHANGED', `The account or session changed (${error.code}: ${error.message}). Refresh MainSequence and retry once.`);

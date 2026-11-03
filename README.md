@@ -77,6 +77,13 @@ Activity** and **Settings**.
 From chat, `/ms login --backend https://api.main-sequence.app` does the same sign-in, and
 `/ms auth-status --check` verifies it.
 
+A sign-in lasts a fixed time that the backend sets (five days by default); renewing the
+session does not extend it. From a day before it ends, the panel header and the account in
+`/ms` results say **MainSequence session ends** with the local time and point to
+`/ms login`. Once it has ended, they say when and ask you to sign in again. A refused
+permission (HTTP 403) shows its message as an ordinary error: signing in again does not
+change it.
+
 ## What you can do
 
 - **Agents.** Browse the environment's agents with their descriptions, skills and example

@@ -87,14 +87,37 @@ function fields(value: unknown, indent = ''): string[] {
   return lines;
 }
 
+// A saved login ends at a fixed moment, its refresh token's expiry, which devtools reports as
+// `sessionEndsAt`; renewing does not move it. Within a day of it the account warns, and once it
+// has passed it says when the login ended. Times are the machine's local time.
+const LOGIN_WARN_MS = 86_400_000;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const two = (value: number): string => String(value).padStart(2, '0');
+/** "today at 12:30", "tomorrow at 09:05", "yesterday at 18:00" or "on 30 Oct at 07:16". */
+function loginWhen(at: number, now: number): string {
+  const date = new Date(at), day = (value: number) => new Date(value).toDateString();
+  const named = { [day(now)]: 'today', [day(now + 86_400_000)]: 'tomorrow', [day(now - 86_400_000)]: 'yesterday' }[day(at)];
+  return `${named || `on ${date.getDate()} ${MONTHS[date.getMonth()]}`} at ${two(date.getHours())}:${two(date.getMinutes())}`;
+}
+function loginEnd(session: Record<string, unknown>, now = Date.now()): { notice: string; line: string } {
+  const at = typeof session.sessionEndsAt === 'string' ? Date.parse(session.sessionEndsAt) : NaN;
+  if (!Number.isFinite(at)) return { notice: '', line: '' };
+  const when = loginWhen(at, now);
+  if (at <= now) return { notice: `MainSequence session ended ${when} — sign in again (/ms login)`, line: '' };
+  if (at - now <= LOGIN_WARN_MS) return { notice: `MainSequence session ends ${when} — sign in again (/ms login)`, line: '' };
+  return { notice: '', line: `Session ends ${when}` };
+}
+
 function account(value: unknown): string[] {
-  const session = record(value);
+  const session = record(value), end = loginEnd(session);
   const username = typeof session.username === 'string' && session.username ? ` as ${singleLine(session.username)}` : '';
   const lines = [session.authenticated ? `Signed in${username}` : 'Not signed in'];
+  if (end.notice) lines.push(end.notice);
   if (session.backend) lines.push(`Backend: ${singleLine(session.backend)}`);
   if (session.source === 'machine') lines.push('Login shared with your SDKs');
   else if (session.source === 'environment') lines.push('Using the login from your environment');
   else if (session.source === 'host') lines.push('Using the editor login');
+  if (end.line) lines.push(end.line);
   if (session.expiresAt) lines.push(`Expires: ${singleLine(session.expiresAt)}`);
   if (session.checked) lines.push('Verified with the backend');
   return lines;
@@ -120,6 +143,7 @@ export function displayCodexResult(result: ActionResult): string {
     sections.push(result.summary);
     const code = result.error?.code;
     if (code === 'INVALID_REQUEST') sections.push('For commands and examples: /ms --help');
+    // FORBIDDEN (HTTP 403) is a refused permission for a signed-in account, so it offers no sign-in.
     else if (code === 'NOT_AUTHENTICATED' || code === 'AUTH_REJECTED') sections.push('Sign in again: /ms login');
   } else if (result.action === 'repositories' && Array.isArray(result.data)) sections.push(repositories(result.data));
   else if (['login', 'refresh-token', 'auth-status'].includes(result.action)) sections.push(account(result.data).join('\n'));

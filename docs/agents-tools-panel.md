@@ -8,7 +8,7 @@ stay unchanged. No probe or custom Codex build is shipped.
 
 | Surface | Implemented behavior |
 | --- | --- |
-| Header/navigation | MainSequence emblem, shared account, environment, Activity, Settings; Home/Code/Projects/Agents/Tools; compact rows and grouped details; host theme variables, neutral fallbacks and reduced-motion icons |
+| Header/navigation | MainSequence emblem, shared account with when its login ends, environment, Activity, Settings; Home/Code/Projects/Agents/Tools; compact rows and grouped details; host theme variables, neutral fallbacks and reduced-motion icons |
 | Agents | Search/pages, real icons, defaults, descriptions, skills/examples; Talk prepares a stable session without sending; new conversations; drafts survive browsing; direct messages and task mode |
 | Native context/recovery | Immutable request saved before native submission, at-most-once dispatch, durable receipts, same-ID recovery, uncertain sends blocked; native MCP results and labelled replies remain conversation context |
 | Agent tasks | Accepted task receipt, get/wait/cancel, continue an owned saved task, outputs in native context; no task read/recovery resends the original message |
@@ -63,7 +63,9 @@ known in another environment names that environment; an unknown release says whi
 (`mainsequence_view connections` or `mainsequence_discover tools`) must come first; an
 omitted `arguments` object on `mainsequence_call_tool` is an empty object; release ids match
 regardless of case. `CONTEXT_CHANGED` carries its cause (`AUTH_REJECTED: The MCP endpoint
-returned HTTP 401.`).
+returned HTTP 401.`). Only `AUTH_REJECTED` and `NOT_AUTHENTICATED` end the view: `FORBIDDEN`
+(HTTP 403, a permission the signed-in account lacks) keeps the context, and the panel, the
+tools and `/ms` show its message as an ordinary error with no sign-in prompt.
 
 Agent icons come inline from the platform's agent directory (`include_icons: true`); the
 panel does not request individual icon URLs, and a missing or invalid image renders the
@@ -128,6 +130,17 @@ failed preparation with zero dispatches can be recovered under the same ID; erro
 dispatch are never retried; after a process dies during send, or a transport response is
 ambiguous, the request is **uncertain** and resend is blocked. A new request must never be
 used to bypass an uncertain one.
+
+Login end: a saved login ends at a fixed moment, its refresh token's expiry, which
+devtools reports as `sessionEndsAt` in `auth-status`; renewing does not move it.
+`mainsequence_open` returns it with the account. From a day before, the header's account
+dot turns amber and the header says "MainSequence session ends today at 14:30 — sign in
+again (/ms login)", in local time. Once it has passed, devtools reports the account signed
+out without contacting the backend, and the header shows **Session ended** with when it
+ended. While the panel stays open, a timer redraws the header at the warning and at the end;
+the next request then refuses the old view and asks for a refresh. The account in
+`/ms login`, `/ms auth-status`, `/ms refresh-token` and `/ms status` results gives the same
+warning and end, and otherwise names when the login ends.
 
 Plugin version and update: the panel header always shows the running plugin version. When
 the panel opens, the server compares it with the `mainsequence` catalog on this
