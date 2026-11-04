@@ -40,7 +40,7 @@
     "check:docs": "node scripts/check-docs.cjs"
   },
   "dependencies": {
-    "@dev-mainsequence/devtools": "0.3.14"
+    "@dev-mainsequence/devtools": "0.3.15"
   },
   "devDependencies": {
     "@types/node": "18.19.130",

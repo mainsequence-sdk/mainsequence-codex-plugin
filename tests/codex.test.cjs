@@ -160,6 +160,30 @@ test('Codex repository, session and project results show useful fields without J
   assert.deepEqual(JSON.parse(savedList.reason).data, [connection], 'the stored labels reach the mainsequence-mcp skill unchanged');
 });
 
+test('the account names when the saved login ends: a warning within a day, and when it ended once it has', async () => {
+  const run = (action, data) => handleCodexPrompt({ prompt: `/ms ${action}` }, async () => ({ schemaVersion: 1, action, status: 'success', summary: `${action} completed.`, data }));
+  const local = at => { const d = new Date(at); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  const session = { authenticated: true, username: 'fixture-user', backend: 'https://fixture.example', source: 'machine' };
+  const soon = Date.now() + 3 * 3_600_000, later = Date.now() + 3 * 86_400_000, ended = Date.now() - 3_600_000;
+  const ending = await run('auth-status', { ...session, sessionEndsAt: new Date(soon).toISOString() });
+  assert.match(ending.reason, new RegExp(`\\n\\nSigned in as fixture-user\\nMainSequence session ends (today|tomorrow) at ${local(soon)} — sign in again \\(/ms login\\)\\nBackend: https://fixture\\.example\\n`));
+  const active = await run('auth-status', { ...session, sessionEndsAt: new Date(later).toISOString() });
+  assert.match(active.reason, new RegExp(`Login shared with your SDKs\\nSession ends on \\d{1,2} [A-Z][a-z]{2} at ${local(later)}$`));
+  assert.doesNotMatch(active.reason, /sign in again/i, 'no warning more than a day before the end');
+  const over = await run('auth-status', { ...session, authenticated: false, sessionEndsAt: new Date(ended).toISOString() });
+  assert.match(over.reason, new RegExp(`\\n\\nNot signed in\\nMainSequence session ended (today|yesterday) at ${local(ended)} — sign in again \\(/ms login\\)\\n`));
+  assert.doesNotMatch((await run('auth-status', session)).reason, /session end/i, 'an environment login has no saved end');
+  const status = await run('status', { project: { root: '/fixture project' }, session: { ...session, sessionEndsAt: new Date(soon).toISOString() } });
+  assert.match(status.reason, /Signed in as fixture-user\nMainSequence session ends .+ — sign in again \(\/ms login\)/);
+});
+
+test('a refused permission (FORBIDDEN, HTTP 403) shows its message as an ordinary error with no sign-in prompt', async () => {
+  const fail = (code, message) => handleCodexPrompt({ prompt: '/ms repositories' }, async () => ({ schemaVersion: 1, action: 'repositories', status: 'failure', summary: message, error: { code, message } }));
+  const message = 'The backend https://fixture.example denied GET /api/v1/code-repositories/ (HTTP 403): the signed-in account does not have permission for it.';
+  assert.equal((await fail('FORBIDDEN', message)).reason, `MainSequence · List code repositories · Failed\n\n${message}`);
+  for (const code of ['AUTH_REJECTED', 'NOT_AUTHENTICATED']) assert.match((await fail(code, 'Sign-in failed.')).reason, /\n\nSign in again: \/ms login$/);
+});
+
 test('a literal --json option value does not request JSON output', async () => {
   const output = await handleCodexPrompt({ prompt: '/ms resolve --path "--json"' }, async request => ({ schemaVersion: 1, action: request.action, status: 'success', summary: `${request.action} completed.`, data: { root: request.root } }));
   assert.match(output.reason, /MainSequence · Find the backend repository\n\nCompleted successfully\./);

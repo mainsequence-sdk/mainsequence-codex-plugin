@@ -6,7 +6,7 @@ const html = fs.readFileSync('src/hosts/panel/panel.html', 'utf8').replace('/* M
 function element() { return { value: '', disabled: false, textContent: '', hidden: false, children: [], attributes: {}, style: {setProperty(){}},
   setAttribute(key, value) { this.attributes[key] = value; }, append(...nodes) { for (const n of nodes) n.parentNode = this; this.children.push(...nodes); }, replaceChildren(...nodes) { for (const n of nodes) n.parentNode = this; this.children = nodes; },
   replaceWith(next) { const p = this.parentNode, i = p ? p.children.indexOf(this) : -1; if (i >= 0) { p.children[i] = next; next.parentNode = p; } }, focus() {} }; }
-async function panel(handler, storage = new Map()) {
+async function panel(handler, storage = new Map(), globals = {}) {
   // Minute-long timers (the icon re-check) are captured for the test to fire; shorter ones run for real.
   const scheduled = [];
   const schedule = (fn, ms) => { if (ms >= 60000) { const t = { fn, ms, cleared: false }; scheduled.push(t); return t; } return setTimeout(fn, ms); };
@@ -26,7 +26,7 @@ async function panel(handler, storage = new Map()) {
   } };
   const document = { getElementById: id => els.get(id), createElement: () => element(), documentElement: { style: { setProperty: (k, v) => styles.set(k, v) } } };
   const localStorage = {getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
-  await vm.runInNewContext('(async()=>{' + html.match(/<script type="module">([\s\S]*?)<\/script>/)[1] + '})()', { document, window: {}, parent, localStorage, addEventListener: (name, fn) => listeners.set(name, fn), setTimeout: schedule, clearTimeout: cancel, crypto: require('node:crypto') });
+  await vm.runInNewContext('(async()=>{' + html.match(/<script type="module">([\s\S]*?)<\/script>/)[1] + '})()', { document, window: {}, parent, localStorage, addEventListener: (name, fn) => listeners.set(name, fn), setTimeout: schedule, clearTimeout: cancel, crypto: require('node:crypto'), ...globals });
   return { el: id => els.get(id), requests, receive, document, styles, scheduled, pendingRechecks: () => scheduled.filter(t => !t.cleared) };
 }
 const account = { authenticated: true, username: 'Analyst', source: 'machine', checked: true, backend: 'https://example.test' };
@@ -65,6 +65,42 @@ test('account changes clear results and require a fresh context', async () => {
   assert.equal(ui.el('results').children.length, 0); assert.equal(ui.el('environment').disabled, true); assert.equal(ui.el('search-button').disabled, true);
   assert.equal(ui.el('notice').textContent, 'Account changed'); assert.equal(ui.el('refresh').disabled, false);
   assert.equal(ui.el('account').attributes['data-status'],'error');
+});
+
+// devtools reports when the saved login ends (sessionEndsAt). The panel reads time through Date, which these tests set.
+const localTime = at => { const d = new Date(at); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+function clock(now) { const state = { now }; return { state, Date: class extends Date { static now() { return state.now; } } }; }
+test('the header warns a day before the saved login ends and says it ended at the end, on a timer while open', async () => {
+  const time = clock(Date.now()), at = time.state.now + 30 * 3_600_000;
+  const ui = await panel(async name => name === 'mainsequence_open' ? { ...status, account: { ...account, sessionEndsAt: new Date(at).toISOString() } } : page('Analyst'), new Map(), { Date: time.Date });
+  assert.equal(ui.el('account').attributes['data-status'], 'connected'); assert.equal(ui.el('login-notice').textContent, '', 'no warning more than a day before');
+  let [timer] = ui.pendingRechecks(); assert.equal(timer.ms, 6 * 3_600_000, 'wakes when the warning starts');
+  time.state.now += timer.ms; timer.fn();
+  assert.equal(ui.el('account').textContent, 'Analyst'); assert.equal(ui.el('account').attributes['data-status'], 'warning'); assert.equal(ui.el('account').attributes.title, 'Session ends soon');
+  assert.match(ui.el('login-notice').textContent, new RegExp(`^MainSequence session ends (today|tomorrow) at ${localTime(at)} — sign in again \\(/ms login\\)$`));
+  [timer] = ui.pendingRechecks(); assert.equal(timer.ms, 24 * 3_600_000, 'wakes at the end');
+  time.state.now += timer.ms; timer.fn();
+  assert.equal(ui.el('account').textContent, 'Session ended'); assert.equal(ui.el('account').attributes['data-status'], 'error');
+  assert.equal(ui.el('login-notice').textContent, `MainSequence session ended today at ${localTime(at)} — sign in again (/ms login), then refresh.`);
+  assert.deepEqual(ui.pendingRechecks(), []);
+});
+
+test('a panel opened after the saved login ended says when it ended and points to /ms login', async () => {
+  const ended = Date.now() - 2 * 86_400_000;
+  const ui = await panel(async name => name === 'mainsequence_open' ? { account: { authenticated: false, source: 'machine', backend: account.backend, sessionEndsAt: new Date(ended).toISOString() }, contextId: null, environments: [], issue: null } : {});
+  assert.equal(ui.el('account').textContent, 'Session ended'); assert.equal(ui.el('account').attributes['data-status'], 'error');
+  assert.match(ui.el('login-notice').textContent, new RegExp(`^MainSequence session ended on \\d{1,2} [A-Z][a-z]{2} at ${localTime(ended)} — sign in again \\(/ms login\\), then refresh\\.$`));
+  assert.equal(ui.el('account-issue').textContent, '', 'the ended notice replaces the generic sign-in hint');
+  assert.deepEqual(ui.pendingRechecks(), []);
+});
+
+test('a refused permission (FORBIDDEN) shows its message without signing the panel out', async () => {
+  const message = 'The backend https://example.test denied GET /api/v1/agents/ (HTTP 403): the signed-in account does not have permission for it.';
+  const ui = await panel(async name => { if (name === 'mainsequence_open') return status; throw Object.assign(new Error(message), { code: 'FORBIDDEN' }); });
+  ui.el('environment').value = 'env-a'; await ui.el('environment').onchange();
+  assert.equal(ui.el('notice').textContent, message);
+  assert.equal(ui.el('account').textContent, 'Analyst'); assert.equal(ui.el('account').attributes['data-status'], 'connected');
+  assert.equal(ui.el('environment').disabled, false); assert.equal(ui.el('environment').value, 'env-a'); assert.equal(ui.el('search').disabled, false);
 });
 
 test('environment choice survives reopening only for the same verified account and available environment',async()=>{

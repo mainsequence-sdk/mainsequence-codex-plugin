@@ -45,7 +45,7 @@ async function fixture(t, overrides = {}) {
     return new Response(JSON.stringify(result), { headers: { 'Content-Type': 'application/json' } });
   };
   const persistence = { name: 'fixture store', mode: 'machine',
-    read: async () => authenticated ? { username: overrides.savedUsername ?? username, access: 'private-machine-access', refresh: 'private-machine-refresh' } : null,
+    read: async () => authenticated ? { username: overrides.savedUsername ?? username, access: 'private-machine-access', refresh: overrides.refresh ?? 'private-machine-refresh' } : null,
     write: async () => writes.push('credential-write'), remove: async () => writes.push('credential-remove') };
   const session = createSessionService(createNodeHost(), { persistence, fetch, env: {} });
   const devtools = createDevTools({ host: createNodeHost(), session, env: { MAINSEQUENCE_ENDPOINT: backend }, fetch, mcpConnectionsPath: connections });
@@ -117,6 +117,36 @@ test('signed-out sessions do not perform discovery or sign in', async t => {
   const f = await fixture(t); f.signOut(); const output = await createDiscovery().status(f.dispatch);
   assert.equal(output.contextId, null); assert.equal(output.account.authenticated, false); assert.deepEqual(output.environments, []);
   assert.deepEqual(f.calls, []); assert.deepEqual(f.actions.map(a => a.action), ['auth-status']);
+});
+
+// A refresh token whose expiry devtools reads as the end of the saved login.
+const refreshEnding = at => ['header', Buffer.from(JSON.stringify({ exp: Math.floor(at / 1000) })).toString('base64url'), 'signature'].join('.');
+
+test('the verified account carries when the saved login ends', async t => {
+  const endsAt = Date.now() + 3 * 3_600_000, f = await fixture(t, { refresh: refreshEnding(endsAt) });
+  const status = await createDiscovery().status(f.dispatch);
+  assert.equal(status.account.checked, true); assert.ok(status.contextId);
+  assert.equal(status.account.sessionEndsAt, new Date(Math.floor(endsAt / 1000) * 1000).toISOString());
+});
+
+test('an ended saved login is signed out with its end, without contacting the backend', async t => {
+  const endedAt = Date.now() - 3_600_000, f = await fixture(t, { refresh: refreshEnding(endedAt) });
+  const output = await createDiscovery().status(f.dispatch);
+  assert.equal(output.account.authenticated, false); assert.equal(output.contextId, null); assert.equal(output.issue, null);
+  assert.equal(output.account.sessionEndsAt, new Date(Math.floor(endedAt / 1000) * 1000).toISOString());
+  assert.deepEqual(f.calls, []); assert.deepEqual(f.actions.map(a => a.action), ['auth-status']);
+});
+
+test('a refused permission (FORBIDDEN) is an ordinary error that keeps the context', async t => {
+  const f = await fixture(t), service = createDiscovery(), state = await service.status(f.dispatch), selected = { contextId: state.contextId, environmentUid };
+  await service.view(f.dispatch, { ...selected, view: 'connections' });
+  const message = `The backend ${backend} denied GET /api/v1/agents/ (HTTP 403): the signed-in account does not have permission for it.`;
+  const refused = { status: 'failure', summary: message, error: { code: 'FORBIDDEN', message } };
+  const dispatch = async request => ['agents-list', 'mcp-call'].includes(request.action) ? { schemaVersion: 1, action: request.action, ...refused } : f.dispatch(request);
+  await assert.rejects(service.discover(dispatch, { ...selected, catalog: 'agents' }), { code: 'FORBIDDEN', message });
+  const called = await service.invoke(dispatch, { ...selected, releaseUid, tool: 'metrics' });
+  assert.deepEqual(called.error, { code: 'FORBIDDEN', message }, 'a refused tool call is returned, not turned into a context change');
+  assert.equal((await service.view(f.dispatch, { ...selected, view: 'connections' })).count, 1, 'the context stays usable');
 });
 
 test('scope and pagination validation; unknown releases cannot acquire credentials', async t => {
