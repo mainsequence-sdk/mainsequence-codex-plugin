@@ -149,7 +149,8 @@ async function request(method: string, params: RecordValue, signal: AbortSignal)
         return { ...('error' in data && data.error ? { isError: true } : {}), content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data };
       } catch (error) {
         const data = { error: { code: signal.aborted ? 'CANCELLED' : error instanceof DiscoveryError || error instanceof ToolingError ? error.code : 'INTERNAL_ERROR',
-          message: signal.aborted ? 'The native wait was stopped. Read or recover the same saved request ID; do not resend.' : error instanceof DiscoveryError || error instanceof ToolingError ? error.message : 'MainSequence could not complete the operation. Read the saved request status before recovery.' } };
+          message: signal.aborted ? (params.name === 'mainsequence_workspace' ? 'The read was stopped before it finished. Call it again to read the current state.'
+            : 'The native wait was stopped. Read or recover the same saved request ID; do not resend.') : error instanceof DiscoveryError || error instanceof ToolingError ? error.message : 'MainSequence could not complete the operation. Read the saved request status before recovery.' } };
         return { isError: true, content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data };
       }
     }
