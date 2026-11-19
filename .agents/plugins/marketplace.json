@@ -9,7 +9,7 @@
       "source": {
         "source": "npm",
         "package": "@dev-mainsequence/codex-plugin",
-        "version": "0.7.13"
+        "version": "0.7.14"
       },
       "policy": {
         "installation": "AVAILABLE",
