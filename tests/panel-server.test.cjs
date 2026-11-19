@@ -40,6 +40,15 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   assert.deepEqual(listed.map(tool => tool.name), ['mainsequence_open', 'mainsequence_discover', 'mainsequence_tools', 'mainsequence_stage_message', 'mainsequence_agent_request', 'mainsequence_agent_status', 'mainsequence_submission', 'mainsequence_view', 'mainsequence_connection', 'mainsequence_call_tool','mainsequence_agent_task','mainsequence_workspace','mainsequence_action','mainsequence_operations','mainsequence_settings','mainsequence_agent_prepare','mainsequence_plugin', registered]);
   assert.ok(listed.slice(0, 3).every(tool => tool.annotations.readOnlyHint));
   assert.equal(listed.some(tool => tool.name === foreign), false, 'another backend\'s cached tools never appear in this server\'s list');
+  // Releases, active runs and waiting for a run are reads the model can make without confirmation.
+  const releaseReads = ['deployment-releases', 'deployment-release', 'deployment-active', 'deployment-wait'];
+  const workspaceTool = listed.find(tool => tool.name === 'mainsequence_workspace'), actionTool = listed.find(tool => tool.name === 'mainsequence_action');
+  for (const action of releaseReads) assert.ok(workspaceTool.inputSchema.properties.action.enum.includes(action), action);
+  assert.equal(releaseReads.some(action => actionTool.inputSchema.properties.action.enum.includes(action)), false, 'never an operation');
+  assert.deepEqual(workspaceTool.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true });
+  assert.match(workspaceTool.description, /deployment-releases.*deployment-release.*deployment-active.*deployment-wait/s);
+  assert.match(workspaceTool.description, /at most 120 s per call.*call it again/);
+  assert.match(workspaceTool.description, /none of them deploys/);
   // The saved project's tool is a first-class tool with the remote schema, as in Claude Desktop.
   const project = listed.at(-1);
   assert.deepEqual(project.inputSchema, cached.tools[0].inputSchema);

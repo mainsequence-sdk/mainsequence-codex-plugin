@@ -8,14 +8,15 @@ stay unchanged. No probe or custom Codex build is shipped.
 
 | Surface | Implemented behavior |
 | --- | --- |
-| Header/navigation | MainSequence emblem, shared account with when its login ends, environment, Activity, Settings; Home/Code/Projects/Agents/Tools; compact rows and grouped details; host theme variables, neutral fallbacks and reduced-motion icons |
+| Header/navigation | MainSequence emblem, shared account with when its login ends, environment, Activity, Settings; Home/Code/Releases/Projects/Agents/Tools; compact rows and grouped details; host theme variables, neutral fallbacks and reduced-motion icons |
 | Agents | Search/pages, real icons, defaults, descriptions, skills/examples; Talk prepares a stable session without sending; new conversations; drafts survive browsing; direct messages and task mode |
 | Native context/recovery | Immutable request saved before native submission, at-most-once dispatch, durable receipts, same-ID recovery, uncertain sends blocked; native MCP results and labelled replies remain conversation context |
 | Agent tasks | Accepted task receipt, get/wait/cancel, continue an owned saved task, outputs in native context; no task read/recovery resends the original message |
 | Tools | Saved connections, Add MCP, connect/disconnect review, fresh schemas, explicit JSON tool-call review; catalog cache survives refresh failure; stable model-facing discovery/call tools |
 | Code | Remote/local search, branch selection, setup with optional install; folder/type, status/resolve/SDK; sync/install/SDK update and preview; instructions/skills and preview/sync; environment cleanup; Docker build preview; devcontainer preview/write; local deletion preview and explicit confirmation |
 | Projects | Search/pages, branch counts, descriptions, repository/branch links; local setup/update with Codex AGENTS.md; progress, cancellation, partial-effect reporting and explicit native workspace handoff |
-| Deployments | Environment/branch history, pages, run/workflow stages, related runs, durations, errors, active-run polling, stage logs, log filtering/cursors; read-only |
+| Releases | Environment releases (APIs, agents, static sites) with kind and local-repository filters, the last ten run states, success counts or the last failure, deploying releases first with commit, stage and elapsed time, pages; a release's serving and wanted revisions, 7/30/90-day stats (runs, success rate, median time, slowest stage, most common failure) and runs that open the run detail; read-only. No re-read while nothing deploys; while a shown run is active, `deployment-active` every 30 s and one re-read when a watched run ends; checks wait while hidden, never overlap and pause after an hour |
+| Deployments | Environment/branch history, pages, run/workflow stages, related runs, durations, errors, stage logs, log filtering/cursors; a running run's details re-read every 10 s while shown and visible, pausing after an hour; read-only |
 | Settings | Existing shared account, browser login, connection check, renewal, explicit shared sign-out; repositories folder/backend/Command Center settings; diagnostics and local scan |
 | Activity | Agent receipts/tasks plus accepted workspace operations, progress, explicit cancellation and results; accepted workspace work survives panel close/native Stop while the server remains alive |
 
@@ -172,7 +173,7 @@ updates the plugin.
 | `mainsequence_agent_status` | Saved request/receipt list, get and wait; no sending |
 | `mainsequence_agent_task` | Owned saved-task get, wait and cancellation |
 | `mainsequence_submission` | App-only native submission acknowledgement bookkeeping; no remote dispatch |
-| `mainsequence_workspace` | Scoped repository/SDK/local status, previews and public deployment reads |
+| `mainsequence_workspace` | Scoped repository/SDK/local status, previews and public deployment reads: history, runs, logs, releases (`deployment-releases`, `deployment-release`), active runs (`deployment-active`) and `deployment-wait`, at most 120 s per call |
 | `mainsequence_action` | Reviewed allowlisted devtools repository/project operations |
 | `mainsequence_operations` | Host-owned accepted-operation status and cancellation |
 | `mainsequence_settings` | Public shared preferences and existing shared-session login/renewal/sign-out |

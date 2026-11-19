@@ -57,8 +57,8 @@ codex plugin add mainsequence@mainsequence
 
 ## Sign in and choose an environment
 
-Ask Codex to **open MainSequence**. The panel has **Home, Code, Projects, Agents, Tools,
-Activity** and **Settings**.
+Ask Codex to **open MainSequence**. The panel has **Home, Code, Releases, Projects, Agents,
+Tools, Activity** and **Settings**.
 
 1. In **Settings**, choose **Sign in with browser**. The hosted MainSequence login opens in
    your browser; account creation is part of that flow. The session is saved in your
@@ -109,8 +109,25 @@ change it.
 - **Projects.** The environment's MainSequence projects with their repository branches.
   **Set up project locally** prepares every member branch in its own checkout and hands
   the workspace to Codex, with a project `AGENTS.md`.
+- **Releases.** The environment's APIs, agents and static sites, each with its last ten
+  runs as colored dots and how many of its runs of the last 30 days succeeded (superseded,
+  cancelled and skipped runs don't count); filter by kind, or by the repository of a local folder (**Code → View releases**). Releases that
+  are deploying come first, with their commit, stage and elapsed time. A release shows the
+  commit it serves and the one it wants, its success rate, median time, slowest stage and
+  most common failure over 7, 30 or 90 days, and its runs; a run opens its stages and logs.
+  Read-only. Nothing is read again while nothing deploys. While a shown run is queued or
+  running, the panel checks only the active runs every 30 s and reads the screen again
+  once one of them ends; checks wait while the panel is hidden and pause after an hour
+  (**Refresh** starts them again).
 - **Deployments.** The latest run of a repository branch, its stages and logs, and the
-  environment's deployment history. Read-only.
+  environment's deployment history, including jobs and images. A running deployment's
+  details are read again every 10 s while they are on screen, with the same pauses.
+  Read-only.
+- **Ask about deployments.** "What is deploying right now?", "How reliable has
+  pricing-api been this month?", "Wait for that deployment to finish." Codex reads
+  releases, their history and stats, and the active runs with `mainsequence_workspace`,
+  and waits for a run at most two minutes per call, calling again while it still runs.
+  None of these reads deploys anything.
 - **Activity.** Running and finished operations with progress, results and cancellation.
 - **`/ms` commands.** In Codex desktop, type `/ms`, select **ms** from the slash menu,
   append the arguments and submit, for example `/ms --help`, `/ms status`, `/ms sync`. The
