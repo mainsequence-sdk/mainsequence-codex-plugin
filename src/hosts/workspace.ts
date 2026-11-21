@@ -14,6 +14,9 @@ export function createWorkspace(discovery: ReturnType<typeof createDiscovery>, d
   const ownerKey = (context: { backend: string; account: string; conversationId?: string }) => JSON.stringify([context.backend, context.account, context.conversationId]);
   const publicJob = ({ owner: _, controller: __, ...job }: Job) => job;
   async function execute(action: string, args: Row, scope: { backend: string; account: string }, environmentUid: string, signal?: AbortSignal, progress?: (message: string) => void) {
+    // Release reads default to short windows, as in the panel: a week for the list, a day for one release's history.
+    const window = action === 'deployment-releases' ? 7 : action === 'deployment-release' ? 1 : null;
+    if (window !== null && args.days == null) args = { ...args, days: window };
     if(dependencies.execute) return dependencies.execute(action,args,scope,environmentUid,signal,progress);
     const host = createNodeHost(progress);
     host.openFolder = async root => { if (!await host.openBrowser(pathToFileURL(root).href)) throw new ToolingError('BROWSER_FAILED','The folder could not open.'); };

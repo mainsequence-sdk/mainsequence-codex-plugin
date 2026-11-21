@@ -263,8 +263,11 @@ async function projectDetail(project,target,run) {if(run!==generation)return;ret
 const RELEASE_CHECK_MS = 30000, RUN_CHECK_MS = 10000, WATCH_LIMIT_MS = 3600000, AGE_MS = 60000, RELEASE_PAGE = 50;
 const RELEASE_FILTERS = [['all', 'All kinds', ['']], ['api', 'APIs', ['fastapi']], ['agents', 'Agents', ['harness_agent', 'agent']], ['sites', 'Static sites', ['static_site']]];
 const RUN_SOURCES = { repository_event: 'Repository push', manual: 'Manual', create: 'Created', system_reconciliation: 'Reconciliation' };
-const WINDOWS = [[7, '7 days'], [30, '30 days'], [90, '90 days']], ACTIVE_RUNS = ['queued', 'running'];
-let watch = null, ageTimer = null, drawAge = null, releaseKind = 'all', releaseMine = false, releaseDays = 30, folderBranch = null;
+// History windows: the list opens on a week, enough for most rows' last run, repository and branch; a release's
+// history opens on the last day. A longer window is read only when chosen.
+const WINDOWS = [[1, '1 day'], [7, '7 days'], [30, '30 days'], [90, '90 days']], ACTIVE_RUNS = ['queued', 'running'];
+const windowText = days => days === 1 ? 'the last day' : 'the last ' + days + ' days';
+let watch = null, ageTimer = null, drawAge = null, releaseKind = 'all', releaseMine = false, releaseListDays = 7, releaseDays = 1, folderBranch = null;
 const pageHidden = () => document.visibilityState === 'hidden';
 const humanize = code => { const text = String(code || '').replace(/_/g, ' ').trim(); return text && text[0].toUpperCase() + text.slice(1); };
 function span(ms) { if (typeof ms !== 'number' || !Number.isFinite(ms)) return '—'; const s = Math.round(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60); return s < 60 ? s + ' s' : m < 60 ? m + ' min' + (s % 60 ? ' ' + s % 60 + ' s' : '') : h + ' h' + (m % 60 ? ' ' + m % 60 + ' min' : ''); }
@@ -347,7 +350,7 @@ const revisionText = revision => (revision.commit || 'an unknown commit') + (rev
 function releaseOutcome(release, days) {
   const last = release.lastRun, s = release.stats || {}, decided = (s.succeeded || 0) + (s.failed || 0) + (s.blocked || 0);
   if (last && ['failed', 'blocked'].includes(last.state)) return node('small', humanize(last.state), 'tone-bad');
-  return node('small', decided ? s.succeeded + ' of ' + decided + ' ok' : s.runs ? s.runs + (s.runs === 1 ? ' run' : ' runs') : 'No runs in ' + days + ' days');
+  return node('small', decided ? s.succeeded + ' of ' + decided + ' ok' : s.runs ? s.runs + (s.runs === 1 ? ' run' : ' runs') : 'No runs in ' + windowText(days));
 }
 function releaseRow(release, days, live) {
   const active = release.activeRun, progress = active && node('p', deploying(active), 'caption tone-live');
@@ -357,14 +360,14 @@ function releaseRow(release, days, live) {
 }
 function releaseQuery() {
   const kinds = (RELEASE_FILTERS.find(([key]) => key === releaseKind) || RELEASE_FILTERS[0])[2];
-  return { kinds, branch: releaseMine && folderBranch?.environmentUid === $('environment').value ? folderBranch.uid : '' };
+  return { kinds, days: releaseListDays, branch: releaseMine && folderBranch?.environmentUid === $('environment').value ? folderBranch.uid : '' };
 }
 // One page per backend kind of the filter (Agents covers two), merged by name; `from` appends the next pages to a shown list.
 async function readReleases(target, query, sizes, from = null) {
   const parts = query.kinds.map((kind, i) => ({ kind, loaded: from ? from.parts[i].loaded : 0, count: from ? from.parts[i].count : 0, size: sizes[i] }));
-  const pages = await Promise.all(parts.map(part => part.size > 0 ? readWorkspace('deployment-releases', { limit: part.size, offset: part.loaded, ...(part.kind ? { releaseKind: part.kind } : {}), ...(query.branch ? { codeRepositoryBranchUid: query.branch } : {}) }, target) : null));
+  const pages = await Promise.all(parts.map(part => part.size > 0 ? readWorkspace('deployment-releases', { days: query.days, limit: part.size, offset: part.loaded, ...(part.kind ? { releaseKind: part.kind } : {}), ...(query.branch ? { codeRepositoryBranchUid: query.branch } : {}) }, target) : null));
   const results = from ? [...from.results] : [];
-  let days = from?.days || 30, truncated = Boolean(from?.truncated);
+  let days = from?.days || query.days, truncated = Boolean(from?.truncated);
   parts.forEach((part, i) => { const page = pages[i]; if (!page) return; results.push(...page.results); part.loaded += page.results.length; part.count = page.count; days = page.days || days; truncated = truncated || page.runsTruncated === true; });
   if (query.kinds.length > 1) results.sort((a, b) => String(a.name).localeCompare(String(b.name)));
   return { target, query, parts: parts.map(({ kind, loaded, count }) => ({ kind, loaded, count })), results, days, truncated, readAt: from ? from.readAt : Date.now() };
@@ -375,13 +378,14 @@ function drawReleases(list, screen, started) {
   const known = folderBranch?.environmentUid === list.target.environmentUid ? folderBranch : null;
   const chips = chipGroup('Release kind', RELEASE_FILTERS.map(([key, label]) => [key, label]), releaseKind, key => { releaseKind = key; return discover(0); });
   if (known) { const mine = button('This repository', () => { releaseMine = !list.query.branch; return discover(0); }); mine.setAttribute('aria-pressed', String(Boolean(list.query.branch))); mine.setAttribute('title', known.label); chips.append(mine); }
-  append(out, group('row between', group('grow', node('h2', 'Releases'), age), button('Refresh', () => discover(0))), chips);
+  append(out, group('row between', group('grow', node('h2', 'Releases'), age), button('Refresh', () => discover(0))), chips,
+    chipGroup('List window', WINDOWS, list.days, days => { releaseListDays = days; return discover(0); }));
   readAge(age, environment, list.readAt, screen);
   const rows = [...list.results.filter(release => release.activeRun), ...list.results.filter(release => !release.activeRun)], items = group('stack');
   items.style.gap = '0';
   for (const release of rows) items.append(releaseRow(release, list.days, live));
   if (!rows.length) append(out, empty('No releases', list.query.branch ? 'This repository has no APIs, agents or static sites in ' + environment + '.' : 'No APIs, agents or static sites in ' + environment + ' match this filter.'));
-  append(out, items, rows.length && zoneNote(), list.truncated && caption('Run history counts the most recent runs of the last ' + list.days + ' days; older runs in that window were not read.'));
+  append(out, items, rows.length && zoneNote(), list.truncated && caption('Run history counts the most recent runs of ' + windowText(list.days) + '; older runs in that window were not read.'));
   const total = list.parts.reduce((sum, part) => sum + part.count, 0);
   if (list.parts.some(part => part.loaded < part.count)) {
     const more = button('Load more', async () => {
@@ -398,7 +402,7 @@ function drawReleases(list, screen, started) {
 }
 function tile(label, value, detail) { return group('tile', node('small', label), node('strong', value), detail && node('small', detail)); }
 function runTable(runs, days, from, live) {
-  if (!runs.length) return empty('No runs', 'This release did not deploy in the last ' + days + ' days.');
+  if (!runs.length) return empty('No runs', 'This release did not deploy in ' + windowText(days) + '.');
   const table = node('table', undefined, 'runs'), head = node('thead'), titles = node('tr'), body = node('tbody');
   const cell = child => { const td = node('td'); td.append(child); return td; };
   for (const title of ['Started', 'Commit', 'Source', 'State', 'Stages', 'Time']) titles.append(node('th', title));

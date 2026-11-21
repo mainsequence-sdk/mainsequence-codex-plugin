@@ -429,7 +429,7 @@ function releasePanel(globals = {}) {
     calls.push(JSON.parse(JSON.stringify({ action: args.action, input: args.input, environmentUid: args.environmentUid }))); // plain objects outside the panel's realm
     if (args.action === 'local-context') return { preferences: { baseDir: '/tmp' }, organization: 'fixture', pluginWorkspace: null, local: { status: 'success', data: { items: [{ name: 'pricing-engine', path: '/tmp/pricing-engine', repositoryUid: 'repo-1' }] } } };
     if (args.action === 'resolve') return ok('resolve', { project: { branch: 'main' }, resolution: { code_repository_branch: { uid: 'branch-1', code_repository_name: 'pricing-engine', repository_branch: 'main' } } });
-    if (args.action === 'deployment-releases') { const rows = releaseRows(state.deploying); return ok('deployment-releases', { count: rows.length, days: 30, now: new Date().toISOString(), runsTruncated: false, results: rows }); }
+    if (args.action === 'deployment-releases') { const rows = releaseRows(state.deploying); return ok('deployment-releases', { count: rows.length, days: args.input.days ?? 30, now: new Date().toISOString(), runsTruncated: false, results: rows }); }
     if (args.action === 'deployment-release') return state.hiddenRelease ? ok('deployment-release', { hidden: true, uid: args.input.releaseUid }, "You can't see this release. A release is shown to the people it is shared with.") : ok('deployment-release', releaseDetailData(state.deploying, args.input.days));
     if (args.action === 'deployment-active') return ok('deployment-active', { count: state.active.length, runs: state.active });
     if (args.action === 'deployment-history') return ok('deployment-history', { count: 1, results: [{ kind: 'deployment_run', uid: 'run-1', targetLabel: 'pricing-api', state: state.runState, branchName: 'main', commit: 'abc1234' }] });
@@ -441,7 +441,7 @@ function releasePanel(globals = {}) {
 test('Releases reads the list once and shows kinds, the last runs as dots, and deploying releases first', async () => {
   const ui = await releasePanel(); await ui.el('releases-tab').onclick();
   assert.equal(ui.el('releases-tab').attributes['aria-selected'], 'true');
-  assert.deepEqual(ui.calls.map(call => [call.action, call.input, call.environmentUid]), [['deployment-releases', { limit: 50, offset: 0 }, 'env-a']]);
+  assert.deepEqual(ui.calls.map(call => [call.action, call.input, call.environmentUid]), [['deployment-releases', { days: 7, limit: 50, offset: 0 }, 'env-a']], 'the list opens on a week');
   const text = flatten(ui.el('results'));
   assert.match(text, /Releases/); assert.match(text, /Research · read just now/);
   for (const chip of ['All kinds', 'APIs', 'Agents', 'Static sites']) assert.ok(button(ui, 'results', chip), chip);
@@ -459,6 +459,10 @@ test('Releases reads the list once and shows kinds, the last runs as dots, and d
   assert.equal(dots.attributes['aria-label'], 'Last 4 runs, newest first: running, succeeded, failed, superseded');
   assert.deepEqual(dots.children.map(dot => dot.className), ['dot tone-live', 'dot tone-ok', 'dot tone-bad', 'dot tone-off']);
   assert.equal(button(ui, 'results', 'Load more'), undefined);
+  assert.equal(button(ui, 'results', '7 days').attributes['aria-pressed'], 'true'); assert.ok(button(ui, 'results', '1 day'));
+  await button(ui, 'results', '30 days').onclick();
+  assert.deepEqual(ui.reads('deployment-releases').at(-1).input, { days: 30, limit: 50, offset: 0 }, 'a longer window is read only when chosen');
+  assert.equal(button(ui, 'results', '30 days').attributes['aria-pressed'], 'true');
   await button(ui, 'results', 'All deployments, including jobs and images').onclick();
   assert.equal(ui.calls.at(-1).action, 'deployment-history'); assert.ok(button(ui, 'results', '← Releases'));
   assert.equal(ui.timers(30000).length, 0, 'leaving Releases ends its checks');
@@ -513,14 +517,14 @@ test('a check waits while the panel is hidden, runs as soon as it is visible, an
 test('kind chips read each backend kind; This repository filters by the branch a local folder resolved to', async () => {
   const ui = await releasePanel(); await ui.el('releases-tab').onclick();
   await button(ui, 'results', 'Agents').onclick();
-  assert.deepEqual(ui.reads('deployment-releases').slice(-2).map(call => call.input), [{ limit: 50, offset: 0, releaseKind: 'harness_agent' }, { limit: 50, offset: 0, releaseKind: 'agent' }]);
+  assert.deepEqual(ui.reads('deployment-releases').slice(-2).map(call => call.input), [{ days: 7, limit: 50, offset: 0, releaseKind: 'harness_agent' }, { days: 7, limit: 50, offset: 0, releaseKind: 'agent' }]);
   assert.equal(button(ui, 'results', 'Agents').attributes['aria-pressed'], 'true');
   await button(ui, 'results', 'APIs').onclick(); assert.equal(ui.reads('deployment-releases').at(-1).input.releaseKind, 'fastapi');
   await button(ui, 'results', 'All kinds').onclick(); assert.equal(ui.reads('deployment-releases').at(-1).input.releaseKind, undefined);
   await ui.el('code-tab').onclick(); await button(ui, 'results', 'Open').onclick(); await button(ui, 'results', 'View releases').onclick();
   assert.deepEqual(ui.reads('resolve').at(-1).input, { root: '/tmp/pricing-engine' });
   assert.equal(ui.el('releases-tab').attributes['aria-selected'], 'true');
-  assert.deepEqual(ui.reads('deployment-releases').at(-1).input, { limit: 50, offset: 0, codeRepositoryBranchUid: 'branch-1' });
+  assert.deepEqual(ui.reads('deployment-releases').at(-1).input, { days: 7, limit: 50, offset: 0, codeRepositoryBranchUid: 'branch-1' });
   const mine = button(ui, 'results', 'This repository');
   assert.equal(mine.attributes['aria-pressed'], 'true'); assert.equal(mine.attributes.title, 'pricing-engine · main');
   await ui.timers(30000)[0].fn(); assert.deepEqual(ui.reads('deployment-active').at(-1).input, { codeRepositoryBranchUid: 'branch-1' }, 'checks follow the filter');
@@ -534,7 +538,7 @@ test('kind chips read each backend kind; This repository filters by the branch a
 test('a release shows what it serves and wants, stats over a chosen window and its runs; a run opens its details', async () => {
   const ui = await releasePanel(); await ui.el('releases-tab').onclick();
   await button(ui, 'results', 'pricing-api').onclick();
-  assert.deepEqual(ui.calls.at(-1), { action: 'deployment-release', input: { releaseUid: 'release-api', days: 30 }, environmentUid: 'env-a' });
+  assert.deepEqual(ui.calls.at(-1), { action: 'deployment-release', input: { releaseUid: 'release-api', days: 1 }, environmentUid: 'env-a' }, 'a release history opens on the last day');
   const text = flatten(ui.el('results'));
   assert.match(text, /pricing-api\s+API/); assert.match(text, /pricing-engine · main/);
   assert.match(text, new RegExp(`Serving abc1def \\(revision 14\\) since ${STAMP} \\(56 min ago\\)`)); assert.match(text, new RegExp(`Wanted abc0def \\(revision 15\\), requested ${STAMP} \\(5 min ago\\)`));
@@ -544,7 +548,7 @@ test('a release shows what it serves and wants, stats over a chosen window and i
   assert.match(text, /Stats from the last 100 runs/);
   assert.deepEqual(walk(ui.el('results')).filter(el => el.textContent && ['Started', 'Commit', 'Source', 'State', 'Stages', 'Time'].includes(el.textContent) && !el.onclick).map(el => el.textContent), ['Started', 'Commit', 'Source', 'State', 'Stages', 'Time']);
   for (const value of ['Repository push', 'Manual', 'Reconciliation', 'Running', 'Failed', '1 of 3', '3 of 3', 'abc9999']) assert.ok(walk(ui.el('results')).some(el => el.textContent === value), value);
-  assert.equal(button(ui, 'results', '30 days').attributes['aria-pressed'], 'true');
+  assert.equal(button(ui, 'results', '1 day').attributes['aria-pressed'], 'true');
   assert.equal(ui.timers(30000).length, 1, 'a running run is watched'); await ui.timers(30000)[0].fn();
   assert.deepEqual(ui.reads('deployment-active').at(-1).input, { codeRepositoryBranchUid: 'branch-1' }, 'scoped to the release branch');
   await button(ui, 'results', '7 days').onclick();
