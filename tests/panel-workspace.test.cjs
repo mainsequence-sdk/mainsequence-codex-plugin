@@ -40,7 +40,8 @@ test('release reads reach devtools as GET requests for the scoped account, and a
   const workspace=createWorkspace({scoped:async(_,args,fn)=>fn(context,args.environmentUid)},{fetch});
   const call=(action,input,signal=new AbortController().signal)=>workspace.call('mainsequence_workspace',{contextId:'ctx',environmentUid:ENV,action,input},()=>assert.fail('no discovery dispatch'),signal,'chat');
   const list=(await call('deployment-releases',{releaseKind:'fastapi'})).result;
-  assert.equal(list.status,'success',list.summary);assert.equal(list.data.results[0].activeRun.uid,RUN);
+  assert.equal(list.status,'success',list.summary);assert.equal(list.data.results[0].activeRun.uid,RUN);assert.equal(list.data.days,7,'the list defaults to a week');
+  assert.equal((await call('deployment-release',{releaseUid:RELEASE})).result.data.days,1,'a release history defaults to the last day');
   assert.equal((await call('deployment-release',{releaseUid:RELEASE,days:7})).result.data.release.name,'pricing-api');
   assert.equal((await call('deployment-active',{})).result.data.count,1);
   assert.ok(requests.every(request=>request.method==='GET'&&request.authorization==='Bearer fixture-releases-access'),JSON.stringify(requests));
