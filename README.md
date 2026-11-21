@@ -112,7 +112,8 @@ change it.
 - **Releases.** The environment's APIs, agents and static sites, each with its last ten
   runs of the last 7 days (or 1, 30 or 90) as colored dots and how many of them succeeded (superseded,
   cancelled and skipped runs don't count), and the date and time it last deployed or its last
-  run ended; filter by kind, or by the repository of a local folder (**Code → View releases**).
+  run ended. A release with no runs in the window still shows its repository, branch and
+  when it last deployed, or that it never has; filter by kind, or by the repository of a local folder (**Code → View releases**).
   Releases that are deploying come first, with their commit, stage, start time and elapsed
   time. A release shows the commit it serves and since when, the one it wants and when it
   was requested, its success rate, median time, slowest stage and most common failure over

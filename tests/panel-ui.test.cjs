@@ -413,7 +413,12 @@ const releaseRows = deploying => [
     recent: [{ uid: 'run-1', state: deploying ? 'running' : 'succeeded' }, { uid: 'run-2', state: 'succeeded' }, { uid: 'run-3', state: 'failed' }, { uid: 'run-4', state: 'superseded' }],
     lastRun: runSummary('run-1', deploying ? 'running' : 'succeeded'), activeRun: deploying ? runSummary('run-1', 'running', { durationMs: 240000 }) : null, stats: releaseStats({ active: deploying ? 1 : 0 }) },
   { uid: 'release-agent', name: 'risk-agent', kind: 'harness_agent', kindLabel: 'Agent', branchUid: 'branch-1', repositoryName: 'pricing-engine', branchName: 'main', recent: [{ uid: 'run-5', state: 'blocked' }],
-    lastRun: runSummary('run-5', 'blocked', { finishedAt: minutesAgo(125) }), activeRun: null, stats: releaseStats({ runs: 1, succeeded: 0, failed: 0, blocked: 1, successRate: 0 }) }];
+    lastRun: runSummary('run-5', 'blocked', { finishedAt: minutesAgo(125) }), deployed: true, lastDeploy: runSummary('run-7', 'succeeded', { finishedAt: minutesAgo(3000) }),
+    activeRun: null, stats: releaseStats({ runs: 1, succeeded: 0, failed: 0, blocked: 1, successRate: 0 }) },
+  // Deployed days ago with nothing in the window: it still says when, and from where.
+  { uid: 'release-quiet', name: 'app', kind: 'fastapi', kindLabel: 'API', branchUid: 'branch-2', repositoryName: 'HunchAPI', branchName: 'main', recent: [], lastRun: null,
+    deployed: true, lastDeploy: runSummary('run-8', 'succeeded', { finishedAt: minutesAgo(4400) }), activeRun: null,
+    stats: releaseStats({ runs: 0, succeeded: 0, failed: 0, blocked: 0, successRate: null, commonFailure: null }) }];
 const releaseDetailData = (deploying, days = 30) => ({ hidden: false, uid: 'release-api', days, count: 140, counted: 100, truncated: true,
   release: { uid: 'release-api', name: 'pricing-api', kind: 'fastapi', kindLabel: 'API', branchUid: 'branch-1', repositoryName: 'pricing-engine', branchName: 'main',
     activeRevision: { uid: 'revision-14', commit: 'abc1def', configurationRevision: 14, activatedAt: minutesAgo(56) }, desiredRevision: { uid: 'revision-15', commit: 'abc0def', configurationRevision: 15, activatedAt: null, createdAt: minutesAgo(5) } },
@@ -447,12 +452,15 @@ test('Releases reads the list once and shows kinds, the last runs as dots, and d
   for (const chip of ['All kinds', 'APIs', 'Agents', 'Static sites']) assert.ok(button(ui, 'results', chip), chip);
   assert.equal(button(ui, 'results', 'All kinds').attributes['aria-pressed'], 'true');
   assert.equal(button(ui, 'results', 'This repository'), undefined, 'offered only once a folder resolved its branch');
-  assert.deepEqual(walk(ui.el('results')).filter(el => el.className === 'name').map(el => el.textContent), ['pricing-api', 'docs-site', 'risk-agent'], 'a deploying release is pinned on top');
+  assert.deepEqual(walk(ui.el('results')).filter(el => el.className === 'name').map(el => el.textContent), ['pricing-api', 'docs-site', 'risk-agent', 'app'], 'a deploying release is pinned on top');
   assert.match(text, new RegExp(`Deploying abc1234 · stage 2 of 3 · started ${STAMP} · 4 min`));
   assert.match(text, /API/); assert.match(text, /Static site/); assert.match(text, /pricing-engine · main/);
   assert.match(text, /1 of 1 ok/); assert.match(text, /Blocked/);
   assert.match(text, new RegExp(`pricing-engine · main · deployed ${STAMP} \\(26 min ago\\)`), 'a row says when it last deployed');
-  assert.match(text, new RegExp(`pricing-engine · main · last run ${STAMP} \\(2 h ago\\)`), 'or when its last run ended');
+  assert.match(text, new RegExp(`pricing-engine · main · last run ${STAMP} \\(2 h ago\\) · deployed ${STAMP} \\(2 days ago\\)`), 'or when its last run ended, and when it last deployed');
+  assert.match(text, new RegExp(`HunchAPI · main · deployed ${STAMP} \\(3 days ago\\)`), 'a release without runs in the window still says when it deployed');
+  assert.doesNotMatch(text, /No runs/, 'and nothing reads as undeployed');
+  assert.equal(walk(ui.el('results')).filter(el => el.attributes?.role === 'img').length, 3, 'a release without runs in the window has no dots');
   assert.doesNotMatch(text, /deploying since/, 'a deploying row says when it started once, on its progress line');
   assert.match(text, /Times in UTC([+-]\d\d:\d\d)?\./, 'the zone of those times is named');
   const dots = walk(ui.el('results')).find(el => el.attributes?.role === 'img');

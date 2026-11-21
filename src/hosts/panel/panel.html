@@ -286,6 +286,14 @@ function lastRunText(run) {
   const at = stampAgo(run.finishedAt || start);
   return at ? (run.state === 'succeeded' ? 'deployed ' : 'last run ') + at : '';
 }
+// When a release last changed, whatever the window: its newest run there and, when that run did not deploy, when
+// it last did. A release without runs in the window still says when it deployed, or that it never has.
+function releaseWhen(release) {
+  const run = release.lastRun, deploy = release.lastDeploy, deployed = deploy ? 'deployed ' + stampAgo(deploy.finishedAt || deploy.startedAt || deploy.createdAt) : '';
+  if (!run) return deployed || (release.deployed === false ? 'not deployed yet' : '');
+  const latest = lastRunText(run);
+  return run.state === 'succeeded' || !deployed || deploy.uid === run.uid ? latest : latest + ' · ' + deployed;
+}
 const tone = state => state === 'succeeded' ? 'ok' : ['failed', 'blocked'].includes(state) ? 'bad' : ['pending', ...ACTIVE_RUNS].includes(state) ? 'live' : 'off';
 const badge = (text, cls = '') => node('span', text, 'badge' + (cls ? ' ' + cls : ''));
 const stateBadge = state => badge(humanize(state) || 'Unknown', 'tone-' + tone(state));
@@ -350,13 +358,16 @@ const revisionText = revision => (revision.commit || 'an unknown commit') + (rev
 function releaseOutcome(release, days) {
   const last = release.lastRun, s = release.stats || {}, decided = (s.succeeded || 0) + (s.failed || 0) + (s.blocked || 0);
   if (last && ['failed', 'blocked'].includes(last.state)) return node('small', humanize(last.state), 'tone-bad');
-  return node('small', decided ? s.succeeded + ' of ' + decided + ' ok' : s.runs ? s.runs + (s.runs === 1 ? ' run' : ' runs') : 'No runs in ' + windowText(days));
+  if (!last) return null; // the row's caption says when it deployed
+  return node('small', decided ? s.succeeded + ' of ' + decided + ' ok' : s.runs ? s.runs + (s.runs === 1 ? ' run' : ' runs') : '');
 }
 function releaseRow(release, days, live) {
   const active = release.activeRun, progress = active && node('p', deploying(active), 'caption tone-live');
+  // A deploying row says when it started on its progress line, so its caption names only the last deploy.
+  const deploy = release.lastDeploy, when = active ? deploy && 'deployed ' + stampAgo(deploy.finishedAt || deploy.startedAt || deploy.createdAt) : releaseWhen(release);
   if (active) live.set(active.uid, run => { progress.textContent = deploying(run); });
-  return group('item row', group('grow', group('row wrap', button(release.name || 'Release', () => releaseDetail(release), 'name'), badge(release.kindLabel || humanize(release.kind))), caption([release.repositoryName, release.branchName, !active && lastRunText(release.lastRun)].filter(Boolean).join(' · ')), progress),
-    group('release-end', runDots(release.recent || []), releaseOutcome(release, days)));
+  return group('item row', group('grow', group('row wrap', button(release.name || 'Release', () => releaseDetail(release), 'name'), badge(release.kindLabel || humanize(release.kind))), caption([release.repositoryName, release.branchName, when].filter(Boolean).join(' · ') || 'No runs in ' + windowText(days)), progress),
+    group('release-end', (release.recent || []).length ? runDots(release.recent) : null, releaseOutcome(release, days)));
 }
 function releaseQuery() {
   const kinds = (RELEASE_FILTERS.find(([key]) => key === releaseKind) || RELEASE_FILTERS[0])[2];
