@@ -111,10 +111,13 @@ change it.
   the workspace to Codex, with a project `AGENTS.md`.
 - **Releases.** The environment's APIs, agents and static sites, each with its last ten
   runs as colored dots and how many of its runs of the last 30 days succeeded (superseded,
-  cancelled and skipped runs don't count); filter by kind, or by the repository of a local folder (**Code → View releases**). Releases that
-  are deploying come first, with their commit, stage and elapsed time. A release shows the
-  commit it serves and the one it wants, its success rate, median time, slowest stage and
-  most common failure over 7, 30 or 90 days, and its runs; a run opens its stages and logs.
+  cancelled and skipped runs don't count), and the date and time it last deployed or its last
+  run ended; filter by kind, or by the repository of a local folder (**Code → View releases**).
+  Releases that are deploying come first, with their commit, stage, start time and elapsed
+  time. A release shows the commit it serves and since when, the one it wants and when it
+  was requested, its success rate, median time, slowest stage and most common failure over
+  7, 30 or 90 days, and its runs by start date and time; a run opens its stages and logs.
+  Times are in the machine's time zone, which the panel names.
   Read-only. Nothing is read again while nothing deploys. While a shown run is queued or
   running, the panel checks only the active runs every 30 s and reads the screen again
   once one of them ends; checks wait while the panel is hidden and pause after an hour

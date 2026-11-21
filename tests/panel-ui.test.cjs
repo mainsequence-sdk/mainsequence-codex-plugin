@@ -401,6 +401,7 @@ test('an unreachable catalog keeps the version with a manual check that reads ag
 
 // Releases and deployments, with results in the shape devtools' deployment reads return.
 const minutesAgo = minutes => new Date(Date.now() - minutes * 60000).toISOString();
+const STAMP = String.raw`\d{4}-\d\d-\d\d \d\d:\d\d`; // a date and time in the machine's zone
 const runSummary = (uid, state, extra = {}) => ({ uid, state, outcome: '', operation: 'build_and_deploy', source: 'repository_event', commit: 'abc1234', createdAt: minutesAgo(30), startedAt: minutesAgo(30),
   finishedAt: ['queued', 'running'].includes(state) ? null : minutesAgo(26), durationMs: 250000, error: '', errorCode: '', stepsDone: state === 'succeeded' ? 3 : 1, stepsTotal: 3, ...extra });
 const releaseStats = extra => ({ runs: 6, succeeded: 5, failed: 1, blocked: 0, cancelled: 0, superseded: 0, skipped: 0, active: 0, successRate: 5 / 6, medianMs: 250000, p90Ms: 400000,
@@ -415,7 +416,7 @@ const releaseRows = deploying => [
     lastRun: runSummary('run-5', 'blocked', { finishedAt: minutesAgo(125) }), activeRun: null, stats: releaseStats({ runs: 1, succeeded: 0, failed: 0, blocked: 1, successRate: 0 }) }];
 const releaseDetailData = (deploying, days = 30) => ({ hidden: false, uid: 'release-api', days, count: 140, counted: 100, truncated: true,
   release: { uid: 'release-api', name: 'pricing-api', kind: 'fastapi', kindLabel: 'API', branchUid: 'branch-1', repositoryName: 'pricing-engine', branchName: 'main',
-    activeRevision: { uid: 'revision-14', commit: 'abc1def', configurationRevision: 14, activatedAt: minutesAgo(56) }, desiredRevision: { uid: 'revision-15', commit: 'abc0def', configurationRevision: 15, activatedAt: null } },
+    activeRevision: { uid: 'revision-14', commit: 'abc1def', configurationRevision: 14, activatedAt: minutesAgo(56) }, desiredRevision: { uid: 'revision-15', commit: 'abc0def', configurationRevision: 15, activatedAt: null, createdAt: minutesAgo(5) } },
   runs: [runSummary('run-1', deploying ? 'running' : 'succeeded', { durationMs: 240000 }), runSummary('run-2', 'succeeded', { source: 'manual', commit: 'abc9999' }), runSummary('run-3', 'failed', { source: 'system_reconciliation', error: 'not ready' })],
   stats: releaseStats({ active: deploying ? 1 : 0 }) });
 function releasePanel(globals = {}) {
@@ -447,9 +448,13 @@ test('Releases reads the list once and shows kinds, the last runs as dots, and d
   assert.equal(button(ui, 'results', 'All kinds').attributes['aria-pressed'], 'true');
   assert.equal(button(ui, 'results', 'This repository'), undefined, 'offered only once a folder resolved its branch');
   assert.deepEqual(walk(ui.el('results')).filter(el => el.className === 'name').map(el => el.textContent), ['pricing-api', 'docs-site', 'risk-agent'], 'a deploying release is pinned on top');
-  assert.match(text, /Deploying abc1234 · stage 2 of 3 · 4 min/);
+  assert.match(text, new RegExp(`Deploying abc1234 · stage 2 of 3 · started ${STAMP} · 4 min`));
   assert.match(text, /API/); assert.match(text, /Static site/); assert.match(text, /pricing-engine · main/);
-  assert.match(text, /1 of 1 ok/); assert.match(text, /Blocked 2 h ago/);
+  assert.match(text, /1 of 1 ok/); assert.match(text, /Blocked/);
+  assert.match(text, new RegExp(`pricing-engine · main · deployed ${STAMP} \\(26 min ago\\)`), 'a row says when it last deployed');
+  assert.match(text, new RegExp(`pricing-engine · main · last run ${STAMP} \\(2 h ago\\)`), 'or when its last run ended');
+  assert.doesNotMatch(text, /deploying since/, 'a deploying row says when it started once, on its progress line');
+  assert.match(text, /Times in UTC([+-]\d\d:\d\d)?\./, 'the zone of those times is named');
   const dots = walk(ui.el('results')).find(el => el.attributes?.role === 'img');
   assert.equal(dots.attributes['aria-label'], 'Last 4 runs, newest first: running, succeeded, failed, superseded');
   assert.deepEqual(dots.children.map(dot => dot.className), ['dot tone-live', 'dot tone-ok', 'dot tone-bad', 'dot tone-off']);
@@ -467,7 +472,7 @@ test('Releases re-checks only active runs every 30 s, reads the list once when a
   await ui.timers(30000)[0].fn();
   assert.deepEqual(ui.calls.map(call => call.action), ['deployment-releases', 'deployment-active']);
   assert.deepEqual(ui.calls[1].input, {}, 'the environment, without a branch filter');
-  assert.match(flatten(ui.el('results')), /Deploying abc1234 · stage 3 of 3 · 4 min 30 s/);
+  assert.match(flatten(ui.el('results')), new RegExp(`Deploying abc1234 · stage 3 of 3 · started ${STAMP} · 4 min 30 s`));
   assert.equal(ui.timers(30000).length, 1);
   // The run ends: the list is read once more and, with nothing deploying, nothing is watched.
   ui.state.active = []; ui.state.deploying = false;
@@ -532,7 +537,7 @@ test('a release shows what it serves and wants, stats over a chosen window and i
   assert.deepEqual(ui.calls.at(-1), { action: 'deployment-release', input: { releaseUid: 'release-api', days: 30 }, environmentUid: 'env-a' });
   const text = flatten(ui.el('results'));
   assert.match(text, /pricing-api\s+API/); assert.match(text, /pricing-engine · main/);
-  assert.match(text, /Serving abc1def \(revision 14\)/); assert.match(text, /Wanted abc0def \(revision 15\)/);
+  assert.match(text, new RegExp(`Serving abc1def \\(revision 14\\) since ${STAMP} \\(56 min ago\\)`)); assert.match(text, new RegExp(`Wanted abc0def \\(revision 15\\), requested ${STAMP} \\(5 min ago\\)`));
   assert.match(text, /Runs\s+6\s+1 active/); assert.match(text, /Succeeded\s+83%\s+5 of 6/);
   assert.match(text, /Median time\s+4 min 10 s\s+90th percentile 6 min 40 s/); assert.match(text, /Slowest stage\s+Deploy\s+3 min median/);
   assert.match(text, /Most common failure: Workflow prerequisite failed \(1 of 1\)/);
@@ -544,7 +549,8 @@ test('a release shows what it serves and wants, stats over a chosen window and i
   assert.deepEqual(ui.reads('deployment-active').at(-1).input, { codeRepositoryBranchUid: 'branch-1' }, 'scoped to the release branch');
   await button(ui, 'results', '7 days').onclick();
   assert.deepEqual(ui.calls.at(-1).input, { releaseUid: 'release-api', days: 7 }); assert.equal(button(ui, 'results', '7 days').attributes['aria-pressed'], 'true');
-  const run = walk(ui.el('results')).find(el => el.attributes?.['aria-label'] === 'Open the run started 30 min ago');
+  const run = walk(ui.el('results')).find(el => new RegExp(`^Open the run started ${STAMP} \\(30 min ago\\)$`).test(el.attributes?.['aria-label'] || ''));
+  assert.match(run.textContent, new RegExp(`^${STAMP}$`), 'a run is listed by its start date and time'); assert.match(flatten(ui.el('results')), /30 min ago/);
   await run.onclick();
   assert.deepEqual(ui.calls.at(-1).input, { runUid: 'run-1', kind: 'deployment_run' });
   await button(ui, 'results', '← pricing-api').onclick();
