@@ -4,7 +4,6 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const cp = require('node:child_process');
-const { createHash } = require('node:crypto');
 const { canonicalRepositoryDir, readOrganizationProjectWorkspace } = require('@dev-mainsequence/devtools');
 const { createWorkspace } = require('../build/hosts/workspace');
 const { git } = require('./helpers.cjs');
@@ -69,7 +68,7 @@ test('project setup and links use the real account-bound dispatcher and retain p
   // package installation or real credentials. Setup still verifies membership,
   // origins and branches and writes its actual workspace manifest/instructions.
   const baseDir = path.join(home, 'repositories');
-  const container = path.join(baseDir, 'fixture-org', 'organization-projects', createHash('sha256').update(backend).digest('hex').slice(0, 16), `fixture-project-${uid(1)}`);
+  const container = path.join(baseDir, 'fixture-org', 'organization-projects', `fixture-project-${uid(1)}`);
   const root = path.join(container, project.name);
   const source = canonicalRepositoryDir(baseDir, 'fixture-org', uid(3), 'Pricing');
   const checkout = path.join(container, 'repositories', `pricing-${uid(3)}`, `main-${uid(4)}`);
