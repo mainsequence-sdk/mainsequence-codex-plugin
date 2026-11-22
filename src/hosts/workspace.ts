@@ -6,7 +6,7 @@ import { createDevTools, createNodeHost, createSessionService, bindSessionAccoun
 import { createDiscovery, type Dispatch, DiscoveryError } from './discovery';
 type Row = Record<string, unknown>;
 type Job = { id: string; action: string; context: string; status: 'running' | 'success' | 'failure' | 'cancelled'; progress: string; startedAt: string; result?: ActionResult; owner: string; controller: AbortController };
-const READ = new Set(['status','resolve','sdk-status','local-repositories','delete-local-preview','docker-preview','devcontainer-preview','deployment-history','deployment-run','deployment-logs','deployment-releases','deployment-release','deployment-active','deployment-wait','update-sdk','install-skills']);
+const READ = new Set(['status','resolve','sdk-status','local-repositories','delete-local-preview','docker-preview','devcontainer-preview','deployment-history','deployment-run','deployment-logs','deployment-release-history','deployment-active','deployment-wait','update-sdk','install-skills']);
 const WRITE = new Set(['setup','sync','update-sdk','update-agents','install-skills','skills-sync','install','env-cleanup','open-folder','docker-build','devcontainer-write','delete-local','organization-project-setup','organization-project-link']);
 const ALLOWED = new Set(['root','projectType','repositoryUid','branch','baseDir','install','dryRun','organization','confirmation','image','platform','expectedDigest','projectUid','branchUid','target','commandCenterUrl','codeRepositoryBranchUid','limit','offset','runUid','kind','stepUid','cursor','releaseUid','releaseKind','search','days','timeoutSeconds']);
 export function createWorkspace(discovery: ReturnType<typeof createDiscovery>, dependencies: { fetch?: typeof fetch; sessionLock?: SessionLock; execute?: (action: string, input: Row, context: {backend:string;account:string}, environmentUid:string, signal?:AbortSignal, progress?:(message:string)=>void) => Promise<ActionResult> } = {}) {
@@ -14,9 +14,6 @@ export function createWorkspace(discovery: ReturnType<typeof createDiscovery>, d
   const ownerKey = (context: { backend: string; account: string; conversationId?: string }) => JSON.stringify([context.backend, context.account, context.conversationId]);
   const publicJob = ({ owner: _, controller: __, ...job }: Job) => job;
   async function execute(action: string, args: Row, scope: { backend: string; account: string }, environmentUid: string, signal?: AbortSignal, progress?: (message: string) => void) {
-    // Release reads default to short windows, as in the panel: a week for the list, a day for one release's history.
-    const window = action === 'deployment-releases' ? 7 : action === 'deployment-release' ? 1 : null;
-    if (window !== null && args.days == null) args = { ...args, days: window };
     if(dependencies.execute) return dependencies.execute(action,args,scope,environmentUid,signal,progress);
     const host = createNodeHost(progress);
     host.openFolder = async root => { if (!await host.openBrowser(pathToFileURL(root).href)) throw new ToolingError('BROWSER_FAILED','The folder could not open.'); };

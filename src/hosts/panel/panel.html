@@ -7,7 +7,7 @@
 .account-name[data-status=connected]:before{color:var(--color-text-success,light-dark(#16803d,#40c977))}.account-name[data-status=error]:before{color:var(--color-text-danger,light-dark(#b42318,#ff6764))}.account-name[data-status=warning]:before{color:var(--color-text-warning,light-dark(#9a6700,#e3b341))}#login-notice:empty{display:none}#login-notice{font-size:12px;padding-top:8px;color:var(--color-text-warning,light-dark(#9a6700,#e3b341))}.account-row select{width:auto;min-width:132px;max-width:220px}
 @media(max-width:400px){.header{padding:14px 12px 0}.content{padding:8px 12px 16px}.account-row{gap:4px}.utility{margin-left:0}.account-name{font-size:12px}.account-row select{max-width:180px}nav button{padding:5px 7px}.toolbar{flex-wrap:wrap}button{max-width:100%;white-space:normal}.row.between{flex-wrap:wrap}.card{padding:10px}}
 .brand{flex-wrap:wrap;row-gap:2px}.version{color:var(--muted);font-size:12px}.release{gap:6px;font-size:12px;white-space:normal}.release button{min-height:24px;padding:2px 8px;font-size:12px}.release .ok{color:var(--color-text-success,light-dark(#16803d,#40c977))}.release .warn{color:var(--color-text-warning,light-dark(#9a6700,#e3b341))}.plugin-help{margin:10px 0 0}
-.chips{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 4px}.chips button{min-height:26px;padding:2px 10px;font-size:12px;border-color:var(--border);color:var(--muted)}.chips button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:transparent}.badge{display:inline-block;font-size:11px;line-height:16px;padding:0 6px;border:1px solid var(--border);border-radius:999px;color:var(--muted);white-space:nowrap;font-weight:400}.badge[class*=tone-]{border-color:currentColor}.dots{display:inline-flex;gap:3px;align-items:center;min-height:12px}.dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}.tone-ok{color:var(--color-text-success,light-dark(#16803d,#40c977))}.tone-bad{color:var(--color-text-danger,light-dark(#b42318,#ff6764))}.tone-off{color:var(--color-text-tertiary,light-dark(#9a9a9a,#6f6f6f))}.tone-live{color:var(--color-text-info,light-dark(#0969da,#4493f8))}.release-end{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none;align-self:flex-start;padding-top:5px}.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0}.tile{border:1px solid var(--border);border-radius:var(--border-radius-lg,10px);padding:10px 12px;min-width:0}.tile strong{display:block;font-size:17px;font-weight:600;margin:2px 0;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;margin:8px 0}table.runs{width:100%;border-collapse:collapse;font-size:12px}.runs th{text-align:left;font-weight:500;color:var(--muted);padding:6px 10px 6px 0;border-bottom:1px solid var(--border);white-space:nowrap}.runs td{padding:6px 10px 6px 0;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:middle}.runs td button.name{font-weight:500;font-size:12px;min-height:20px;white-space:nowrap}.runs td .since{margin-left:6px;font-size:12px}.watch-note:empty{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 4px}.chips button{min-height:26px;padding:2px 10px;font-size:12px;border-color:var(--border);color:var(--muted)}.chips button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:transparent}.badge{display:inline-block;font-size:11px;line-height:16px;padding:0 6px;border:1px solid var(--border);border-radius:999px;color:var(--muted);white-space:nowrap;font-weight:400}.badge[class*=tone-]{border-color:currentColor}.dots{display:inline-flex;gap:3px;align-items:center;min-height:12px}.dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}.tone-ok{color:var(--color-text-success,light-dark(#16803d,#40c977))}.tone-bad{color:var(--color-text-danger,light-dark(#b42318,#ff6764))}.tone-off{color:var(--color-text-tertiary,light-dark(#9a9a9a,#6f6f6f))}.tone-live{color:var(--color-text-info,light-dark(#0969da,#4493f8))}.tone-warn{color:var(--color-text-warning,light-dark(#9a6700,#e3b341))}.release-end{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none;align-self:flex-start;padding-top:5px}.watch-note:empty{display:none}
 </style></head><body>
 <main class="shell">
 <header class="header">
@@ -256,18 +256,17 @@ async function localRepository({root,repo}) {const ctx=await workspace();if(fold
 async function projectDetail(project,target,run) {if(run!==generation)return;return detail(async()=>({...await view('project',{projectUid:project.uid},target),workspace:await workspace(),operations:await operations()}),data=>{const prepared=operationCache.find(op=>op.action==='organization-project-setup'&&op.context===project.uid&&op.status==='success')?.result?.data;const progress=node('div'),center=data.workspace.preferences.commandCenterUrl,link=(target,branchUid)=>runOperation('organization-project-link',{projectUid:project.uid,target,...(branchUid?{branchUid}:{}),commandCenterUrl:center},progress);const setup=actionButton(prepared?'Update local workspace':'Set up locally','organization-project-setup',{projectUid:project.uid,baseDir:data.workspace.preferences.baseDir},progress,{primary:true,description:'Prepare separate checkouts for '+data.branches.length+' assigned branches in '+data.workspace.preferences.baseDir+'. Existing changes are preserved.'});setup.disabled=!data.branches.length;
  const centerButton=button('Open in Command Center',()=>link('project'));centerButton.disabled=!center;centerButton.title=center?'':'Set the Command Center URL in Settings.';
  append($('results'),back('Projects',()=>discover()),node('h2',data.project.name),markdown(data.project.description),group('row wrap',setup,centerButton),prepared&&caption(prepared.root),prepared&&operationRow(operationCache.find(op=>op.result?.data===prepared),target),progress,node('h3','Repositories'),...data.branches.map(b=>group('item',button(b.code_repository_name,()=>link('repository',b.uid),'name'),group('row',button(b.repository_branch,()=>link('branch',b.uid)),caption(b.is_initialized?'Ready':'Initializing')))));}); }
-// Deployments and releases follow devtools' polling rules (docs/deployments.md): nothing re-reads while no run is active.
-// While a shown run is queued or running, the Releases list or a release checks only the active runs every 30 s and reads
-// itself once more when one of them ends; a run's details re-read that run every 10 s. A check that comes due while the
-// panel is hidden waits until it is visible again, checks never overlap, and they pause after an hour.
-const RELEASE_CHECK_MS = 30000, RUN_CHECK_MS = 10000, WATCH_LIMIT_MS = 3600000, AGE_MS = 60000, RELEASE_PAGE = 50;
-const RELEASE_FILTERS = [['all', 'All kinds', ['']], ['api', 'APIs', ['fastapi']], ['agents', 'Agents', ['harness_agent', 'agent']], ['sites', 'Static sites', ['static_site']]];
-const RUN_SOURCES = { repository_event: 'Repository push', manual: 'Manual', create: 'Created', system_reconciliation: 'Reconciliation' };
-// History windows: the list opens on a week, enough for most rows' last run, repository and branch; a release's
-// history opens on the last day. A longer window is read only when chosen.
+// Deployments and releases follow devtools' polling rules (docs/deployments.md): nothing re-reads while nothing deploys.
+// While the deployment history shows one in progress it checks only those every 30 s and reads itself once more when
+// one ends or starts; a deployment's details re-read it every 10 s. A check that comes due while the panel is hidden
+// waits until it is visible again, checks never overlap, and they pause after an hour.
+const RELEASE_CHECK_MS = 30000, RUN_CHECK_MS = 10000, WATCH_LIMIT_MS = 3600000, AGE_MS = 60000, RELEASE_PAGE = 25;
+const RELEASE_FILTERS = [['', 'All types'], ['fastapi', 'APIs'], ['harness_agent', 'Agents'], ['static_site', 'Static sites']];
+const SOURCES = { repository_event: 'Repository event', manual: 'Manual', create: 'Create', system_reconciliation: 'System reconciliation' };
+// The history opens on the last day; a longer window is read only when chosen.
 const WINDOWS = [[1, '1 day'], [7, '7 days'], [30, '30 days'], [90, '90 days']], ACTIVE_RUNS = ['queued', 'running'];
 const windowText = days => days === 1 ? 'the last day' : 'the last ' + days + ' days';
-let watch = null, ageTimer = null, drawAge = null, releaseKind = 'all', releaseMine = false, releaseListDays = 7, releaseDays = 1, folderBranch = null;
+let watch = null, ageTimer = null, drawAge = null, releaseKind = '', releaseMine = false, releaseDays = 1, folderBranch = null;
 const pageHidden = () => document.visibilityState === 'hidden';
 const humanize = code => { const text = String(code || '').replace(/_/g, ' ').trim(); return text && text[0].toUpperCase() + text.slice(1); };
 function span(ms) { if (typeof ms !== 'number' || !Number.isFinite(ms)) return '—'; const s = Math.round(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60); return s < 60 ? s + ' s' : m < 60 ? m + ' min' + (s % 60 ? ' ' + s % 60 + ' s' : '') : h + ' h' + (m % 60 ? ' ' + m % 60 + ' min' : ''); }
@@ -277,16 +276,7 @@ const two = n => String(n).padStart(2, '0');
 function stamp(at) { const time = typeof at === 'number' ? at : Date.parse(at); if (!Number.isFinite(time)) return ''; const d = new Date(time); return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()) + ' ' + two(d.getHours()) + ':' + two(d.getMinutes()); }
 const stampAgo = at => { const when = stamp(at); return when && when + ' (' + ago(at) + ')'; };
 function zoneName() { const offset = -new Date().getTimezoneOffset(), m = Math.abs(offset); return offset ? 'UTC' + (offset > 0 ? '+' : '-') + two(Math.floor(m / 60)) + ':' + two(m % 60) : 'UTC'; }
-const zoneNote = () => caption('Times in ' + zoneName() + '.');
-// When a release's newest run happened: when it deployed or ended, or since when it runs.
-function lastRunText(run) {
-  if (!run) return '';
-  const start = run.startedAt || run.createdAt;
-  if (ACTIVE_RUNS.includes(run.state)) return start ? (run.state === 'queued' ? 'queued' : 'deploying') + ' since ' + stampAgo(start) : '';
-  const at = stampAgo(run.finishedAt || start);
-  return at ? (run.state === 'succeeded' ? 'deployed ' : 'last run ') + at : '';
-}
-const tone = state => state === 'succeeded' ? 'ok' : ['failed', 'blocked'].includes(state) ? 'bad' : ['pending', ...ACTIVE_RUNS].includes(state) ? 'live' : 'off';
+const tone = state => state === 'succeeded' ? 'ok' : state === 'failed' ? 'bad' : state === 'blocked' ? 'warn' : ['pending', ...ACTIVE_RUNS].includes(state) ? 'live' : 'off';
 const badge = (text, cls = '') => node('span', text, 'badge' + (cls ? ' ' + cls : ''));
 const stateBadge = state => badge(humanize(state) || 'Unknown', 'tone-' + tone(state));
 const watchNote = () => node('p', '', 'caption watch-note');
@@ -311,18 +301,17 @@ function startWatch(screen, every, check, note, started = Date.now()) {
 }
 // A watched screen reads itself again without the loading state, and replaces itself only while it is still shown.
 async function redraw(load, draw) { const shown = generation, data = await load(); if (shown !== generation) return; const screen = ++generation; clearResults(); $('list-toolbar').hidden = true; draw(data, screen); }
-// While shown runs are queued or running, check only the active runs; read the screen again once a watched one ends.
-function watchActive(screen, target, branch, runs, note, live, reread, started) {
-  const watched = new Set(runs.map(run => run.uid)); let last = watched.size;
+// While shown deployments are queued or running, check only those; read the history again once one ends or another starts.
+function watchDeployments(screen, list, note, live, reread, started) {
+  const watched = list.results.filter(item => ACTIVE_RUNS.includes(item.state)).map(item => item.uid), known = new Set(list.results.map(item => item.uid));
+  const { kind, branch } = list.query;
   note.textContent = 'Auto-refresh every 30 s while deploying.';
   startWatch(screen, RELEASE_CHECK_MS, async w => {
-    const data = await readWorkspace('deployment-active', branch ? { codeRepositoryBranchUid: branch } : {}, target);
+    const data = await readWorkspace('deployment-active', branch ? { codeRepositoryBranchUid: branch } : {}, list.target);
     if (!w.alive()) return false;
-    for (const run of data.runs) live.get(run.uid)?.(run);
-    const still = new Set(data.runs.map(run => run.uid));
-    const ended = data.count === 0 || data.count < last || (data.runs.length >= data.count && [...watched].some(uid => !still.has(uid)));
-    last = data.count;
-    if (!ended) return true;
+    for (const item of data.results) live.get(item.uid)?.(item);
+    const still = new Set(data.results.map(item => item.uid)), from = Date.now() - list.days * 86400000;
+    if (!watched.some(uid => !still.has(uid)) && !data.results.some(item => !known.has(item.uid) && (!kind || item.kind === kind) && Date.parse(item.createdAt) >= from)) return true;
     await reread(w);
     return false;
   }, note, started);
@@ -339,109 +328,75 @@ function chipGroup(label, options, selected, choose) {
   for (const [value, text] of options) { const chip = button(text, () => choose(value)); chip.setAttribute('aria-pressed', String(value === selected)); box.append(chip); }
   return box;
 }
-function runDots(recent) {
+// Release names repeat across repositories (several are named app), so the repository leads; an agent goes by its own name.
+const deploymentTitle = item => [item.repositoryName, item.agentName || item.releaseName].filter(Boolean).join(' · ') || 'Deployment';
+function stageDots(steps) {
   const box = node('span', undefined, 'dots'); box.setAttribute('role', 'img');
-  box.setAttribute('aria-label', recent.length ? 'Last ' + (recent.length === 1 ? 'run' : recent.length + ' runs, newest first') + ': ' + recent.map(run => humanize(run.state).toLowerCase()).join(', ') : 'No runs');
-  for (const run of recent) { const dot = node('span', undefined, 'dot tone-' + tone(run.state)); dot.setAttribute('title', humanize(run.state)); box.append(dot); }
+  box.setAttribute('aria-label', 'Stages: ' + steps.map(step => step.name + ' ' + humanize(step.state).toLowerCase()).join(', '));
+  for (const step of steps) { const dot = node('span', undefined, 'dot tone-' + tone(step.state)); dot.setAttribute('title', step.name + ': ' + humanize(step.state)); box.append(dot); }
   return box;
 }
-const deploying = run => [(run.state === 'queued' ? 'Queued' : 'Deploying') + (run.commit ? ' ' + run.commit : ''), run.state !== 'queued' && run.stepsTotal > 0 && 'stage ' + Math.min(run.stepsDone + 1, run.stepsTotal) + ' of ' + run.stepsTotal, (run.startedAt || run.createdAt) && 'started ' + stamp(run.startedAt || run.createdAt), typeof run.durationMs === 'number' && span(run.durationMs)].filter(Boolean).join(' · ');
-const revisionText = revision => (revision.commit || 'an unknown commit') + (revision.configurationRevision != null ? ' (revision ' + revision.configurationRevision + ')' : '');
-function releaseOutcome(release, days) {
-  const last = release.lastRun, s = release.stats || {}, decided = (s.succeeded || 0) + (s.failed || 0) + (s.blocked || 0);
-  if (last && ['failed', 'blocked'].includes(last.state)) return node('small', humanize(last.state), 'tone-bad');
-  return node('small', decided ? s.succeeded + ' of ' + decided + ' ok' : s.runs ? s.runs + (s.runs === 1 ? ' run' : ' runs') : 'No runs in ' + windowText(days));
+function progressText(item) {
+  const steps = item.steps || [];
+  if (!steps.length) return '';
+  const at = item.state === 'succeeded' ? null : steps.find(step => ['running', 'failed', 'blocked', 'stopped'].includes(step.state));
+  return steps.filter(step => step.state === 'succeeded').length + ' of ' + steps.length + ' stages' + (at?.name ? ' · ' + at.name : '');
 }
-function releaseRow(release, days, live) {
-  const active = release.activeRun, progress = active && node('p', deploying(active), 'caption tone-live');
-  if (active) live.set(active.uid, run => { progress.textContent = deploying(run); });
-  return group('item row', group('grow', group('row wrap', button(release.name || 'Release', () => releaseDetail(release), 'name'), badge(release.kindLabel || humanize(release.kind))), caption([release.repositoryName, release.branchName, !active && lastRunText(release.lastRun)].filter(Boolean).join(' · ')), progress),
-    group('release-end', runDots(release.recent || []), releaseOutcome(release, days)));
+// Why it did not deploy: its error, else its outcome, as a blocked one often has only that.
+const reasonText = item => item.error || (['failed', 'blocked'].includes(item.state) ? humanize(item.outcome) : '');
+function deploymentRow(item, from) {
+  const steps = item.steps || [], title = deploymentTitle(item), at = item.startedAt || item.createdAt, active = ACTIVE_RUNS.includes(item.state);
+  const open = button(title, () => deploymentDetail({ uid: item.uid, kind: 'deployment_run', title }, from), 'name');
+  open.setAttribute('aria-label', title + ', ' + humanize(item.state).toLowerCase() + (at ? ', started ' + stamp(at) : ''));
+  const time = typeof item.durationMs === 'number' ? span(item.durationMs) + (active ? ' so far' : '') : '';
+  return group('item row', group('grow', group('row wrap', open, badge(item.kindLabel)), caption([item.branchName, item.commit || 'no commit', stampAgo(at)].filter(Boolean).join(' · ')),
+    group('row wrap', steps.length > 0 && stageDots(steps), caption([progressText(item), time, SOURCES[item.source] || humanize(item.source)].filter(Boolean).join(' · '))),
+    reasonText(item) && node('p', reasonText(item), 'caption tone-' + tone(item.state))), group('release-end', stateBadge(item.state)));
 }
 function releaseQuery() {
-  const kinds = (RELEASE_FILTERS.find(([key]) => key === releaseKind) || RELEASE_FILTERS[0])[2];
-  return { kinds, days: releaseListDays, branch: releaseMine && folderBranch?.environmentUid === $('environment').value ? folderBranch.uid : '' };
+  return { kind: releaseKind, days: releaseDays, branch: releaseMine && folderBranch?.environmentUid === $('environment').value ? folderBranch.uid : '' };
 }
-// One page per backend kind of the filter (Agents covers two), merged by name; `from` appends the next pages to a shown list.
-async function readReleases(target, query, sizes, from = null) {
-  const parts = query.kinds.map((kind, i) => ({ kind, loaded: from ? from.parts[i].loaded : 0, count: from ? from.parts[i].count : 0, size: sizes[i] }));
-  const pages = await Promise.all(parts.map(part => part.size > 0 ? readWorkspace('deployment-releases', { days: query.days, limit: part.size, offset: part.loaded, ...(part.kind ? { releaseKind: part.kind } : {}), ...(query.branch ? { codeRepositoryBranchUid: query.branch } : {}) }, target) : null));
-  const results = from ? [...from.results] : [];
-  let days = from?.days || query.days, truncated = Boolean(from?.truncated);
-  parts.forEach((part, i) => { const page = pages[i]; if (!page) return; results.push(...page.results); part.loaded += page.results.length; part.count = page.count; days = page.days || days; truncated = truncated || page.runsTruncated === true; });
-  if (query.kinds.length > 1) results.sort((a, b) => String(a.name).localeCompare(String(b.name)));
-  return { target, query, parts: parts.map(({ kind, loaded, count }) => ({ kind, loaded, count })), results, days, truncated, readAt: from ? from.readAt : Date.now() };
+// `from` appends the next page to a shown history; a re-read asks for as many rows as were shown, 100 at a time.
+async function readHistory(target, query, wanted, from = null) {
+  const results = from ? [...from.results] : [], seen = new Set(results.map(item => item.uid)), end = (from ? from.loaded : 0) + wanted;
+  let loaded = from ? from.loaded : 0, data = null;
+  while (loaded < end) {
+    data = await readWorkspace('deployment-release-history', { days: query.days, limit: Math.min(100, end - loaded), offset: loaded, ...(query.kind ? { releaseKind: query.kind } : {}), ...(query.branch ? { codeRepositoryBranchUid: query.branch } : {}) }, target);
+    for (const item of data.results) if (!seen.has(item.uid)) { seen.add(item.uid); results.push(item); }
+    loaded += data.results.length;
+    if (!data.results.length || loaded >= data.count) break;
+  }
+  return { target, query, results, loaded, count: data.count, days: data.days || query.days, readAt: from ? from.readAt : Date.now() };
 }
-async function renderReleases(target, run) { const query = releaseQuery(), list = await readReleases(target, query, query.kinds.map(() => RELEASE_PAGE)); if (run === generation) drawReleases(list, run); }
+async function renderReleases(target, run) { const list = await readHistory(target, releaseQuery(), RELEASE_PAGE); if (run === generation) drawReleases(list, run); }
 function drawReleases(list, screen, started) {
-  const out = $('results'), age = caption(''), note = watchNote(), live = new Map(), environment = environmentName();
+  const out = $('results'), age = caption(''), note = watchNote(), live = new Map(), environment = environmentName(), here = { label: 'Releases', releases: true, open: () => discover(0) };
   const known = folderBranch?.environmentUid === list.target.environmentUid ? folderBranch : null;
-  const chips = chipGroup('Release kind', RELEASE_FILTERS.map(([key, label]) => [key, label]), releaseKind, key => { releaseKind = key; return discover(0); });
+  const chips = chipGroup('Release type', RELEASE_FILTERS, list.query.kind, kind => { releaseKind = kind; return discover(0); });
   if (known) { const mine = button('This repository', () => { releaseMine = !list.query.branch; return discover(0); }); mine.setAttribute('aria-pressed', String(Boolean(list.query.branch))); mine.setAttribute('title', known.label); chips.append(mine); }
-  append(out, group('row between', group('grow', node('h2', 'Releases'), age), button('Refresh', () => discover(0))), chips,
-    chipGroup('List window', WINDOWS, list.days, days => { releaseListDays = days; return discover(0); }));
-  readAge(age, environment, list.readAt, screen);
-  const rows = [...list.results.filter(release => release.activeRun), ...list.results.filter(release => !release.activeRun)], items = group('stack');
+  append(out, group('row between', group('grow', node('h2', 'Deployment history'), age), button('Refresh', () => discover(0))), chips,
+    chipGroup('History window', WINDOWS, list.days, days => { releaseDays = days; return discover(0); }));
+  readAge(age, environment + ' · ' + list.count + (list.count === 1 ? ' deployment' : ' deployments') + ' in ' + windowText(list.days), list.readAt, screen);
+  const items = group('stack');
   items.style.gap = '0';
-  for (const release of rows) items.append(releaseRow(release, list.days, live));
-  if (!rows.length) append(out, empty('No releases', list.query.branch ? 'This repository has no APIs, agents or static sites in ' + environment + '.' : 'No APIs, agents or static sites in ' + environment + ' match this filter.'));
-  append(out, items, rows.length && zoneNote(), list.truncated && caption('Run history counts the most recent runs of ' + windowText(list.days) + '; older runs in that window were not read.'));
-  const total = list.parts.reduce((sum, part) => sum + part.count, 0);
-  if (list.parts.some(part => part.loaded < part.count)) {
+  for (const item of list.results) {
+    let row = deploymentRow(item, here);
+    items.append(row);
+    if (ACTIVE_RUNS.includes(item.state)) live.set(item.uid, next => { const fresh = deploymentRow(next, here); row.replaceWith(fresh); row = fresh; });
+  }
+  if (!list.results.length) append(out, empty('No deployments in ' + windowText(list.days), (list.query.kind || list.query.branch ? 'Nothing matching these filters was deployed.' : 'No resource release was deployed in ' + environment + '.') + (list.days < 90 ? ' Choose a longer window for older deployments.' : '')));
+  append(out, items, list.results.length > 0 && caption('Newest first. Times in ' + zoneName() + '.'));
+  if (list.loaded < list.count) {
     const more = button('Load more', async () => {
       more.disabled = true;
-      try { const next = await readReleases(list.target, list.query, list.parts.map(part => part.loaded < part.count ? RELEASE_PAGE : 0), list); if (screen === generation) { const again = ++generation; clearResults(); drawReleases(next, again); } }
+      try { const next = await readHistory(list.target, list.query, RELEASE_PAGE, list); if (screen === generation) { const again = ++generation; clearResults(); drawReleases(next, again); } }
       finally { more.disabled = false; }
     });
-    append(out, group('pager', node('small', list.results.length + ' of ' + total + ' releases'), more));
+    append(out, group('pager', node('small', list.results.length + ' of ' + list.count + ' deployments'), more));
   }
-  append(out, note, button('All deployments, including jobs and images', () => deployments(list.query.branch || undefined, 0, { label: 'Releases', open: () => discover(0) }), 'plain muted'));
-  const active = rows.filter(release => release.activeRun).map(release => release.activeRun);
-  if (active.length) watchActive(screen, list.target, list.query.branch, active, note, live,
-    w => redraw(() => readReleases(list.target, list.query, list.parts.map(part => Math.min(100, Math.max(RELEASE_PAGE, part.loaded)))), (next, again) => drawReleases(next, again, w.started)), started);
-}
-function tile(label, value, detail) { return group('tile', node('small', label), node('strong', value), detail && node('small', detail)); }
-function runTable(runs, days, from, live) {
-  if (!runs.length) return empty('No runs', 'This release did not deploy in ' + windowText(days) + '.');
-  const table = node('table', undefined, 'runs'), head = node('thead'), titles = node('tr'), body = node('tbody');
-  const cell = child => { const td = node('td'); td.append(child); return td; };
-  for (const title of ['Started', 'Commit', 'Source', 'State', 'Stages', 'Time']) titles.append(node('th', title));
-  for (const run of runs) {
-    const at = run.startedAt || run.createdAt, when = stamp(at), open = button(when || 'Open', () => deploymentDetail({ uid: run.uid, kind: 'deployment_run' }, from), 'name');
-    open.setAttribute('aria-label', 'Open the run started ' + (when ? stampAgo(at) : 'at an unknown time'));
-    const stages = node('td', run.stepsTotal ? run.stepsDone + ' of ' + run.stepsTotal : '—'), time = node('td', span(run.durationMs)), row = node('tr');
-    if (ACTIVE_RUNS.includes(run.state)) live.set(run.uid, next => { stages.textContent = next.stepsTotal ? next.stepsDone + ' of ' + next.stepsTotal : '—'; time.textContent = span(next.durationMs); });
-    const started = cell(open); if (when) started.append(node('small', ago(at), 'muted since'));
-    row.append(started, cell(node('code', run.commit || '—')), node('td', RUN_SOURCES[run.source] || humanize(run.source) || '—'), cell(stateBadge(run.state)), stages, time);
-    if (run.error) row.setAttribute('title', run.error);
-    body.append(row);
-  }
-  head.append(titles); table.append(head, body);
-  return group('table-wrap', table);
-}
-async function releaseDetail(release, started) {
-  const target = selection(), load = () => readResult('deployment-release', { releaseUid: release.uid, days: releaseDays }, target);
-  return (started ? redraw : detail)(load, (result, screen) => {
-    const data = result.data, out = $('results');
-    append(out, back('Releases', () => discover(0)));
-    if (data.hidden) { append(out, empty(release.name || 'Release', result.summary)); return; }
-    const r = data.release, s = data.stats, age = caption(''), note = watchNote(), live = new Map(), name = r.name || release.name || 'Release';
-    const serving = r.activeRevision, wanted = r.desiredRevision, decided = s.succeeded + s.failed + s.blocked;
-    append(out,
-      group('row between', group('grow', group('row wrap', node('h2', name), badge(r.kindLabel || humanize(r.kind))), caption([r.repositoryName || release.repositoryName, r.branchName || release.branchName].filter(Boolean).join(' · '))), button('Refresh', () => releaseDetail(release))),
-      age, node('p', serving ? 'Serving ' + revisionText(serving) + (serving.activatedAt ? ' since ' + stampAgo(serving.activatedAt) : '') : 'Not serving a revision yet'), wanted && wanted.uid !== serving?.uid && node('p', 'Wanted ' + revisionText(wanted) + (wanted.createdAt ? ', requested ' + stampAgo(wanted.createdAt) : '')),
-      chipGroup('History window', WINDOWS, data.days, days => { releaseDays = days; return releaseDetail(release); }),
-      group('tiles', tile('Runs', String(s.runs), s.active ? s.active + ' active' : 'in ' + data.days + ' days'),
-        tile('Succeeded', s.successRate == null ? '—' : Math.round(s.successRate * 100) + '%', decided ? s.succeeded + ' of ' + decided : 'No finished runs'),
-        tile('Median time', span(s.medianMs), s.p90Ms != null && '90th percentile ' + span(s.p90Ms)),
-        tile('Slowest stage', s.slowestStage ? s.slowestStage.name : '—', s.slowestStage && span(s.slowestStage.medianMs) + ' median')),
-      s.commonFailure && caption('Most common failure: ' + humanize(s.commonFailure.code) + ' (' + s.commonFailure.count + ' of ' + s.commonFailure.of + ')'),
-      data.truncated && caption('Stats from the last ' + (data.counted ?? data.runs.length) + ' runs'),
-      runTable(data.runs, data.days, { label: name, open: () => releaseDetail(release) }, live), data.runs.length > 0 && zoneNote(), note);
-    readAge(age, environmentName(), Date.now(), screen);
-    const active = data.runs.filter(run => ACTIVE_RUNS.includes(run.state));
-    if (active.length) watchActive(screen, target, r.branchUid || '', active, note, live, w => releaseDetail(release, w.started), started);
-  });
+  append(out, note);
+  if (list.results.some(item => ACTIVE_RUNS.includes(item.state))) watchDeployments(screen, list, note, live,
+    w => redraw(() => readHistory(list.target, list.query, Math.max(RELEASE_PAGE, list.loaded)), (next, again) => drawReleases(next, again, w.started)), started);
 }
 // The Releases list offers "This repository" once the panel has resolved a local folder to its repository branch.
 function rememberBranch(data, root) { const branch = data?.resolution?.code_repository_branch; folderBranch = branch?.uid ? { uid: branch.uid, root, label: [branch.code_repository_name, branch.repository_branch].filter(Boolean).join(' · '), environmentUid: $('environment').value } : null; }
@@ -449,7 +404,7 @@ async function folderReleases(input) { try { rememberBranch(await readWorkspace(
 const codeBack = () => ({ label: 'Code', open: () => tab('code') });
 async function deployments(branchUid,offset=0,from=codeBack()) {return detail(()=>readWorkspace('deployment-history',{limit:25,offset,...(branchUid?{codeRepositoryBranchUid:branchUid}:{})}),data=>{const out=$('results'),here={label:'Deployments',open:()=>deployments(branchUid,offset,from)};append(out,back(from.label,from.open),group('row between',node('h2','Deployments'),button('Refresh',here.open)),caption(environmentName()));for(const run of data.results)append(out,group('item row',group('grow',button(run.targetLabel||run.workflowPath||run.repositoryName||run.uid,()=>deploymentDetail(run,here),'name'),caption([run.branchName,run.commit,run.state,stamp(run.createdAt)].filter(Boolean).join(' · '))),button('Details',()=>deploymentDetail(run,here))));if(!data.results.length)append(out,empty('No deployments','No deployment history in this environment.'));append(out,group('row between',offset>0&&button('Previous',()=>deployments(branchUid,Math.max(0,offset-25),from)),offset+data.results.length<data.count&&button('Next',()=>deployments(branchUid,offset+25,from))));}); }
 // A run's details re-read only that run, every 10 s while it is pending, queued or running.
-async function deploymentDetail(run,from={label:'Deployments',open:()=>deployments()},started) {return (started?redraw:detail)(()=>readWorkspace('deployment-run',{runUid:run.uid,kind:run.kind}),(data,screen)=>{const out=$('results'),open=next=>deploymentDetail(next,from);append(out,back(from.label,from.open));if(data.hidden){append(out,caption("You can't see this deployment."));return;}const r=data.run,note=watchNote();append(out,group('row between',node('h2',r.targetLabel||r.workflowPath||'Deployment'),button('Refresh',()=>open(run))),facts([['State',r.state],['Branch',r.branchName],['Commit',r.commit],['Started',stamp(r.startedAt)&&stamp(r.startedAt)+' '+zoneName()],['Finished',stamp(r.finishedAt)&&stamp(r.finishedAt)+' '+zoneName()],['Duration',r.durationMs==null?'':Math.round(r.durationMs/1000)+' s']]),r.error&&caption(r.error),note);for(const step of r.steps||[])append(out,group('item',node('h3',step.name||step.key),caption([step.state,step.reason,step.durationMs==null?'':Math.round(step.durationMs/1000)+' s'].filter(Boolean).join(' · ')),step.error&&caption(step.error),step.uid&&button('View stage logs',()=>deploymentLogs(run,step.uid,undefined,from)),step.deploymentRunUid&&button('Open deployment',()=>open({uid:step.deploymentRunUid,kind:'deployment_run'}))));for(const owned of r.deploymentRuns||[])append(out,button(owned.targetLabel||owned.uid,()=>open({uid:owned.uid,kind:'deployment_run'})));if(r.workflowRun)append(out,button('Open workflow',()=>open(r.workflowRun)));if(r.kind==='deployment_run')append(out,button('View logs',()=>deploymentLogs(run,undefined,undefined,from)));if(['pending',...ACTIVE_RUNS].includes(r.state)){note.textContent='Auto-refresh every 10 s while it runs.';startWatch(screen,RUN_CHECK_MS,async w=>{await deploymentDetail(run,from,w.started);return false;},note,started);}}); }
+async function deploymentDetail(run,from={label:'Deployments',open:()=>deployments()},started) {return (started?redraw:detail)(()=>readWorkspace('deployment-run',{runUid:run.uid,kind:run.kind}),(data,screen)=>{const out=$('results'),open=next=>deploymentDetail(next,from);append(out,back(from.label,from.open));if(data.hidden){append(out,caption("You can't see this deployment."));return;}const r=data.run,note=watchNote(),title=from.releases&&(run.title||(r.releaseName||r.agentName)&&deploymentTitle(r))||r.targetLabel||r.workflowPath||'Deployment';append(out,group('row between',node('h2',title),button('Refresh',()=>open(run))),facts([['State',r.state],['Branch',r.branchName],['Commit',r.commit],['Started',stamp(r.startedAt)&&stamp(r.startedAt)+' '+zoneName()],['Finished',stamp(r.finishedAt)&&stamp(r.finishedAt)+' '+zoneName()],['Duration',r.durationMs==null?'':Math.round(r.durationMs/1000)+' s']]),r.error&&caption(r.error),note);for(const step of r.steps||[])append(out,group('item',node('h3',step.name||step.key),caption([step.state,step.reason,step.durationMs==null?'':Math.round(step.durationMs/1000)+' s'].filter(Boolean).join(' · ')),step.error&&caption(step.error),step.uid&&button('View stage logs',()=>deploymentLogs(run,step.uid,undefined,from)),step.deploymentRunUid&&button('Open deployment',()=>open({uid:step.deploymentRunUid,kind:'deployment_run'}))));for(const owned of r.deploymentRuns||[])append(out,button(owned.targetLabel||owned.uid,()=>open({uid:owned.uid,kind:'deployment_run'})));if(r.workflowRun&&!from.releases)append(out,button('Open workflow',()=>open(r.workflowRun)));if(r.kind==='deployment_run')append(out,button('View logs',()=>deploymentLogs(run,undefined,undefined,from)));if(['pending',...ACTIVE_RUNS].includes(r.state)){note.textContent=from.releases?'Auto-refresh every 10 s while it deploys.':'Auto-refresh every 10 s while it runs.';startWatch(screen,RUN_CHECK_MS,async w=>{await deploymentDetail(run,from,w.started);return false;},note,started);}}); }
 async function deploymentLogs(run,stepUid,cursor,from) {return detail(()=>readWorkspace('deployment-logs',{runUid:run.uid,...(stepUid?{stepUid}:{}),...(cursor?{cursor}:{}),limit:200}),data=>{const out=$('results');append(out,back('Deployment',()=>deploymentDetail(run,from)),node('h2','Logs'));if(data.hidden){append(out,caption("You can't see this deployment."));return;}const search=field('Filter logs',''),log=node('pre');const draw=()=>log.textContent=data.entries.filter(e=>JSON.stringify(e).toLowerCase().includes(search.input.value.toLowerCase())).map(e=>[e.timestamp,e.level,e.text].filter(Boolean).join(' ')).join('\n')||'No matching log entries.';search.input.oninput=draw;draw();append(out,search.element,log,group('row wrap',button('Refresh',()=>deploymentLogs(run,stepUid,cursor,from)),data.nextCursor&&button('Next logs',()=>deploymentLogs(run,stepUid,data.nextCursor,from))),caption(data.complete?'Log stream complete':'More logs may arrive.'));}); }
 
 function nativeRequestText(request) {

@@ -402,25 +402,15 @@ test('an unreachable catalog keeps the version with a manual check that reads ag
 // Releases and deployments, with results in the shape devtools' deployment reads return.
 const minutesAgo = minutes => new Date(Date.now() - minutes * 60000).toISOString();
 const STAMP = String.raw`\d{4}-\d\d-\d\d \d\d:\d\d`; // a date and time in the machine's zone
-const runSummary = (uid, state, extra = {}) => ({ uid, state, outcome: '', operation: 'build_and_deploy', source: 'repository_event', commit: 'abc1234', createdAt: minutesAgo(30), startedAt: minutesAgo(30),
-  finishedAt: ['queued', 'running'].includes(state) ? null : minutesAgo(26), durationMs: 250000, error: '', errorCode: '', stepsDone: state === 'succeeded' ? 3 : 1, stepsTotal: 3, ...extra });
-const releaseStats = extra => ({ runs: 6, succeeded: 5, failed: 1, blocked: 0, cancelled: 0, superseded: 0, skipped: 0, active: 0, successRate: 5 / 6, medianMs: 250000, p90Ms: 400000,
-  slowestStage: { name: 'Deploy', medianMs: 180000 }, commonFailure: { code: 'workflow_prerequisite_failed', count: 1, of: 1 }, ...extra });
-const releaseRows = deploying => [
-  { uid: 'release-site', name: 'docs-site', kind: 'static_site', kindLabel: 'Static site', branchUid: 'branch-1', repositoryName: 'pricing-engine', branchName: 'main', recent: [{ uid: 'run-6', state: 'succeeded' }],
-    lastRun: runSummary('run-6', 'succeeded'), activeRun: null, stats: releaseStats({ runs: 1, succeeded: 1, failed: 0, successRate: 1, commonFailure: null }) },
-  { uid: 'release-api', name: 'pricing-api', kind: 'fastapi', kindLabel: 'API', branchUid: 'branch-1', repositoryName: 'pricing-engine', branchName: 'main',
-    recent: [{ uid: 'run-1', state: deploying ? 'running' : 'succeeded' }, { uid: 'run-2', state: 'succeeded' }, { uid: 'run-3', state: 'failed' }, { uid: 'run-4', state: 'superseded' }],
-    lastRun: runSummary('run-1', deploying ? 'running' : 'succeeded'), activeRun: deploying ? runSummary('run-1', 'running', { durationMs: 240000 }) : null, stats: releaseStats({ active: deploying ? 1 : 0 }) },
-  { uid: 'release-agent', name: 'risk-agent', kind: 'harness_agent', kindLabel: 'Agent', branchUid: 'branch-1', repositoryName: 'pricing-engine', branchName: 'main', recent: [{ uid: 'run-5', state: 'blocked' }],
-    lastRun: runSummary('run-5', 'blocked', { finishedAt: minutesAgo(125) }), activeRun: null, stats: releaseStats({ runs: 1, succeeded: 0, failed: 0, blocked: 1, successRate: 0 }) }];
-const releaseDetailData = (deploying, days = 30) => ({ hidden: false, uid: 'release-api', days, count: 140, counted: 100, truncated: true,
-  release: { uid: 'release-api', name: 'pricing-api', kind: 'fastapi', kindLabel: 'API', branchUid: 'branch-1', repositoryName: 'pricing-engine', branchName: 'main',
-    activeRevision: { uid: 'revision-14', commit: 'abc1def', configurationRevision: 14, activatedAt: minutesAgo(56) }, desiredRevision: { uid: 'revision-15', commit: 'abc0def', configurationRevision: 15, activatedAt: null, createdAt: minutesAgo(5) } },
-  runs: [runSummary('run-1', deploying ? 'running' : 'succeeded', { durationMs: 240000 }), runSummary('run-2', 'succeeded', { source: 'manual', commit: 'abc9999' }), runSummary('run-3', 'failed', { source: 'system_reconciliation', error: 'not ready' })],
-  stats: releaseStats({ active: deploying ? 1 : 0 }) });
+const deployment = (uid, state, extra = {}) => ({ uid, state, outcome: '', source: 'repository_event', commit: 'abc1234', releaseUid: 'release-api', releaseName: 'app', agentName: '', kind: 'fastapi', kindLabel: 'FastAPI', revisionUid: 'revision-1',
+  repositoryName: 'pricing-engine', branchUid: 'branch-1', branchName: 'main', createdAt: minutesAgo(30), startedAt: minutesAgo(30), finishedAt: ['queued', 'running'].includes(state) ? null : minutesAgo(26), durationMs: 250000, error: '', errorCode: '',
+  steps: [{ name: 'Build', state: 'succeeded' }, { name: 'Deploy', state: ['queued', 'running'].includes(state) ? 'running' : state }, { name: 'Verify', state: state === 'succeeded' ? 'succeeded' : 'pending' }], ...extra });
+const deploymentRows = deploying => [
+  deployment('run-1', deploying ? 'running' : 'succeeded', { durationMs: 240000 }),
+  deployment('run-2', 'succeeded', { source: 'manual', commit: 'abc9999', createdAt: minutesAgo(90), startedAt: minutesAgo(90) }),
+  deployment('run-5', 'blocked', { releaseUid: 'release-agent', releaseName: 'tau', agentName: 'Risk Analyst', kind: 'harness_agent', kindLabel: 'Harness Agent', createdAt: minutesAgo(125), startedAt: minutesAgo(125), error: 'workflow_prerequisite_failed: image missing' })];
 function releasePanel(globals = {}) {
-  const calls = [], state = { deploying: true, active: [runSummary('run-1', 'running', { durationMs: 240000 })], runState: 'running', hiddenRelease: false };
+  const calls = [], state = { deploying: true, active: [deployment('run-1', 'running', { durationMs: 240000 })], runState: 'running', more: [], empty: false };
   const ok = (action, data, summary = 'Read.') => ({ result: { schemaVersion: 1, action, status: 'success', summary, data } });
   return panel(async (name, args) => {
     if (name === 'mainsequence_open') return { ...status, selectedEnvironmentUid: 'env-a' };
@@ -429,72 +419,95 @@ function releasePanel(globals = {}) {
     calls.push(JSON.parse(JSON.stringify({ action: args.action, input: args.input, environmentUid: args.environmentUid }))); // plain objects outside the panel's realm
     if (args.action === 'local-context') return { preferences: { baseDir: '/tmp' }, organization: 'fixture', pluginWorkspace: null, local: { status: 'success', data: { items: [{ name: 'pricing-engine', path: '/tmp/pricing-engine', repositoryUid: 'repo-1' }] } } };
     if (args.action === 'resolve') return ok('resolve', { project: { branch: 'main' }, resolution: { code_repository_branch: { uid: 'branch-1', code_repository_name: 'pricing-engine', repository_branch: 'main' } } });
-    if (args.action === 'deployment-releases') { const rows = releaseRows(state.deploying); return ok('deployment-releases', { count: rows.length, days: args.input.days ?? 30, now: new Date().toISOString(), runsTruncated: false, results: rows }); }
-    if (args.action === 'deployment-release') return state.hiddenRelease ? ok('deployment-release', { hidden: true, uid: args.input.releaseUid }, "You can't see this release. A release is shown to the people it is shared with.") : ok('deployment-release', releaseDetailData(state.deploying, args.input.days));
-    if (args.action === 'deployment-active') return ok('deployment-active', { count: state.active.length, runs: state.active });
+    if (args.action === 'deployment-release-history') { const { days, limit, offset } = args.input, rows = state.empty ? [] : [...state.more, ...deploymentRows(state.deploying)]; return ok(args.action, { count: rows.length, days, now: new Date().toISOString(), results: rows.slice(offset, offset + limit) }); }
+    if (args.action === 'deployment-active') return ok('deployment-active', { count: state.active.length, results: state.active });
     if (args.action === 'deployment-history') return ok('deployment-history', { count: 1, results: [{ kind: 'deployment_run', uid: 'run-1', targetLabel: 'pricing-api', state: state.runState, branchName: 'main', commit: 'abc1234' }] });
-    if (args.action === 'deployment-run') return ok('deployment-run', { hidden: false, uid: args.input.runUid, kind: 'deployment_run', run: { kind: 'deployment_run', uid: args.input.runUid, targetLabel: 'pricing-api', state: state.runState, branchName: 'main', commit: 'abc1234', steps: [] } });
+    if (args.action === 'deployment-run') return ok('deployment-run', { hidden: false, uid: args.input.runUid, kind: 'deployment_run', run: { kind: 'deployment_run', uid: args.input.runUid, targetLabel: 'pricing-api', workflowRun: { kind: 'workflow_run', uid: 'workflow-1' }, state: state.runState, branchName: 'main', commit: 'abc1234', steps: [] } });
     throw new Error('Unexpected workspace action ' + args.action);
   }, new Map(), globals).then(ui => Object.assign(ui, { calls, state, reads: action => calls.filter(call => call.action === action), timers: ms => ui.pendingRechecks().filter(timer => timer.ms === ms) }));
 }
 
-test('Releases reads the list once and shows kinds, the last runs as dots, and deploying releases first', async () => {
+const historyInput = extra => ({ days: 1, limit: 25, offset: 0, ...extra });
+
+test('Releases is the deployment history of resource releases, one row per deployment, newest first', async () => {
   const ui = await releasePanel(); await ui.el('releases-tab').onclick();
   assert.equal(ui.el('releases-tab').attributes['aria-selected'], 'true');
-  assert.deepEqual(ui.calls.map(call => [call.action, call.input, call.environmentUid]), [['deployment-releases', { days: 7, limit: 50, offset: 0 }, 'env-a']], 'the list opens on a week');
+  assert.deepEqual(ui.calls.map(call => [call.action, call.input, call.environmentUid]), [['deployment-release-history', historyInput(), 'env-a']], 'one read, over the last day');
   const text = flatten(ui.el('results'));
-  assert.match(text, /Releases/); assert.match(text, /Research · read just now/);
-  for (const chip of ['All kinds', 'APIs', 'Agents', 'Static sites']) assert.ok(button(ui, 'results', chip), chip);
-  assert.equal(button(ui, 'results', 'All kinds').attributes['aria-pressed'], 'true');
+  assert.match(text, /Deployment history/); assert.match(text, /Research · 3 deployments in the last day · read just now/);
+  for (const chip of ['All types', 'APIs', 'Agents', 'Static sites']) assert.ok(button(ui, 'results', chip), chip);
+  assert.equal(button(ui, 'results', 'All types').attributes['aria-pressed'], 'true');
   assert.equal(button(ui, 'results', 'This repository'), undefined, 'offered only once a folder resolved its branch');
-  assert.deepEqual(walk(ui.el('results')).filter(el => el.className === 'name').map(el => el.textContent), ['pricing-api', 'docs-site', 'risk-agent'], 'a deploying release is pinned on top');
-  assert.match(text, new RegExp(`Deploying abc1234 · stage 2 of 3 · started ${STAMP} · 4 min`));
-  assert.match(text, /API/); assert.match(text, /Static site/); assert.match(text, /pricing-engine · main/);
-  assert.match(text, /1 of 1 ok/); assert.match(text, /Blocked/);
-  assert.match(text, new RegExp(`pricing-engine · main · deployed ${STAMP} \\(26 min ago\\)`), 'a row says when it last deployed');
-  assert.match(text, new RegExp(`pricing-engine · main · last run ${STAMP} \\(2 h ago\\)`), 'or when its last run ended');
-  assert.doesNotMatch(text, /deploying since/, 'a deploying row says when it started once, on its progress line');
+  assert.deepEqual(walk(ui.el('results')).filter(el => el.className === 'name').map(el => el.textContent), ['pricing-engine · app', 'pricing-engine · app', 'pricing-engine · Risk Analyst'], 'newest first, and a release deployed twice has two rows');
+  assert.match(text, new RegExp(`main · abc1234 · ${STAMP} \\(30 min ago\\)`)); assert.match(text, new RegExp(`main · abc9999 · ${STAMP} \\(1 h ago\\)`));
+  assert.match(text, /1 of 3 stages · Deploy · 4 min so far · Repository event/); assert.match(text, /3 of 3 stages · 4 min 10 s · Manual/);
+  assert.match(text, /FastAPI/); assert.match(text, /Harness Agent/); assert.match(text, /workflow_prerequisite_failed: image missing/);
+  for (const [value, cls] of [['Running', 'live'], ['Succeeded', 'ok'], ['Blocked', 'warn']]) assert.ok(walk(ui.el('results')).some(el => el.textContent === value && el.className === 'badge tone-' + cls), value);
   assert.match(text, /Times in UTC([+-]\d\d:\d\d)?\./, 'the zone of those times is named');
+  assert.doesNotMatch(text, /\bruns?\b|\d of \d+ ok|All deployments|Open workflow/i, 'no runs, workflows or other deployments');
   const dots = walk(ui.el('results')).find(el => el.attributes?.role === 'img');
-  assert.equal(dots.attributes['aria-label'], 'Last 4 runs, newest first: running, succeeded, failed, superseded');
-  assert.deepEqual(dots.children.map(dot => dot.className), ['dot tone-live', 'dot tone-ok', 'dot tone-bad', 'dot tone-off']);
+  assert.equal(dots.attributes['aria-label'], 'Stages: Build succeeded, Deploy running, Verify pending', "the dots are this deployment's own stages");
   assert.equal(button(ui, 'results', 'Load more'), undefined);
-  assert.equal(button(ui, 'results', '7 days').attributes['aria-pressed'], 'true'); assert.ok(button(ui, 'results', '1 day'));
+  assert.equal(button(ui, 'results', '1 day').attributes['aria-pressed'], 'true');
   await button(ui, 'results', '30 days').onclick();
-  assert.deepEqual(ui.reads('deployment-releases').at(-1).input, { days: 30, limit: 50, offset: 0 }, 'a longer window is read only when chosen');
+  assert.deepEqual(ui.reads('deployment-release-history').at(-1).input, historyInput({ days: 30 }), 'a longer window is read only when chosen');
   assert.equal(button(ui, 'results', '30 days').attributes['aria-pressed'], 'true');
-  await button(ui, 'results', 'All deployments, including jobs and images').onclick();
-  assert.equal(ui.calls.at(-1).action, 'deployment-history'); assert.ok(button(ui, 'results', '← Releases'));
-  assert.equal(ui.timers(30000).length, 0, 'leaving Releases ends its checks');
 });
 
-test('Releases re-checks only active runs every 30 s, reads the list once when a run ends, then stops', async () => {
+test('a blocked deployment without an error says why by its outcome', async () => {
+  const ui = await releasePanel(); ui.state.more = [deployment('run-8', 'blocked', { outcome: 'image_not_ready' })];
+  await ui.el('releases-tab').onclick();
+  assert.match(flatten(ui.el('results')), /Image not ready/);
+});
+
+test('an empty history says there were no deployments', async () => {
+  const ui = await releasePanel(); ui.state.empty = true; await ui.el('releases-tab').onclick();
+  const text = flatten(ui.el('results'));
+  assert.match(text, /No deployments in the last day/); assert.match(text, /Choose a longer window/); assert.doesNotMatch(text, /No runs/);
+  assert.equal(ui.timers(30000).length, 0);
+});
+
+test('a history longer than a page loads more from where it stopped', async () => {
+  const ui = await releasePanel(); ui.state.deploying = false;
+  ui.state.more = Array.from({ length: 27 }, (_, n) => deployment('more-' + n, 'succeeded', { releaseName: 'site-' + n }));
+  await ui.el('releases-tab').onclick();
+  assert.match(flatten(ui.el('results')), /25 of 30 deployments/);
+  await button(ui, 'results', 'Load more').onclick();
+  assert.deepEqual(ui.reads('deployment-release-history').at(-1).input, historyInput({ offset: 25 }));
+  assert.equal(walk(ui.el('results')).filter(el => el.className === 'name').length, 30); assert.equal(button(ui, 'results', 'Load more'), undefined);
+});
+
+test('Releases re-checks only deployments in progress every 30 s, reads the history once when one ends or starts, then stops', async () => {
   const ui = await releasePanel(); await ui.el('releases-tab').onclick();
   assert.equal(ui.timers(30000).length, 1); assert.match(flatten(ui.el('results')), /Auto-refresh every 30 s while deploying\./);
-  // Still running, one stage further: the row updates in place and the list is not read again.
-  ui.state.active = [runSummary('run-1', 'running', { stepsDone: 2, durationMs: 270000 })];
+  // Still deploying, one stage further: the row updates in place and the history is not read again.
+  ui.state.active = [deployment('run-1', 'running', { durationMs: 270000, steps: [{ name: 'Build', state: 'succeeded' }, { name: 'Deploy', state: 'succeeded' }, { name: 'Verify', state: 'running' }] })];
   await ui.timers(30000)[0].fn();
-  assert.deepEqual(ui.calls.map(call => call.action), ['deployment-releases', 'deployment-active']);
+  assert.deepEqual(ui.calls.map(call => call.action), ['deployment-release-history', 'deployment-active']);
   assert.deepEqual(ui.calls[1].input, {}, 'the environment, without a branch filter');
-  assert.match(flatten(ui.el('results')), new RegExp(`Deploying abc1234 · stage 3 of 3 · started ${STAMP} · 4 min 30 s`));
+  assert.match(flatten(ui.el('results')), /2 of 3 stages · Verify · 4 min 30 s so far/);
   assert.equal(ui.timers(30000).length, 1);
-  // The run ends: the list is read once more and, with nothing deploying, nothing is watched.
-  ui.state.active = []; ui.state.deploying = false;
+  // Another starts: the history is read once more.
+  const started = deployment('run-9', 'queued', { releaseName: 'other', createdAt: minutesAgo(0) });
+  ui.state.active = [...ui.state.active, started]; ui.state.more = [started];
   await ui.timers(30000)[0].fn();
-  assert.deepEqual(ui.calls.map(call => call.action), ['deployment-releases', 'deployment-active', 'deployment-active', 'deployment-releases']);
+  assert.equal(ui.reads('deployment-release-history').length, 2); assert.match(flatten(ui.el('results')), /pricing-engine · other/);
+  // They end: the history is read once more and, with nothing deploying, nothing is watched.
+  ui.state.active = []; ui.state.more = []; ui.state.deploying = false;
+  await ui.timers(30000)[0].fn();
+  assert.equal(ui.reads('deployment-release-history').length, 3);
   assert.equal(ui.timers(30000).length, 0);
-  assert.doesNotMatch(flatten(ui.el('results')), /Deploying|Auto-refresh/);
-  assert.match(flatten(ui.el('results')), /5 of 6 ok/);
+  assert.doesNotMatch(flatten(ui.el('results')), /so far|Auto-refresh/);
 });
 
-test('nothing re-reads while no run is active; only the read age moves', async () => {
+test('nothing re-reads while nothing deploys; only the read age moves', async () => {
   const time = clock(Date.now());
   const ui = await releasePanel({ Date: time.Date }); ui.state.deploying = false;
   await ui.el('releases-tab').onclick();
   assert.equal(ui.timers(30000).length, 0);
   const [age] = ui.timers(60000); time.state.now += 60000; age.fn();
-  assert.match(flatten(ui.el('results')), /Research · read 1 min ago/);
-  assert.deepEqual(ui.calls.map(call => call.action), ['deployment-releases']);
+  assert.match(flatten(ui.el('results')), /read 1 min ago/);
+  assert.deepEqual(ui.calls.map(call => call.action), ['deployment-release-history']);
 });
 
 test('a check waits while the panel is hidden, runs as soon as it is visible, and pauses after an hour', async () => {
@@ -511,57 +524,39 @@ test('a check waits while the panel is hidden, runs as soon as it is visible, an
   assert.match(flatten(ui.el('results')), /Auto-refresh paused after an hour\./);
   assert.equal(ui.timers(30000).length, 0);
   await button(ui, 'results', 'Refresh').onclick();
-  assert.equal(ui.reads('deployment-releases').length, 2); assert.equal(ui.timers(30000).length, 1, 'Refresh starts a new hour');
+  assert.equal(ui.reads('deployment-release-history').length, 2); assert.equal(ui.timers(30000).length, 1, 'Refresh starts a new hour');
 });
 
-test('kind chips read each backend kind; This repository filters by the branch a local folder resolved to', async () => {
+test('type chips filter on the backend; This repository filters by the branch a local folder resolved to', async () => {
   const ui = await releasePanel(); await ui.el('releases-tab').onclick();
   await button(ui, 'results', 'Agents').onclick();
-  assert.deepEqual(ui.reads('deployment-releases').slice(-2).map(call => call.input), [{ days: 7, limit: 50, offset: 0, releaseKind: 'harness_agent' }, { days: 7, limit: 50, offset: 0, releaseKind: 'agent' }]);
+  assert.deepEqual(ui.reads('deployment-release-history').at(-1).input, historyInput({ releaseKind: 'harness_agent' }));
   assert.equal(button(ui, 'results', 'Agents').attributes['aria-pressed'], 'true');
-  await button(ui, 'results', 'APIs').onclick(); assert.equal(ui.reads('deployment-releases').at(-1).input.releaseKind, 'fastapi');
-  await button(ui, 'results', 'All kinds').onclick(); assert.equal(ui.reads('deployment-releases').at(-1).input.releaseKind, undefined);
+  await button(ui, 'results', 'APIs').onclick(); assert.equal(ui.reads('deployment-release-history').at(-1).input.releaseKind, 'fastapi');
+  await button(ui, 'results', 'All types').onclick(); assert.equal(ui.reads('deployment-release-history').at(-1).input.releaseKind, undefined);
   await ui.el('code-tab').onclick(); await button(ui, 'results', 'Open').onclick(); await button(ui, 'results', 'View releases').onclick();
   assert.deepEqual(ui.reads('resolve').at(-1).input, { root: '/tmp/pricing-engine' });
   assert.equal(ui.el('releases-tab').attributes['aria-selected'], 'true');
-  assert.deepEqual(ui.reads('deployment-releases').at(-1).input, { days: 7, limit: 50, offset: 0, codeRepositoryBranchUid: 'branch-1' });
+  assert.deepEqual(ui.reads('deployment-release-history').at(-1).input, historyInput({ codeRepositoryBranchUid: 'branch-1' }));
   const mine = button(ui, 'results', 'This repository');
   assert.equal(mine.attributes['aria-pressed'], 'true'); assert.equal(mine.attributes.title, 'pricing-engine · main');
   await ui.timers(30000)[0].fn(); assert.deepEqual(ui.reads('deployment-active').at(-1).input, { codeRepositoryBranchUid: 'branch-1' }, 'checks follow the filter');
   await mine.onclick();
-  assert.equal(ui.reads('deployment-releases').at(-1).input.codeRepositoryBranchUid, undefined);
+  assert.equal(ui.reads('deployment-release-history').at(-1).input.codeRepositoryBranchUid, undefined);
   assert.equal(button(ui, 'results', 'This repository').attributes['aria-pressed'], 'false');
   ui.el('environment').value = 'env-b'; await ui.el('environment').onchange(); await ui.el('releases-tab').onclick();
   assert.equal(button(ui, 'results', 'This repository'), undefined, 'a resolved branch belongs to its environment');
 });
 
-test('a release shows what it serves and wants, stats over a chosen window and its runs; a run opens its details', async () => {
+test('a deployment opens its stages and logs under its own name, without the workflow run', async () => {
   const ui = await releasePanel(); await ui.el('releases-tab').onclick();
-  await button(ui, 'results', 'pricing-api').onclick();
-  assert.deepEqual(ui.calls.at(-1), { action: 'deployment-release', input: { releaseUid: 'release-api', days: 1 }, environmentUid: 'env-a' }, 'a release history opens on the last day');
+  await walk(ui.el('results')).find(el => el.className === 'name').onclick();
+  assert.deepEqual(ui.calls.at(-1), { action: 'deployment-run', input: { runUid: 'run-1', kind: 'deployment_run' }, environmentUid: 'env-a' });
   const text = flatten(ui.el('results'));
-  assert.match(text, /pricing-api\s+API/); assert.match(text, /pricing-engine · main/);
-  assert.match(text, new RegExp(`Serving abc1def \\(revision 14\\) since ${STAMP} \\(56 min ago\\)`)); assert.match(text, new RegExp(`Wanted abc0def \\(revision 15\\), requested ${STAMP} \\(5 min ago\\)`));
-  assert.match(text, /Runs\s+6\s+1 active/); assert.match(text, /Succeeded\s+83%\s+5 of 6/);
-  assert.match(text, /Median time\s+4 min 10 s\s+90th percentile 6 min 40 s/); assert.match(text, /Slowest stage\s+Deploy\s+3 min median/);
-  assert.match(text, /Most common failure: Workflow prerequisite failed \(1 of 1\)/);
-  assert.match(text, /Stats from the last 100 runs/);
-  assert.deepEqual(walk(ui.el('results')).filter(el => el.textContent && ['Started', 'Commit', 'Source', 'State', 'Stages', 'Time'].includes(el.textContent) && !el.onclick).map(el => el.textContent), ['Started', 'Commit', 'Source', 'State', 'Stages', 'Time']);
-  for (const value of ['Repository push', 'Manual', 'Reconciliation', 'Running', 'Failed', '1 of 3', '3 of 3', 'abc9999']) assert.ok(walk(ui.el('results')).some(el => el.textContent === value), value);
-  assert.equal(button(ui, 'results', '1 day').attributes['aria-pressed'], 'true');
-  assert.equal(ui.timers(30000).length, 1, 'a running run is watched'); await ui.timers(30000)[0].fn();
-  assert.deepEqual(ui.reads('deployment-active').at(-1).input, { codeRepositoryBranchUid: 'branch-1' }, 'scoped to the release branch');
-  await button(ui, 'results', '7 days').onclick();
-  assert.deepEqual(ui.calls.at(-1).input, { releaseUid: 'release-api', days: 7 }); assert.equal(button(ui, 'results', '7 days').attributes['aria-pressed'], 'true');
-  const run = walk(ui.el('results')).find(el => new RegExp(`^Open the run started ${STAMP} \\(30 min ago\\)$`).test(el.attributes?.['aria-label'] || ''));
-  assert.match(run.textContent, new RegExp(`^${STAMP}$`), 'a run is listed by its start date and time'); assert.match(flatten(ui.el('results')), /30 min ago/);
-  await run.onclick();
-  assert.deepEqual(ui.calls.at(-1).input, { runUid: 'run-1', kind: 'deployment_run' });
-  await button(ui, 'results', '← pricing-api').onclick();
-  assert.equal(ui.calls.at(-1).action, 'deployment-release');
-  ui.state.hiddenRelease = true; await button(ui, 'results', 'Refresh').onclick();
-  assert.match(flatten(ui.el('results')), /You can't see this release\. A release is shown to the people it is shared with\./);
-  assert.equal(ui.timers(30000).length, 0);
+  assert.match(text, /pricing-engine · app/); assert.match(text, /Auto-refresh every 10 s while it deploys\./); assert.ok(button(ui, 'results', 'View logs'));
+  assert.equal(button(ui, 'results', 'Open workflow'), undefined); assert.equal(ui.timers(30000).length, 0, 'leaving the history ends its checks');
+  await button(ui, 'results', '← Releases').onclick();
+  assert.equal(ui.calls.at(-1).action, 'deployment-release-history');
 });
 
 test('a running deployment re-reads every 10 s only while shown and visible, ends with the run, and pauses after an hour', async () => {
