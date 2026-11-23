@@ -14,6 +14,8 @@ test('detached packaged MCP server: tools, immutable UI, validation, no startup 
   const mcp = JSON.parse(fs.readFileSync(path.join(installed, '.mcp.json'))).mcpServers.mainsequence;
   assert.deepEqual(mcp.args, ['./dist/panel-server.js']);
   assert.ok(mcp.tool_timeout_sec >= 120, 'cold project MCP calls exceed the host default of 60 s');
+  // Codex starts the server with HOME, USER and PATH only; on Linux secret-tool needs the desktop's session bus to read the shared sign-in.
+  for (const name of ['DBUS_SESSION_BUS_ADDRESS', 'XDG_RUNTIME_DIR']) assert.ok(mcp.env_vars.includes(name), `${name} must reach the server`);
   // A catalog written by an earlier chat's server, beside the shared CLI state of this HOME.
   const { projectToolName: toolName } = require('@dev-mainsequence/devtools');
   const stateDir = process.platform === 'darwin' ? path.join(temporary, 'Library', 'Application Support', 'MainSequenceCLI') : process.platform === 'win32' ? path.join(temporary, 'MainSequenceCLI') : path.join(temporary, '.config', 'mainsequence');
