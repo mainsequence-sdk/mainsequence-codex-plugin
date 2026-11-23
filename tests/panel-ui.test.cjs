@@ -464,7 +464,7 @@ test('an empty history says there were no deployments', async () => {
   const ui = await releasePanel(); ui.state.empty = true; await ui.el('releases-tab').onclick();
   const text = flatten(ui.el('results'));
   assert.match(text, /No deployments in the last day/); assert.match(text, /Choose a longer window/); assert.doesNotMatch(text, /No runs/);
-  assert.equal(ui.timers(30000).length, 0);
+  assert.equal(ui.timers(30000).length, 1, 'an empty history still watches for a deployment that starts');
 });
 
 test('a history longer than a page loads more from where it stopped', async () => {
@@ -477,9 +477,9 @@ test('a history longer than a page loads more from where it stopped', async () =
   assert.equal(walk(ui.el('results')).filter(el => el.className === 'name').length, 30); assert.equal(button(ui, 'results', 'Load more'), undefined);
 });
 
-test('Releases re-checks only deployments in progress every 30 s, reads the history once when one ends or starts, then stops', async () => {
+test('Releases checks the deployments in progress every 30 s and reads the history once when one ends or starts', async () => {
   const ui = await releasePanel(); await ui.el('releases-tab').onclick();
-  assert.equal(ui.timers(30000).length, 1); assert.match(flatten(ui.el('results')), /Auto-refresh every 30 s while deploying\./);
+  assert.equal(ui.timers(30000).length, 1); assert.match(flatten(ui.el('results')), /Checks for new deployments every 30 s\./);
   // Still deploying, one stage further: the row updates in place and the history is not read again.
   ui.state.active = [deployment('run-1', 'running', { durationMs: 270000, steps: [{ name: 'Build', state: 'succeeded' }, { name: 'Deploy', state: 'succeeded' }, { name: 'Verify', state: 'running' }] })];
   await ui.timers(30000)[0].fn();
@@ -492,22 +492,27 @@ test('Releases re-checks only deployments in progress every 30 s, reads the hist
   ui.state.active = [...ui.state.active, started]; ui.state.more = [started];
   await ui.timers(30000)[0].fn();
   assert.equal(ui.reads('deployment-release-history').length, 2); assert.match(flatten(ui.el('results')), /pricing-engine · other/);
-  // They end: the history is read once more and, with nothing deploying, nothing is watched.
+  // They end: the history is read once more, and the check goes on for the next deployment.
   ui.state.active = []; ui.state.more = []; ui.state.deploying = false;
   await ui.timers(30000)[0].fn();
   assert.equal(ui.reads('deployment-release-history').length, 3);
-  assert.equal(ui.timers(30000).length, 0);
-  assert.doesNotMatch(flatten(ui.el('results')), /so far|Auto-refresh/);
+  assert.equal(ui.timers(30000).length, 1);
+  assert.doesNotMatch(flatten(ui.el('results')), /so far/); assert.match(flatten(ui.el('results')), /Checks for new deployments every 30 s\./);
 });
 
-test('nothing re-reads while nothing deploys; only the read age moves', async () => {
+test('with nothing deploying, only the small check runs until a deployment starts, which then appears by itself', async () => {
   const time = clock(Date.now());
   const ui = await releasePanel({ Date: time.Date }); ui.state.deploying = false;
   await ui.el('releases-tab').onclick();
-  assert.equal(ui.timers(30000).length, 0);
+  assert.equal(ui.timers(30000).length, 1);
+  ui.state.active = []; await ui.timers(30000)[0].fn();
+  assert.deepEqual(ui.calls.map(call => call.action), ['deployment-release-history', 'deployment-active'], 'nothing new: the history is not read again');
   const [age] = ui.timers(60000); time.state.now += 60000; age.fn();
   assert.match(flatten(ui.el('results')), /read 1 min ago/);
-  assert.deepEqual(ui.calls.map(call => call.action), ['deployment-release-history']);
+  const started = deployment('run-9', 'queued', { repositoryName: 'Markets', releaseName: 'api', createdAt: minutesAgo(0) });
+  ui.state.active = [started]; ui.state.more = [started];
+  await ui.timers(30000)[0].fn();
+  assert.equal(ui.reads('deployment-release-history').length, 2, 'it started: the history is read once more'); assert.match(flatten(ui.el('results')), /Markets · api/);
 });
 
 test('a check waits while the panel is hidden, runs as soon as it is visible, and pauses after an hour', async () => {
