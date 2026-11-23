@@ -51,6 +51,12 @@ first release once wrote one after a 773 s refresh and reported nothing).
 `MAINSEQUENCE_CODEX_TOOL_CATALOG=off` stops a server from reading or writing the catalog on
 its own (the packaged test uses it); cached tools are still listed.
 
+Codex starts a plugin's MCP server with `HOME`, `USER` and `PATH` only. On Linux the shared
+sign-in is read with `secret-tool`, which reaches the Secret Service over the desktop's session
+bus, so `.mcp.json` passes `DBUS_SESSION_BUS_ADDRESS` and `XDG_RUNTIME_DIR` on to the server.
+Without them every read fails with `STORE_ERROR` ("The machine session could not be read")
+and Codex shows "Couldn't display MainSequence".
+
 Project MCP requests are slow when the project has scaled to zero: a first call to the
 Production CRM measured 53–71 s, a warm one 7–10 s. `.mcp.json` therefore sets
 `tool_timeout_sec: 300` (Codex's default is 60 s) and the server's own per-request limit is
