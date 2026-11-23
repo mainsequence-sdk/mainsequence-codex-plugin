@@ -256,9 +256,9 @@ async function localRepository({root,repo}) {const ctx=await workspace();if(fold
 async function projectDetail(project,target,run) {if(run!==generation)return;return detail(async()=>({...await view('project',{projectUid:project.uid},target),workspace:await workspace(),operations:await operations()}),data=>{const prepared=operationCache.find(op=>op.action==='organization-project-setup'&&op.context===project.uid&&op.status==='success')?.result?.data;const progress=node('div'),center=data.workspace.preferences.commandCenterUrl,link=(target,branchUid)=>runOperation('organization-project-link',{projectUid:project.uid,target,...(branchUid?{branchUid}:{}),commandCenterUrl:center},progress);const setup=actionButton(prepared?'Update local workspace':'Set up locally','organization-project-setup',{projectUid:project.uid,baseDir:data.workspace.preferences.baseDir},progress,{primary:true,description:'Prepare separate checkouts for '+data.branches.length+' assigned branches in '+data.workspace.preferences.baseDir+'. Existing changes are preserved.'});setup.disabled=!data.branches.length;
  const centerButton=button('Open in Command Center',()=>link('project'));centerButton.disabled=!center;centerButton.title=center?'':'Set the Command Center URL in Settings.';
  append($('results'),back('Projects',()=>discover()),node('h2',data.project.name),markdown(data.project.description),group('row wrap',setup,centerButton),prepared&&caption(prepared.root),prepared&&operationRow(operationCache.find(op=>op.result?.data===prepared),target),progress,node('h3','Repositories'),...data.branches.map(b=>group('item',button(b.code_repository_name,()=>link('repository',b.uid),'name'),group('row',button(b.repository_branch,()=>link('branch',b.uid)),caption(b.is_initialized?'Ready':'Initializing')))));}); }
-// Deployments and releases follow devtools' polling rules (docs/deployments.md): nothing re-reads while nothing deploys.
-// While the deployment history shows one in progress it checks only those every 30 s and reads itself once more when
-// one ends or starts; a deployment's details re-read it every 10 s. A check that comes due while the panel is hidden
+// Deployments and releases follow devtools' polling rules (docs/deployments.md). While the release deployment history is
+// shown it checks only the deployments in progress every 30 s and reads itself once more when one ends or starts; the
+// environment's deployment list checks while it shows one in progress; a deployment's details re-read it every 10 s. A check that comes due while the panel is hidden
 // waits until it is visible again, checks never overlap, and they pause after an hour.
 const RELEASE_CHECK_MS = 30000, RUN_CHECK_MS = 10000, WATCH_LIMIT_MS = 3600000, AGE_MS = 60000, RELEASE_PAGE = 25;
 const RELEASE_FILTERS = [['', 'All types'], ['fastapi', 'APIs'], ['harness_agent', 'Agents'], ['static_site', 'Static sites']];
@@ -301,11 +301,12 @@ function startWatch(screen, every, check, note, started = Date.now()) {
 }
 // A watched screen reads itself again without the loading state, and replaces itself only while it is still shown.
 async function redraw(load, draw) { const shown = generation, data = await load(); if (shown !== generation) return; const screen = ++generation; clearResults(); $('list-toolbar').hidden = true; draw(data, screen); }
-// While shown deployments are queued or running, check only those; read the history again once one ends or another starts.
+// While the history is shown, check only the deployments queued or running: a shown one moves on in place, and the history is
+// read again once one ends or another starts, so a deployment that starts after the read appears by itself.
 function watchDeployments(screen, list, note, live, reread, started) {
   const watched = list.results.filter(item => ACTIVE_RUNS.includes(item.state)).map(item => item.uid), known = new Set(list.results.map(item => item.uid));
   const { kind, branch } = list.query;
-  note.textContent = 'Auto-refresh every 30 s while deploying.';
+  note.textContent = 'Checks for new deployments every 30 s.';
   startWatch(screen, RELEASE_CHECK_MS, async w => {
     const data = await readWorkspace('deployment-active', branch ? { codeRepositoryBranchUid: branch } : {}, list.target);
     if (!w.alive()) return false;
@@ -395,8 +396,9 @@ function drawReleases(list, screen, started) {
     append(out, group('pager', node('small', list.results.length + ' of ' + list.count + ' deployments'), more));
   }
   append(out, note);
-  if (list.results.some(item => ACTIVE_RUNS.includes(item.state))) watchDeployments(screen, list, note, live,
-    w => redraw(() => readHistory(list.target, list.query, Math.max(RELEASE_PAGE, list.loaded)), (next, again) => drawReleases(next, again, w.started)), started);
+  // Something started or ended: the re-read history watches for a new hour.
+  watchDeployments(screen, list, note, live,
+    () => redraw(() => readHistory(list.target, list.query, Math.max(RELEASE_PAGE, list.loaded)), (next, again) => drawReleases(next, again)), started);
 }
 // The Releases list offers "This repository" once the panel has resolved a local folder to its repository branch.
 function rememberBranch(data, root) { const branch = data?.resolution?.code_repository_branch; folderBranch = branch?.uid ? { uid: branch.uid, root, label: [branch.code_repository_name, branch.repository_branch].filter(Boolean).join(' · '), environmentUid: $('environment').value } : null; }

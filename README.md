@@ -115,10 +115,10 @@ change it.
   runs, Jobs or image builds. It opens on the last day (or 7, 30 or 90); filter by type,
   or by the repository of a local folder (**Code → View releases**). A deployment opens
   its stages and logs. Times are in the machine's time zone, which the panel names.
-  Read-only. Nothing is read again while nothing deploys. While a shown deployment is
-  queued or running, the panel checks only those every 30 s and reads the history again
-  once one ends or starts; checks wait while the panel is hidden and pause after an hour
-  (**Refresh** starts them again).
+  Read-only. While the history is shown, the panel checks every 30 s only the deployments
+  queued or running, so one that starts after the read appears by itself, and reads the
+  history again once one ends or starts; checks wait while the panel is hidden and pause
+  after an hour in which nothing started or ended (**Refresh** starts them again).
 - **Deployments.** The latest run of a repository branch, its stages and logs, and the
   environment's deployment history, including jobs and images. A running deployment's
   details are read again every 10 s while they are on screen, with the same pauses.
