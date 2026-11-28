@@ -100,7 +100,7 @@ result and the panel preserve the original `content`, `structuredContent` and
 uncertain-effects warning, so a CRM `not_found` or `forbidden` response is visible instead
 of being discarded, with known authentication credentials redacted. Cold setup verifies
 the shared account remotely; prepared calls check the selected credentials locally before
-and after execution; server-side authorization still applies to every call.
+and after execution; the backend still authorizes every call.
 
 See [ADR 0002](adr/0002-conversational-project-mcp-client.md) for the design and
 authentication decision.

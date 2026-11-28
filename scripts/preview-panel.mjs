@@ -18,7 +18,7 @@ else if(msg.method==='tools/call'){
  else if(msg.params.name==='mainsequence_agent_status')value={requests:[]};
  else if(msg.params.name==='mainsequence_discover')value=a.catalog==='agents'?data.agents:data.mcps;
  else if(msg.params.name==='mainsequence_view')value=a.view==='agent'?data.agentDetails?.[a.agentUid]:a.view==='project'?data.projectDetails?.[a.projectUid]:data[a.view];
- else if(msg.params.name==='mainsequence_settings')value=snapshot.settings||{preferences:{backend:snapshot.status.account.backend,baseDir:'/Users/jose/mainsequence',commandCenterUrl:''},runtime:{nodeVersion:'22',platform:'darwin arm64',capabilities:{}}};
+ else if(msg.params.name==='mainsequence_settings')value=snapshot.settings||{preferences:{backend:snapshot.status.account.backend,baseDir:'/home/fixture/mainsequence',commandCenterUrl:''},runtime:{nodeVersion:'22',platform:'darwin arm64',capabilities:{}}};
  else if(msg.params.name==='mainsequence_operations')value={operations:[]};
  else if(msg.params.name==='mainsequence_workspace')value=a.action==='local-context'?data.localContext:a.action==='deployment-history'?data.deployments:a.action==='deployment-run'?data.runs?.[a.input.runUid]:a.action==='deployment-logs'?data.logs?.[a.input.runUid]:{result:{status:'success',summary:'Preview',data:{}}};
  else if(msg.params.name==='mainsequence_tools')value=data.catalogs?.[a.releaseUid];

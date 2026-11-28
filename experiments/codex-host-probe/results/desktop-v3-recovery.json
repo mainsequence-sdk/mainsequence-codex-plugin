@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "problem": "Registered temporary marketplace and temporary fixture state were absent; plugin cache still existed; native MCP tools absent from this turn.",
   "repair": {
-    "marketplaceRoot": "/Users/jose/code/MainSequenceClientSide/mainsequence-codex-plugin/experiments/codex-host-probe/.local-marketplace",
+    "marketplaceRoot": "<repo>/experiments/codex-host-probe/.local-marketplace",
     "installedVersion": "0.3.0",
     "sourceScope": "Test experiment only",
     "hookEnabled": true,

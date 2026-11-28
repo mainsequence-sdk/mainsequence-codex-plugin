@@ -14,14 +14,14 @@ async function fixtureBackend(t) {
     const body = raw ? JSON.parse(raw) : undefined;
     calls.push({ path: req.url, method: req.method, authorization: req.headers.authorization, body });
     res.setHeader('Content-Type', 'application/json');
-    if (req.url === '/auth/cli/token/') return res.end(JSON.stringify({ access: accepted, refresh: 'fixture-refresh-1', username: 'José' }));
+    if (req.url === '/auth/cli/token/') return res.end(JSON.stringify({ access: accepted, refresh: 'fixture-refresh-1', username: 'Zoë' }));
     if (req.url === '/auth/jwt-token/token/refresh/') {
       generation++; accepted = `fixture-access-${generation}`;
       return res.end(JSON.stringify({ access: accepted, refresh: `fixture-refresh-${generation}` }));
     }
     if (req.url === '/auth/cli/revoke/') { res.writeHead(204).end(); return; }
     if (req.headers.authorization !== `Bearer ${accepted}`) { res.writeHead(401).end(JSON.stringify({ detail: 'denied' })); return; }
-    if (req.url === '/api/v1/users/me/') return res.end(JSON.stringify({ username: 'José', organization: { name: 'Fixture Org' } }));
+    if (req.url === '/api/v1/users/me/') return res.end(JSON.stringify({ username: 'Zoë', organization: { name: 'Fixture Org' } }));
     if (req.url === '/api/v1/code-repositories/') return res.end(JSON.stringify({ results: [{ uid: 'repo-1', code_repository_name: 'Shared', code_repository_type: 'python', primary_language: 'python', framework: 'none', branches: [] }] }));
     if (req.url === '/api/v1/code-repository-branches/resolve-git-context/') return res.end(JSON.stringify({ canonical_repository_identity: body.repository_identity, repository_branch: body.repository_branch, repository_ref: `refs/heads/${body.repository_branch}`, commit_sha: body.commit_sha, code_repository_branch: { uid: 'branch-1', code_repository_uid: 'repo-1', code_repository_name: 'Shared', repository_branch: body.repository_branch, is_initialized: true } }));
     res.writeHead(404).end('{}');

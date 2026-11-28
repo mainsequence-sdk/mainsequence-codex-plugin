@@ -48,7 +48,9 @@ try {
   report.agentCount = agents.count;
   const saved = await call('mainsequence_view', { ...scope, view: 'connections' });
   report.savedConnectionCount = saved.results.length;
-  const crm = saved.results.find(r => r.uid === '2de75e21-bfe1-4b77-b668-6916488ed317');
+  // The saved CRM connection named `crm`, or the release in MAINSEQUENCE_CRM_RELEASE_UID.
+  const crmUid = process.env.MAINSEQUENCE_CRM_RELEASE_UID;
+  const crm = saved.results.find(r => crmUid ? r.uid === crmUid : r.name === 'crm');
   assert.ok(crm, 'Existing saved CRM connection is readable');
   const catalog = await call('mainsequence_tools', { ...scope, releaseUid: crm.uid });
   report.crmToolCount = catalog.tools.length;
